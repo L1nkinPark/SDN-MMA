@@ -40,14 +40,20 @@ python scripts/generate-diagrams.py             # rewrites docs/StudySpot-ERD-Sy
 
 Tests need neither `.env` nor a running MongoDB. `test/api.test.js` starts `mongodb-memory-server`, which downloads a `mongod` binary on first run. `test/unit/` uses no database.
 
-**Mobile**, run from `frontend/mobile`. The app doesn't exist yet; create it once with `npx create-expo-app@latest mobile` from `frontend/`, then update this section if its scripts differ.
+**Mobile**, run from `frontend/mobile` (Expo SDK 58, created with `create-expo-app`). Copy `.env.example` to `.env` first.
 
 ```bash
+npm ci
 npx expo start
 npm run lint
 npx tsc --noEmit
+npm test
+npx expo export --platform android                                                   # bundle check without a device
 npx openapi-typescript ../../backend/src/docs/openapi.yaml -o src/api/schema.d.ts   # rerun when the API changes
+EXPO_OFFLINE=1 npx expo install <package>                                            # add a library at the SDK version
 ```
+
+`openapi-typescript` runs through `npx` only; its TypeScript 5 peer conflicts with the app's TypeScript 6. Use `EXPO_OFFLINE=1` with `expo install` when the network blocks Expo's version API.
 
 ## Backend architecture
 
@@ -90,11 +96,12 @@ Prioritize Android, and also check on a real phone.
 | Realtime | `socket.io-client` |
 | API types | Generated with `openapi-typescript` |
 | Fonts | `@expo-google-fonts/barlow-condensed`, `@expo-google-fonts/be-vietnam-pro` |
+| Icons | `react-native-svg`, with paths copied from `frontend/design/` |
 | Tests | `jest-expo` |
 
 ```text
 frontend/mobile/
-  app/              Screens and navigation; composition only
+  src/app/          Screens and navigation (Expo Router); composition only
   src/api/          API client, generated schema, API hooks
   src/auth/         Token storage, session handling
   src/realtime/     Socket.IO connection
@@ -111,7 +118,7 @@ Set `EXPO_PUBLIC_API_URL` in `frontend/mobile/.env` and commit the variable name
 
 `frontend/design/` is the visual source of truth for all 15 screens. `<screen>.dc.html` holds the layout, copy, and values for every state, and `<screen>.png` shows one state. Follow them, and don't redesign. `frontend/PLAN-B.md` explains how to read these files. People can also view them at https://claude.ai/artifact/NMFgBbUsV3toaKCAWPvoKV, which needs a shared, signed-in browser. Map areas are placeholders, and all ratings, counts, names, and review text are example data.
 
-The look is a ruled student notebook: flat paper, blue ballpoint ink, a red margin line. No gradients, shadows, emoji, glass effects, or rounded cards.
+The look is a ruled student notebook: flat paper and blue ballpoint ink. No gradients, shadows, emoji, glass effects, or rounded cards. The red margin line in `frontend/design/` and on the canvas was removed from the app; don't build it.
 
 | Token | Value |
 |---|---|
@@ -122,12 +129,11 @@ The look is a ruled student notebook: flat paper, blue ballpoint ink, a red marg
 | Placeholder text | `#5A647D` |
 | Field underline | `#8C96AE` |
 | Row rule | `#C9D1E3` |
-| Margin line | `#D8432B` |
 | Error and highest level | `#B8321C` |
 | Loading block | `#E1E5EF` |
 
 - Fonts: Barlow Condensed 700 for screen titles (44px; 68px on Login), Be Vietnam Pro for everything else. Row title 16px/600, secondary 13px, meta 12px.
-- Layout: content starts 40px from the left and ends 20px from the right. A 1px margin line runs at x=24 down to the tab bar.
+- Layout: content starts 40px from the left and ends 20px from the right.
 - Lists: separate rows with a 1px rule, not cards. A 1.5px ink rule sits under the screen title.
 - Controls: primary button 54px high, secondary 48px, radius 2px. Inputs have a 1.5px underline and no box. Touch targets are at least 44px.
 - Tab bar: 84px high, 1.5px ink rule on top, active tab has a 3px ink bar and a filled icon.
