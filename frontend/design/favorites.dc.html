@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <title>Yêu thích</title>
+  <script src="./support.js"></script>
+</head>
+
+<body>
+  <x-dc>F
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap"
+      rel="stylesheet">
+    <style>
+      body {
+        margin: 0
+      }
+
+      a {
+        color: #141A2E;
+        text-decoration: none
+      }
+
+      a:hover {
+        color: #16308F
+      }
+s
+      button:focus-visible,
+      sa:focus-visible {
+        outline: 2px solid #16308F;
+        outline-offset: 2px
+      }
+    </style>
+    </helmet>
+    <div
+      style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+      <div aria-hidden="true"
+        style="position: absolute; left: 24px; top: 0; bottom: 84px; width: 1px; background: #D8432B"></div>
+
+      <header
+        style="flex: none; display: flex; align-items: baseline; justify-content: space-between; padding: 64px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+        <h1
+          style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1; color: #16308F">
+          Yêu thích</h1>
+        <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+          <span style="font-size: 13px; font-weight: 500; color: #3F4963">{{count}} địa điểm</span>
+        </sc-if>
+      </header>
+
+      <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+        <main style="flex: 1 1 auto; min-height: 0; overflow-y: auto">
+          <sc-for list="{{places}}" as="place" hint-placeholder-count="4">
+            <article
+              style="display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 12px 40px; border-bottom: 1px solid #C9D1E3">
+              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px">
+                <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                  <a href="#chi-tiet" style="font-size: 16px; line-height: 22px; font-weight: 600">{{place.name}}</a>
+                  <span style="font-size: 13px; line-height: 18px; color: #3F4963">{{place.address}}</span>
+                </div>
+                <button type="button" aria-label="Bỏ lưu {{place.name}}"
+                  style="flex: none; width: 44px; height: 44px; margin: -8px -12px 0 0; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 20.5 3.6 12.2a5.1 5.1 0 0 1 7.2-7.2L12 6.2 13.2 5a5.1 5.1 0 0 1 7.2 7.2L12 20.5Z">
+                    </path>
+                  </svg>
+                </button>
+              </div>
+
+              <sc-if value="{{place.known}}" hint-placeholder-val="{{ true }}">
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+                  <div style="display: flex; align-items: flex-end; gap: 8px">
+                    <span aria-hidden="true" style="display: flex; align-items: flex-end; gap: 2px; height: 18px">
+                      <sc-for list="{{place.crowdBars}}" as="bar" hint-placeholder-count="3">
+                        <span
+                          style="width: 6px; height: {{bar.h}}px; box-sizing: border-box; background: {{bar.fill}}; border: 1px solid {{bar.line}}"></span>
+                      </sc-for>
+                    </span>
+                    <span style="font-size: 13px; line-height: 18px; color: #3F4963">Độ đông: <strong
+                        style="font-weight: 600; color: {{place.crowdColor}}">{{place.crowd}}</strong></span>
+                  </div>
+                  <div style="display: flex; align-items: flex-end; gap: 8px">
+                    <span aria-hidden="true" style="display: flex; align-items: flex-end; gap: 2px; height: 18px">
+                      <sc-for list="{{place.noiseBars}}" as="bar" hint-placeholder-count="3">
+                        <span
+                          style="width: 6px; height: {{bar.h}}px; box-sizing: border-box; background: {{bar.fill}}; border: 1px solid {{bar.line}}"></span>
+                      </sc-for>
+                    </span>
+                    <span style="font-size: 13px; line-height: 18px; color: #3F4963">Độ ồn: <strong
+                        style="font-weight: 600; color: {{place.noiseColor}}">{{place.noise}}</strong></span>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{place.unknown}}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 13px; line-height: 18px; color: #3F4963">Chưa đủ người báo, cần ít nhất 2 người
+                </div>
+              </sc-if>
+
+              <div
+                style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; line-height: 16px; color: #3F4963; font-variant-numeric: tabular-nums">
+                <span style="display: flex; align-items: center; gap: 4px">
+                  <sc-if value="{{place.rated}}" hint-placeholder-val="{{ true }}">
+                    <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="#16308F">
+                      <path d="m12 2.5 2.9 6.2 6.8.8-5 4.7 1.3 6.8-6-3.4-6 3.4 1.3-6.8-5-4.7 6.8-.8L12 2.5Z"></path>
+                    </svg>
+                  </sc-if>
+                  <span>{{place.rating}}</span>
+                </span>
+                <span>{{place.report}}</span>
+              </div>
+            </article>
+          </sc-for>
+        </main>
+      </sc-if>
+
+      <sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}">
+        <main aria-busy="true" aria-label="Đang tải danh sách" style="flex: 1 1 auto; min-height: 0; overflow: hidden">
+          <sc-for list="{{skeletons}}" as="row" hint-placeholder-count="4">
+            <div aria-hidden="true"
+              style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+              <div style="width: {{row.title}}px; height: 16px; background: #E1E5EF"></div>
+              <div style="width: {{row.line}}px; height: 12px; background: #E1E5EF"></div>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+                <div style="height: 16px; background: #E1E5EF"></div>
+                <div style="height: 16px; background: #E1E5EF"></div>
+              </div>
+            </div>
+          </sc-for>
+        </main>
+      </sc-if>
+
+      <sc-if value="{{isFailed}}" hint-placeholder-val="{{ false }}">
+        <main
+          style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 20px 0 40px">
+          <h2 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; color: #B8321C">Chưa tải được danh
+            sách</h2>
+          <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Kiểm tra kết nối mạng rồi thử lại.
+          </p>
+          <button type="button"
+            style="height: 48px; margin-top: 8px; padding: 0 20px; border: 1.5px solid #16308F; border-radius: 2px; background: none; color: #16308F; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Thử
+            lại</button>
+        </main>
+      </sc-if>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+        <main
+          style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 20px 0 40px">
+          <h2 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600">Chưa lưu địa điểm nào</h2>
+          <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Bấm biểu tượng trái tim ở một địa
+            điểm để lưu lại đây.</p>
+          <button type="button"
+            style="height: 48px; margin-top: 8px; padding: 0 20px; border: 1.5px solid #16308F; border-radius: 2px; background: none; color: #16308F; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Tìm
+            địa điểm</button>
+        </main>
+      </sc-if>
+
+      <sc-if value="{{isGuest}}" hint-placeholder-val="{{ false }}">
+        <main
+          style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 20px 0 40px">
+          <h2 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600">Đăng nhập để xem chỗ đã lưu</h2>
+          <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Danh sách yêu thích được lưu theo tài
+            khoản của bạn.</p>
+          <button type="button"
+            style="height: 48px; margin-top: 8px; padding: 0 20px; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Đăng
+            nhập</button>
+        </main>
+      </sc-if>
+
+      <nav aria-label="Điều hướng chính"
+        style="flex: none; height: 84px; box-sizing: border-box; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #F6F7F9; border-top: 1.5px solid #16308F; padding-bottom: 24px">
+        <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="4">
+          <button type="button" aria-label="{{tab.label}}"
+            style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid {{tab.bar}}; margin-top: -1.5px; background: none; color: {{tab.color}}; font: inherit; font-size: 12px; font-weight: {{tab.weight}}; cursor: pointer">
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="{{tab.iconFill}}"
+              stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+              <path d="{{tab.icon}}"></path>
+            </svg>
+            <span>{{tab.label}}</span>
+          </button>
+        </sc-for>
+      </nav>
+    </div>
+  </x-dc>
+  <script type="text/x-dc" data-dc-script
+    data-props='{"state":{"editor":"enum","options":["Có dữ liệu","Đang tải","Trống","Lỗi tải","Chưa đăng nhập"],"default":"Có dữ liệu"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  bars(level) {
+    return [8, 13, 18].map((h, index) => {
+      const on = index < level;
+      const color = level === 3 ? '#B8321C' : '#16308F';
+      return { h, fill: on ? color : 'transparent', line: on ? color : '#8C96AE' };
+    });
+  }
+
+  renderVals() {
+    const state = this.props.state ?? 'Có dữ liệu';
+    const heart = 'M12 20.5 3.6 12.2a5.1 5.1 0 0 1 7.2-7.2L12 6.2 13.2 5a5.1 5.1 0 0 1 7.2 7.2L12 20.5Z';
+    const places = [
+      { name: 'Thư viện Đại học FPT TP.HCM', address: 'Lô E2a-7, Đường D1, Khu Công nghệ cao', crowd: 'Vừa', crowdLevel: 2, noise: 'Yên tĩnh', noiseLevel: 1, rating: '4,6 (18 đánh giá)', report: '5 người báo, đến 16:40' },
+      { name: 'Passio Coffee - FPT University', address: 'Đại học FPT, Đường D1, Khu Công nghệ cao', crowd: 'Đông', crowdLevel: 3, noise: 'Ồn', noiseLevel: 3, rating: '4,1 (9 đánh giá)', report: '3 người báo, đến 15:55' },
+      { name: 'Laha Coffee - Khu Công Nghệ Cao', address: 'Lô T2-1.2, Đường D1, Khu Công nghệ cao', crowd: 'Vắng', crowdLevel: 1, noise: 'Vừa', noiseLevel: 2, rating: '4,3 (6 đánh giá)', report: '2 người báo, đến 16:10' },
+      { name: 'Trung Nguyên Legend Café - Khu Công Nghệ Cao', address: 'Đường D1, Khu Công nghệ cao', crowd: null, rating: 'Chưa có đánh giá', report: '1 người báo' }
+    ].map(place => ({
+      ...place,
+      known: place.crowd !== null,
+      unknown: place.crowd === null,
+      rated: place.rating !== 'Chưa có đánh giá',
+      crowdBars: this.bars(place.crowdLevel ?? 0),
+      noiseBars: this.bars(place.noiseLevel ?? 0),
+      crowdColor: place.crowdLevel === 3 ? '#B8321C' : '#141A2E',
+      noiseColor: place.noiseLevel === 3 ? '#B8321C' : '#141A2E'
+    }));
+    const tabs = [
+      { label: 'Khám phá', icon: 'M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Zm0-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z' },
+      { label: 'Yêu thích', icon: heart, active: true },
+      { label: 'Xếp hạng', icon: 'M4 20V12h5v8M9.5 20V5h5v15M15 20v-6h5v6M3 20h18' },
+      { label: 'Hồ sơ', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.6-3.7 3.6-6 7.5-6s6.9 2.3 7.5 6' }
+    ].map(tab => ({
+      ...tab,
+      color: tab.active ? '#16308F' : '#3F4963',
+      bar: tab.active ? '#16308F' : 'transparent',
+      weight: tab.active ? 600 : 500,
+      iconFill: tab.active ? 'currentColor' : 'none'
+    }));
+    return {
+      places,
+      tabs,
+      count: places.length,
+      showList: state === 'Có dữ liệu',
+      skeletons: [{ title: 214, line: 268 }, { title: 186, line: 240 }, { title: 228, line: 256 }, { title: 200, line: 224 }],
+      isLoading: state === 'Đang tải',
+      isFailed: state === 'Lỗi tải',
+      isEmpty: state === 'Trống',
+      isGuest: state === 'Chưa đăng nhập'
+    };
+  }
+}
+</script>
+</body>
+
+</html>

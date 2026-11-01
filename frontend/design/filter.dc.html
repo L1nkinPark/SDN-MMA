@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Bộ lọc</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#141A2E;text-decoration:none}a:hover{color:#16308F}
+input::placeholder,textarea::placeholder{color:#5A647D;opacity:1}
+input:focus,textarea:focus{outline:none;border-bottom-color:#16308F;box-shadow:0 1px 0 #16308F}
+button:focus-visible,a:focus-visible{outline:2px solid #16308F;outline-offset:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+</helmet>
+<sc-if value="{{s0}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-end; margin: 0 -12px 0 0px"><button type="button" aria-label="Đóng" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Bộ lọc</h1>
+    
+  </div>
+</header>
+<main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><div style="display: flex; flex-direction: column; gap: 22px; padding: 20px 20px 20px 40px"><fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+  <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3F4963">Khoảng cách</legend>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">1 km</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">3 km</button><button type="button" aria-pressed="true" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #16308F; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">5 km</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">10 km</button></div>
+</fieldset>
+<div style="display: flex; flex-direction: column">
+  <div style="margin-bottom: 4px; font-size: 13px; font-weight: 600; color: #3F4963">Tiện ích</div>
+  <button type="button" role="switch" aria-checked="undefined" style="min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; color: #141A2E; cursor: pointer"><span>Có Wi-Fi</span><span aria-hidden="true" style="flex: none; width: 24px; height: 24px; box-sizing: border-box; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #FFFFFF; display: flex; align-items: center; justify-content: center"></span></button><button type="button" role="switch" aria-checked="undefined" style="min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; color: #141A2E; cursor: pointer"><span>Có ổ cắm</span><span aria-hidden="true" style="flex: none; width: 24px; height: 24px; box-sizing: border-box; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #FFFFFF; display: flex; align-items: center; justify-content: center"></span></button>
+  <p style="margin: 0; font-size: 13px; line-height: 18px; color: #3F4963">Chỉ hiện nơi đã xác minh có tiện ích này.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="filter-price" style="font-size: 13px; font-weight: 600; color: #3F4963">Giá nước tối đa (đồng)</label>
+  <div style="position: relative">
+    <input id="filter-price" type="text" placeholder="Ví dụ 30.000" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  
+  
+</div>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+  <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3F4963">Độ đông</legend>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Vắng</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Vừa</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Đông</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Chưa rõ</button></div>
+</fieldset>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+  <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3F4963">Độ ồn</legend>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Yên tĩnh</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Vừa</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Ồn</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Chưa rõ</button></div>
+</fieldset></div></main>
+<div style="flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 32px 40px; background: #F6F7F9"><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><button type="button" style="height: 48px; width: 100%; flex: none; padding: 0 20px; border: 1.5px solid #16308F; border-radius: 2px; background: none; color: #16308F; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Xóa lọc</button><button type="button" style="height: 48px; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Xem kết quả</button></div></div>
+</div>
+</sc-if>
+<sc-if value="{{s1}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-end; margin: 0 -12px 0 0px"><button type="button" aria-label="Đóng" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Bộ lọc</h1>
+    
+  </div>
+</header>
+<main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><div style="display: flex; flex-direction: column; gap: 22px; padding: 20px 20px 20px 40px"><fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+  <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3F4963">Khoảng cách</legend>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">1 km</button><button type="button" aria-pressed="true" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #16308F; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">3 km</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">5 km</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">10 km</button></div>
+</fieldset>
+<div style="display: flex; flex-direction: column">
+  <div style="margin-bottom: 4px; font-size: 13px; font-weight: 600; color: #3F4963">Tiện ích</div>
+  <button type="button" role="switch" aria-checked="true" style="min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; color: #141A2E; cursor: pointer"><span>Có Wi-Fi</span><span aria-hidden="true" style="flex: none; width: 24px; height: 24px; box-sizing: border-box; border: 1.5px solid #16308F; border-radius: 2px; background: #16308F; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" stroke-width="2.4"><path d="M5 12.5 10 17.5 19 7"></path></svg></span></button><button type="button" role="switch" aria-checked="undefined" style="min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; color: #141A2E; cursor: pointer"><span>Có ổ cắm</span><span aria-hidden="true" style="flex: none; width: 24px; height: 24px; box-sizing: border-box; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #FFFFFF; display: flex; align-items: center; justify-content: center"></span></button>
+  <p style="margin: 0; font-size: 13px; line-height: 18px; color: #3F4963">Chỉ hiện nơi đã xác minh có tiện ích này.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="filter-price" style="font-size: 13px; font-weight: 600; color: #3F4963">Giá nước tối đa (đồng)</label>
+  <div style="position: relative">
+    <input id="filter-price" type="text" value="30.000" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  
+  
+</div>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+  <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3F4963">Độ đông</legend>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="true" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #16308F; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Vắng</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Vừa</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Đông</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Chưa rõ</button></div>
+</fieldset>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+  <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3F4963">Độ ồn</legend>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="true" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #16308F; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Yên tĩnh</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Vừa</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Ồn</button><button type="button" aria-pressed="false" style="min-height: 44px;  padding: 0 14px; border: 1.5px solid #8C96AE; border-radius: 2px; background: none; color: #141A2E; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Chưa rõ</button></div>
+</fieldset></div></main>
+<div style="flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 32px 40px; background: #F6F7F9"><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><button type="button" style="height: 48px; width: 100%; flex: none; padding: 0 20px; border: 1.5px solid #16308F; border-radius: 2px; background: none; color: #16308F; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Xóa lọc</button><button type="button" style="height: 48px; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Xem kết quả</button></div></div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["Mặc định","Đang chọn"],"default":"Mặc định"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = ["Mặc định","Đang chọn"];
+    const state = this.props.state ?? names[0];
+    return Object.fromEntries(names.map((name, index) => ['s' + index, name === state]));
+  }
+}
+</script>
+</body>
+</html>
