@@ -15,8 +15,8 @@ describe('validation', () => {
   });
 
   it('checks trimmed name length 2 to 80', () => {
-    expect(nameError(' A ')).toBe('Tên cần ít nhất 2 ký tự.');
+    expect(nameError(' A ')).toBe('Họ tên cần ít nhất 2 ký tự.');
     expect(nameError('An')).toBeNull();
-    expect(nameError('x'.repeat(81))).toBe('Tên tối đa 80 ký tự.');
+    expect(nameError('x'.repeat(81))).toBe('Họ tên tối đa 80 ký tự.');
   });
 });

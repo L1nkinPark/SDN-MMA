@@ -14,3 +14,5 @@ export { TextField } from './TextField';
 export { TabBar } from './TabBar';
 export { Placeholder } from './Placeholder';
 export { FormScroll } from './FormScroll';
+export { ActionBar } from './ActionBar';
+export { FormAlert } from './FormAlert';

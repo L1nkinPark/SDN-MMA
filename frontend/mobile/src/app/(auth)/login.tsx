@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authApi } from '@/api/auth';
 import { errorMessage, isApiError } from '@/api/errors';
-import { Button, FormScroll, Screen, TextField } from '@/components';
+import { Button, FormAlert, FormScroll, Screen, TextField } from '@/components';
 import { useSession } from '@/auth/session';
 import { colors, fonts, spacing, type } from '@/theme';
 import { emailError, passwordError } from '@/utils/validation';
@@ -108,11 +108,7 @@ export default function LoginScreen() {
             invalid={wrongCredentials}
             editable={!login.isPending}
           />
-          {login.isError ? (
-            <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.alert}>
-              {errorMessage(login.error)}
-            </Text>
-          ) : null}
+          <FormAlert message={login.isError ? errorMessage(login.error) : null} />
           <Button label="Đăng nhập" busyLabel="Đang đăng nhập" busy={login.isPending} onPress={submit} block size="large" />
           <View style={styles.registerRow}>
             <Text style={styles.registerText}>Chưa có tài khoản?</Text>
@@ -133,7 +129,6 @@ const styles = StyleSheet.create({
   laterText: { fontFamily: fonts.medium, fontSize: 14, color: colors.ink },
   intro: { gap: spacing.xl, marginTop: 72 },
   form: { gap: 18, marginTop: 'auto', paddingTop: spacing.xxxl },
-  alert: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.error },
   registerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   registerText: { fontFamily: fonts.regular, fontSize: 14, color: colors.textSecondary },
   registerLink: { minHeight: 44, justifyContent: 'center' },

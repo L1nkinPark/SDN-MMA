@@ -23,7 +23,7 @@ export function passwordError(password: string): string | null {
 
 export function nameError(name: string): string | null {
   const length = trimmedLength(name);
-  if (length < 2) return 'Tên cần ít nhất 2 ký tự.';
-  if (length > 80) return 'Tên tối đa 80 ký tự.';
+  if (length < 2) return 'Họ tên cần ít nhất 2 ký tự.';
+  if (length > 80) return 'Họ tên tối đa 80 ký tự.';
   return null;
 }
