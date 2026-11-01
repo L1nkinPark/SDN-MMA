@@ -1,0 +1,6 @@
+node_modules/
+.env
+coverage/
+*.log
+docs/.$*.bkp
+docs/*.drawio.png

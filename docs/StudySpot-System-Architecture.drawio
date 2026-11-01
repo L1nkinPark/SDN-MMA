@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" modified="2026-11-01T00:00:00.000Z" version="24.7.17" type="device">
+  <diagram id="studyspot-architecture" name="02 - System Architecture">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1240" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="header" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#0F172A;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=0;" vertex="1" parent="1">
+          <mxGeometry x="48" y="35" width="1604" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="header-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2DD4BF;strokeColor=#2DD4BF;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="48" y="35" width="11" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="arch-title" value="STUDYSPOT  /  KIẾN TRÚC HỆ THỐNG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#FFFFFF;fontSize=30;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="85" y="55" width="1260" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="arch-subtitle" value="Node.js · Express · Socket.IO · MongoDB  |  Modular Monolith + MVC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#CBD5E1;fontSize=16;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="85" y="112" width="1330" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="clients" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="48" y="205" width="1604" height="184" as="geometry" />
+        </mxCell>
+        <mxCell id="clients-number" value="01" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#334155;strokeColor=#334155;fontColor=#FFFFFF;fontSize=16;align=center;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="224" width="40" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="clients-title" value="ỨNG DỤNG &amp;amp; BẢN ĐỒ" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#334155;fontSize=18;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="125" y="223" width="470" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="clients-subtitle" value="Giao diện dành cho sinh viên và quản trị viên" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#64748B;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="595" y="225" width="990" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="mobile" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Mobile App  ·  dự kiến&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;React Native + Expo&lt;br/&gt;Bản đồ, tìm gần, chi tiết, check-in&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="78" y="266" width="490" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="mobile-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#3B82F6;strokeColor=#3B82F6;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="78" y="266" width="7" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="admin" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Web Admin  ·  dự kiến&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;React&lt;br/&gt;Duyệt địa điểm, báo cáo, ảnh, thống kê&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="605" y="266" width="490" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="admin-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0EA5E9;strokeColor=#0EA5E9;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="605" y="266" width="7" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="map" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Map SDK / API&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Nhà cung cấp chưa chốt&lt;br/&gt;Mobile app gọi trực tiếp&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1132" y="266" width="490" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="map-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#94A3B8;strokeColor=#94A3B8;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="1132" y="266" width="7" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="entry" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#BFDBFE;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="48" y="425" width="1604" height="174" as="geometry" />
+        </mxCell>
+        <mxCell id="entry-number" value="02" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1D4ED8;strokeColor=#1D4ED8;fontColor=#FFFFFF;fontSize=16;align=center;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="444" width="40" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="entry-title" value="CỔNG GIAO TIẾP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#1D4ED8;fontSize=18;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="125" y="443" width="470" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="entry-subtitle" value="HTTPS JSON cho tác vụ; Socket.IO cho cập nhật trực tiếp" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#64748B;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="595" y="445" width="990" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="rest" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;REST API&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Express routes · OpenAPI / Swagger&lt;br/&gt;Đăng nhập, địa điểm, check-in, đánh giá&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="78" y="484" width="754" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="rest-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2563EB;strokeColor=#2563EB;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="78" y="484" width="7" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="socket" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Socket.IO gateway&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Join / leave room · place:status&lt;br/&gt;Kết nối lại: đồng bộ snapshot qua REST&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="868" y="484" width="754" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="socket-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0891B2;strokeColor=#0891B2;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="868" y="484" width="7" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#BBF7D0;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="48" y="635" width="1604" height="303" as="geometry" />
+        </mxCell>
+        <mxCell id="backend-number" value="03" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#15803D;strokeColor=#15803D;fontColor=#FFFFFF;fontSize=16;align=center;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="654" width="40" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="backend-title" value="BACKEND  ·  MVC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#15803D;fontSize=18;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="125" y="653" width="470" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="backend-subtitle" value="Một ứng dụng Node.js, chia module theo nghiệp vụ" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#64748B;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="595" y="655" width="990" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="middleware" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Middleware&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;JWT, RBAC, CORS, rate limit&lt;br/&gt;Validation, upload, error handling&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="78" y="696" width="490" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="middleware-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#22C55E;strokeColor=#22C55E;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="78" y="696" width="7" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="controllers" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Controllers + JSON views&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Auth, Places, Check-in, Reviews&lt;br/&gt;Favorites, Reports, Admin&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="605" y="696" width="490" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="controllers-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#22C55E;strokeColor=#22C55E;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="605" y="696" width="7" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="services" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Domain services&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Trạng thái, rating, reputation&lt;br/&gt;Token, ảnh, dữ liệu khởi tạo&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1132" y="696" width="490" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="services-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#22C55E;strokeColor=#22C55E;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="1132" y="696" width="7" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="models" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Mongoose models&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;User · Place · Checkin · Review · Report&lt;br/&gt;RefreshToken · ReputationEvent&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="78" y="821" width="754" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="models-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#16A34A;strokeColor=#16A34A;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="78" y="821" width="7" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="job" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Background interval&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Check-in hết hiệu lực → tính lại trạng thái địa điểm&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="868" y="821" width="754" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="job-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#84CC16;strokeColor=#84CC16;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="868" y="821" width="7" height="91" as="geometry" />
+        </mxCell>
+        <mxCell id="data" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#FED7AA;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="48" y="974" width="1604" height="171" as="geometry" />
+        </mxCell>
+        <mxCell id="data-number" value="04" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C2410C;strokeColor=#C2410C;fontColor=#FFFFFF;fontSize=16;align=center;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="993" width="40" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="data-title" value="DỮ LIỆU &amp;amp; ẢNH" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#C2410C;fontSize=18;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="125" y="992" width="470" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="data-subtitle" value="MongoDB là nguồn dữ liệu chuẩn; Cloudinary lưu tệp ảnh" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#64748B;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="595" y="994" width="990" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="mongo" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;MongoDB&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Geo 2dsphere · TTL · unique indexes&lt;br/&gt;Lưu địa điểm, người dùng, hoạt động&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="78" y="1033" width="754" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="mongo-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F59E0B;strokeColor=#F59E0B;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="78" y="1033" width="7" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="cloudinary" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Cloudinary&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;Upload ảnh địa điểm&lt;br/&gt;Place.images lưu secure URLs&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="868" y="1033" width="754" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="cloudinary-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F97316;strokeColor=#F97316;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="868" y="1033" width="7" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-clients-entry" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=2;dashed=0;startArrow=none;endArrow=block;endFill=1;fontColor=#64748B;fontSize=12;labelBackgroundColor=#FFFFFF;strokeWidth=3;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="clients" target="entry">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-entry-backend" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=2;dashed=0;startArrow=none;endArrow=block;endFill=1;fontColor=#64748B;fontSize=12;labelBackgroundColor=#FFFFFF;strokeWidth=3;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="entry" target="backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-backend-data" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=2;dashed=0;startArrow=none;endArrow=block;endFill=1;fontColor=#64748B;fontSize=12;labelBackgroundColor=#FFFFFF;strokeWidth=3;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="backend" target="data">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="realtime-note" value="&lt;b&gt;LUỒNG CHECK-IN REALTIME&lt;/b&gt; &amp;nbsp; Mobile → REST → lưu Checkin → tính Place.liveStatus → MongoDB → phát place:status qua Socket.IO. Khi kết nối lại: đọc snapshot REST và join room." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#7DD3FC;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="48" y="1171" width="1604" height="59" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

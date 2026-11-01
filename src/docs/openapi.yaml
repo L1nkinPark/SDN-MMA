@@ -1,0 +1,752 @@
+openapi: 3.0.3
+info:
+  title: StudySpot API
+  version: 1.0.0
+  description: |
+    REST API cho ứng dụng tìm chỗ học. Tọa độ luôn theo thứ tự [longitude, latitude].
+    Trạng thái realtime qua Socket.IO: gửi `place:join` với placeId để nhận
+    `place:status` dạng `{ placeId, liveStatus }`; gửi `place:leave` khi rời room.
+    Sau reconnect hãy join lại và đọc snapshot từ REST.
+servers:
+  - url: /
+    description: Cùng host đang mở Swagger UI
+tags:
+  - name: System
+  - name: Auth
+  - name: Places
+  - name: Check-ins
+  - name: Reviews
+  - name: Favorites
+  - name: Reports
+  - name: Reputation
+  - name: Admin
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Dán accessToken nhận từ register, login hoặc refresh.
+  parameters:
+    PlaceId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+      description: MongoDB ObjectId của địa điểm
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, example: Place not found }
+    Coordinates:
+      type: array
+      description: '[longitude, latitude]'
+      minItems: 2
+      maxItems: 2
+      items: { type: number }
+      example: [105.8, 21.0]
+    Location:
+      type: object
+      properties:
+        type: { type: string, enum: [Point] }
+        coordinates: { $ref: '#/components/schemas/Coordinates' }
+    Amenities:
+      type: object
+      description: null nghĩa là chưa xác minh, khác với false là xác nhận không có.
+      properties:
+        wifi: { type: boolean, nullable: true, default: null }
+        outlets: { type: boolean, nullable: true, default: null }
+    LiveStatus:
+      type: object
+      properties:
+        crowd: { type: string, enum: [unknown, low, medium, high] }
+        noise: { type: string, enum: [unknown, quiet, moderate, loud] }
+        sampleCount: { type: integer, minimum: 0 }
+        updatedAt: { type: string, format: date-time, nullable: true }
+        validUntil: { type: string, format: date-time, nullable: true }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [student, admin] }
+        reputation: { type: integer }
+        favorites:
+          type: array
+          items: { type: string }
+    AuthTokens:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        accessToken: { type: string }
+        refreshToken: { type: string }
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: student@example.com }
+        password: { type: string, minLength: 8, example: Password123! }
+    RefreshInput:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string }
+    PlaceInput:
+      type: object
+      required: [name, address, coordinates]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120, example: Quiet Library }
+        description: { type: string, maxLength: 2000 }
+        address: { type: string, minLength: 5, maxLength: 300, example: 123 Campus Road }
+        coordinates: { $ref: '#/components/schemas/Coordinates' }
+        amenities: { $ref: '#/components/schemas/Amenities' }
+        minDrinkPrice: { type: number, minimum: 0, nullable: true, example: 20000 }
+    Place:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        address: { type: string }
+        location: { $ref: '#/components/schemas/Location' }
+        amenities: { $ref: '#/components/schemas/Amenities' }
+        minDrinkPrice: { type: number, nullable: true }
+        source:
+          type: object
+          properties:
+            url: { type: string, format: uri, nullable: true }
+            retrievedAt: { type: string, format: date-time, nullable: true }
+            locationAccuracy: { type: string, enum: [listed_point, campus_approximate, unknown] }
+            note: { type: string, nullable: true }
+        images:
+          type: array
+          items: { type: string, format: uri }
+        approval: { type: string, enum: [pending, approved, rejected] }
+        submittedBy: { type: string }
+        ratingAverage: { type: number }
+        ratingCount: { type: integer }
+        liveStatus: { $ref: '#/components/schemas/LiveStatus' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    Review:
+      type: object
+      properties:
+        _id: { type: string }
+        user:
+          oneOf:
+            - { type: string }
+            - type: object
+              properties:
+                _id: { type: string }
+                name: { type: string }
+                reputation: { type: integer }
+        place: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        text: { type: string }
+        hidden: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    Checkin:
+      type: object
+      properties:
+        _id: { type: string }
+        user: { type: string }
+        place: { type: string }
+        crowd: { type: string, enum: [low, medium, high] }
+        noise: { type: string, enum: [quiet, moderate, loud] }
+        expiresAt: { type: string, format: date-time }
+    Report:
+      type: object
+      properties:
+        _id: { type: string }
+        user: { type: string }
+        place: { type: string }
+        reason: { type: string, enum: [closed, incorrect_info, inappropriate, other] }
+        detail: { type: string }
+        status: { type: string, enum: [pending, resolved, dismissed] }
+        resolvedBy: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    PlacePage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Place' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+    ReviewPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Review' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+    ReportPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Report' } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Kiểm tra API đang chạy
+      operationId: health
+      responses:
+        '200':
+          description: API hoạt động
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Đăng ký tài khoản sinh viên
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/Credentials' }
+                - type: object
+                  required: [name]
+                  properties:
+                    name: { type: string, minLength: 2, maxLength: 80, example: Alice Student }
+      responses:
+        '201':
+          description: Đã tạo tài khoản
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '400': { description: Dữ liệu không hợp lệ }
+        '409': { description: Email đã tồn tại }
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { description: Sai email hoặc mật khẩu }
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Xoay vòng refresh token
+      operationId: refreshToken
+      description: Refresh token cũ hết hiệu lực sau khi đổi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshInput' }
+      responses:
+        '200':
+          description: Token mới
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { description: Refresh token hết hạn hoặc đã sử dụng }
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Thu hồi refresh token
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshInput' }
+      responses:
+        '204': { description: Đã đăng xuất }
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Hồ sơ người dùng hiện tại
+      operationId: getMe
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Hồ sơ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '401': { description: Chưa đăng nhập }
+  /api/places:
+    get:
+      tags: [Places]
+      summary: Tìm và lọc địa điểm đã duyệt
+      operationId: listPlaces
+      description: Truyền cả lat và lng để tìm gần vị trí; kết quả sắp theo khoảng cách. Không truyền tọa độ thì sắp theo mới nhất.
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: lat, in: query, schema: { type: number, minimum: -90, maximum: 90 } }
+        - { name: lng, in: query, schema: { type: number, minimum: -180, maximum: 180 } }
+        - { name: radius, in: query, description: Bán kính mét, schema: { type: number, minimum: 100, maximum: 50000, default: 5000 } }
+        - { name: wifi, in: query, schema: { type: boolean } }
+        - { name: outlets, in: query, schema: { type: boolean } }
+        - { name: maxPrice, in: query, schema: { type: number, minimum: 0 } }
+        - { name: crowd, in: query, schema: { type: string, enum: [unknown, low, medium, high] } }
+        - { name: noise, in: query, schema: { type: string, enum: [unknown, quiet, moderate, loud] } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Danh sách địa điểm
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlacePage' }
+        '400': { description: Query không hợp lệ }
+    post:
+      tags: [Places]
+      summary: Gửi địa điểm mới
+      operationId: createPlace
+      description: Sinh viên gửi địa điểm ở trạng thái pending; admin tạo sẽ được duyệt ngay.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlaceInput' }
+      responses:
+        '201':
+          description: Địa điểm đã tạo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  place: { $ref: '#/components/schemas/Place' }
+        '400': { description: Dữ liệu không hợp lệ }
+        '401': { description: Chưa đăng nhập }
+  /api/places/{id}:
+    get:
+      tags: [Places]
+      summary: Chi tiết địa điểm đã duyệt
+      operationId: getPlace
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      responses:
+        '200':
+          description: Chi tiết
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  place: { $ref: '#/components/schemas/Place' }
+        '404': { description: Không tìm thấy }
+  /api/places/{id}/checkins:
+    post:
+      tags: [Check-ins]
+      summary: Check-in và báo độ đông/ồn
+      operationId: createCheckin
+      description: Cần ở trong bán kính 250 m; một lần mỗi 15 phút. Check-in hiệu lực mặc định 120 phút. Dưới 2 mẫu, trạng thái là unknown.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [crowd, noise, coordinates]
+              properties:
+                crowd: { type: string, enum: [low, medium, high] }
+                noise: { type: string, enum: [quiet, moderate, loud] }
+                coordinates: { $ref: '#/components/schemas/Coordinates' }
+      responses:
+        '201':
+          description: Check-in đã lưu và trạng thái mới
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkin: { $ref: '#/components/schemas/Checkin' }
+                  liveStatus: { $ref: '#/components/schemas/LiveStatus' }
+        '403': { description: Vị trí quá xa }
+        '429': { description: Check-in quá thường xuyên }
+  /api/places/{id}/reviews:
+    get:
+      tags: [Reviews]
+      summary: Danh sách đánh giá đang hiển thị
+      operationId: listReviews
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Danh sách đánh giá
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewPage' }
+        '404': { description: Không tìm thấy địa điểm }
+  /api/places/{id}/reviews/me:
+    put:
+      tags: [Reviews]
+      summary: Tạo hoặc cập nhật đánh giá của mình
+      operationId: upsertMyReview
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating, text]
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5, example: 5 }
+                text: { type: string, minLength: 3, maxLength: 1000, example: Yên tĩnh và có nhiều ổ cắm }
+      responses:
+        '200':
+          description: Đánh giá đã lưu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  review: { $ref: '#/components/schemas/Review' }
+        '403': { description: Đánh giá đã bị admin ẩn }
+        '404': { description: Không tìm thấy địa điểm }
+    delete:
+      tags: [Reviews]
+      summary: Xóa đánh giá của mình
+      operationId: deleteMyReview
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      responses:
+        '204': { description: Đã xóa }
+        '404': { description: Không tìm thấy đánh giá }
+  /api/favorites:
+    get:
+      tags: [Favorites]
+      summary: Địa điểm yêu thích
+      operationId: listFavorites
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Danh sách yêu thích
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Place' } }
+  /api/favorites/{placeId}:
+    parameters:
+      - name: placeId
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      tags: [Favorites]
+      summary: Lưu địa điểm yêu thích
+      operationId: addFavorite
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Đã lưu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '404': { description: Không tìm thấy địa điểm }
+    delete:
+      tags: [Favorites]
+      summary: Bỏ địa điểm yêu thích
+      operationId: removeFavorite
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Đã bỏ lưu }
+  /api/reports:
+    post:
+      tags: [Reports]
+      summary: Báo cáo địa điểm
+      operationId: createReport
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [placeId, reason, detail]
+              properties:
+                placeId: { type: string }
+                reason: { type: string, enum: [closed, incorrect_info, inappropriate, other] }
+                detail: { type: string, minLength: 10, maxLength: 2000 }
+      responses:
+        '201':
+          description: Báo cáo đã gửi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report: { $ref: '#/components/schemas/Report' }
+        '409': { description: Đã có báo cáo pending cho địa điểm này }
+  /api/reports/me:
+    get:
+      tags: [Reports]
+      summary: Báo cáo của mình
+      operationId: listMyReports
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Danh sách báo cáo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportPage' }
+  /api/reputation/leaderboard:
+    get:
+      tags: [Reputation]
+      summary: Bảng xếp hạng điểm đóng góp
+      operationId: leaderboard
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: Danh sách xếp hạng
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id: { type: string }
+                        name: { type: string }
+                        reputation: { type: integer }
+  /api/admin/places:
+    get:
+      tags: [Admin]
+      summary: Danh sách địa điểm theo trạng thái duyệt
+      operationId: adminListPlaces
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: approval, in: query, schema: { type: string, enum: [pending, approved, rejected] } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Danh sách địa điểm
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlacePage' }
+        '403': { description: Cần quyền admin }
+  /api/admin/places/{id}:
+    patch:
+      tags: [Admin]
+      summary: Sửa hoặc duyệt địa điểm
+      operationId: adminUpdatePlace
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 2, maxLength: 120 }
+                description: { type: string, maxLength: 2000 }
+                address: { type: string, minLength: 5, maxLength: 300 }
+                coordinates: { $ref: '#/components/schemas/Coordinates' }
+                amenities: { $ref: '#/components/schemas/Amenities' }
+                minDrinkPrice: { type: number, minimum: 0, nullable: true }
+                approval: { type: string, enum: [pending, approved, rejected] }
+      responses:
+        '200':
+          description: Địa điểm đã cập nhật
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  place: { $ref: '#/components/schemas/Place' }
+        '400': { description: Không có thay đổi hoặc dữ liệu không hợp lệ }
+        '403': { description: Cần quyền admin }
+        '404': { description: Không tìm thấy địa điểm }
+  /api/admin/places/{id}/images:
+    post:
+      tags: [Admin]
+      summary: Upload ảnh địa điểm lên Cloudinary
+      operationId: adminUploadPlaceImage
+      description: JPEG, PNG hoặc WebP, tối đa 5 MB. Cần cấu hình Cloudinary trong .env.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image: { type: string, format: binary }
+      responses:
+        '201':
+          description: Ảnh đã upload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imageUrl: { type: string, format: uri }
+                  place: { $ref: '#/components/schemas/Place' }
+        '400': { description: File không hợp lệ }
+        '503': { description: Cloudinary chưa được cấu hình }
+  /api/admin/reports:
+    get:
+      tags: [Admin]
+      summary: Danh sách báo cáo cần duyệt
+      operationId: adminListReports
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [pending, resolved, dismissed] } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Danh sách báo cáo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportPage' }
+        '403': { description: Cần quyền admin }
+  /api/admin/reports/{id}:
+    patch:
+      tags: [Admin]
+      summary: Xử lý báo cáo
+      operationId: adminUpdateReport
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [resolved, dismissed] }
+      responses:
+        '200':
+          description: Báo cáo đã xử lý
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report: { $ref: '#/components/schemas/Report' }
+        '403': { description: Cần quyền admin }
+        '404': { description: Không tìm thấy báo cáo }
+  /api/admin/reviews/{id}:
+    patch:
+      tags: [Admin]
+      summary: Ẩn hoặc hiện đánh giá
+      operationId: adminUpdateReview
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hidden]
+              properties:
+                hidden: { type: boolean }
+      responses:
+        '200':
+          description: Đánh giá đã cập nhật
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  review: { $ref: '#/components/schemas/Review' }
+        '403': { description: Cần quyền admin }
+        '404': { description: Không tìm thấy đánh giá }
+  /api/admin/reviews:
+    get:
+      tags: [Admin]
+      summary: Danh sách đánh giá để kiểm duyệt
+      operationId: adminListReviews
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: hidden, in: query, schema: { type: boolean } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Danh sách đánh giá
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewPage' }
+        '403': { description: Cần quyền admin }
+  /api/admin/analytics:
+    get:
+      tags: [Admin]
+      summary: Thống kê cơ bản
+      operationId: adminAnalytics
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Tổng số hiện tại
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users: { type: integer }
+                  approvedPlaces: { type: integer }
+                  pendingPlaces: { type: integer }
+                  pendingReports: { type: integer }
+                  reviews: { type: integer }
+                  activeCheckins: { type: integer }
+        '403': { description: Cần quyền admin }
