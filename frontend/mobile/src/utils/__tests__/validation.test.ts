@@ -1,4 +1,4 @@
-import { emailError, isValidEmail, nameError, passwordError } from '../validation';
+import { emailError, isValidEmail, nameError, passwordError, ratingError, reviewTextError } from '../validation';
 
 describe('validation', () => {
   it('checks email format', () => {
@@ -18,5 +18,13 @@ describe('validation', () => {
     expect(nameError(' A ')).toBe('Họ tên cần ít nhất 2 ký tự.');
     expect(nameError('An')).toBeNull();
     expect(nameError('x'.repeat(81))).toBe('Họ tên tối đa 80 ký tự.');
+  });
+
+  it('checks review rating 1 to 5 and text 3 to 1000', () => {
+    expect(ratingError(0)).toBe('Hãy chọn số sao.');
+    expect(ratingError(5)).toBeNull();
+    expect(reviewTextError(' Ok ')).toBe('Nhận xét cần ít nhất 3 ký tự.');
+    expect(reviewTextError('Tốt')).toBeNull();
+    expect(reviewTextError('x'.repeat(1001))).toBe('Nhận xét tối đa 1.000 ký tự.');
   });
 });

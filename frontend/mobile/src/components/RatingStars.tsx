@@ -29,7 +29,7 @@ export function RatingStars({ value, size = 13, onChange }: RatingStarsProps) {
   }
 
   return (
-    <View style={styles.row} accessibilityRole="radiogroup">
+    <View style={[styles.row, { gap: 4 }]} accessibilityRole="radiogroup">
       {stars.map((star) => (
         <Pressable
           key={star}
@@ -47,5 +47,5 @@ export function RatingStars({ value, size = 13, onChange }: RatingStarsProps) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
-  pick: { minWidth: sizes.touchTarget, minHeight: sizes.touchTarget, alignItems: 'flex-start', justifyContent: 'center' },
+  pick: { width: sizes.touchTarget, height: sizes.touchTarget, alignItems: 'center', justifyContent: 'center' },
 });

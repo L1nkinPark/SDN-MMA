@@ -27,3 +27,14 @@ export function nameError(name: string): string | null {
   if (length > 80) return 'Họ tên tối đa 80 ký tự.';
   return null;
 }
+
+export function ratingError(rating: number): string | null {
+  return rating >= 1 && rating <= 5 ? null : 'Hãy chọn số sao.';
+}
+
+export function reviewTextError(text: string): string | null {
+  const length = trimmedLength(text);
+  if (length < 3) return 'Nhận xét cần ít nhất 3 ký tự.';
+  if (length > 1000) return 'Nhận xét tối đa 1.000 ký tự.';
+  return null;
+}
