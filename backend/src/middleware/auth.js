@@ -8,7 +8,7 @@ export function requireAuth(cfg) {
     const match = /^Bearer (.+)$/.exec(req.headers.authorization || '');
     if (!match) throw new HttpError(401, 'Bearer access token required');
     let payload;
-    try { payload = jwt.verify(match[1], cfg.accessSecret); } catch { throw new HttpError(401, 'Invalid or expired access token'); }
+    try { payload = jwt.verify(match[1], cfg.accessSecret, { algorithms: ['HS256'] }); } catch { throw new HttpError(401, 'Invalid or expired access token'); }
     if (payload.type !== 'access' || !mongoose.isValidObjectId(payload.sub)) throw new HttpError(401, 'Invalid access token');
     const user = await User.findById(payload.sub);
     if (!user) throw new HttpError(401, 'User no longer exists');

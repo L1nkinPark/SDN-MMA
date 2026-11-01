@@ -25,6 +25,8 @@ test('authentication rejects missing, invalid, and wrong-purpose tokens', async 
   assert.equal((await runAuth(`Bearer ${refresh}`)).outcome.status, 401);
   const wrongId = jwt.sign({ sub: 'bad-id', type: 'access' }, cfg.accessSecret);
   assert.equal((await runAuth(`Bearer ${wrongId}`)).outcome.status, 401);
+  const wrongAlgorithm = jwt.sign({ sub: userId, type: 'access' }, cfg.accessSecret, { algorithm: 'HS512' });
+  assert.equal((await runAuth(`Bearer ${wrongAlgorithm}`)).outcome.status, 401);
 });
 
 test('authentication loads the current user and blocks deleted accounts', async t => {

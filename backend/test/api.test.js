@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { io as connectSocket } from 'socket.io-client';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import { createApp } from '../src/app.js';
@@ -132,6 +133,8 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   assert.equal(analytics.body.pendingReports, 0);
 
   const rotated = await request(app).post('/api/auth/refresh').send({ refreshToken: alice.refreshToken }).expect(200);
+  const wrongAlgorithm = jwt.sign({ sub: alice.user.id, type: 'refresh' }, cfg.refreshSecret, { algorithm: 'HS512' });
+  await request(app).post('/api/auth/refresh').send({ refreshToken: wrongAlgorithm }).expect(401);
   await request(app).post('/api/auth/refresh').send({ refreshToken: alice.refreshToken }).expect(401);
   await request(app).post('/api/auth/logout').send({ refreshToken: rotated.body.refreshToken }).expect(204);
   await request(app).post('/api/auth/refresh').send({ refreshToken: rotated.body.refreshToken }).expect(401);

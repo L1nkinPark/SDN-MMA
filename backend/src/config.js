@@ -8,11 +8,12 @@ function positiveInteger(name, fallback, max = Number.MAX_SAFE_INTEGER) {
 
 export function config() {
   const production = process.env.NODE_ENV === 'production';
-  const accessSecret = process.env.JWT_ACCESS_SECRET || (production ? '' : 'dev-access-secret-change-before-production-123');
-  const refreshSecret = process.env.JWT_REFRESH_SECRET || (production ? '' : 'dev-refresh-secret-change-before-production-456');
+  const accessSecret = process.env.JWT_ACCESS_SECRET || '';
+  const refreshSecret = process.env.JWT_REFRESH_SECRET || '';
   if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is required');
-  if (accessSecret.length < 32 || refreshSecret.length < 32 || accessSecret === refreshSecret) {
-    throw new Error('Set distinct JWT_ACCESS_SECRET and JWT_REFRESH_SECRET (32+ characters)');
+  if (accessSecret.length < 32 || refreshSecret.length < 32 || accessSecret === refreshSecret ||
+      accessSecret.startsWith('replace-with-') || refreshSecret.startsWith('replace-with-')) {
+    throw new Error('Set distinct JWT_ACCESS_SECRET and JWT_REFRESH_SECRET (32+ characters; replace example values)');
   }
   return {
     production,

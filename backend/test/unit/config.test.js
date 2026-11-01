@@ -31,6 +31,9 @@ test('production configuration requires separate strong secrets and valid limits
   });
   withEnv({ JWT_REFRESH_SECRET: 'access-secret-1234567890-abcdefghijk' }, () => assert.throws(config, /distinct JWT/));
   withEnv({ JWT_ACCESS_SECRET: 'short' }, () => assert.throws(config, /32\+ characters/));
+  withEnv({ NODE_ENV: 'development', JWT_ACCESS_SECRET: '' }, () => assert.throws(config, /JWT_ACCESS_SECRET/));
+  withEnv({ JWT_ACCESS_SECRET: 'replace-with-a-long-random-secret-at-least-32-characters' },
+    () => assert.throws(config, /replace example values/));
   withEnv({ PORT: '0' }, () => assert.throws(config, /PORT must be an integer/));
   withEnv({ REFRESH_TOKEN_DAYS: '366' }, () => assert.throws(config, /REFRESH_TOKEN_DAYS must be an integer/));
 });

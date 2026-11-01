@@ -31,7 +31,7 @@ export function authController(cfg) {
     refresh: async (req, res) => {
       const { refreshToken: token } = parse(z.object({ refreshToken: z.string() }), req.body);
       let payload;
-      try { payload = jwt.verify(token, cfg.refreshSecret); } catch { throw new HttpError(401, 'Invalid or expired refresh token'); }
+      try { payload = jwt.verify(token, cfg.refreshSecret, { algorithms: ['HS256'] }); } catch { throw new HttpError(401, 'Invalid or expired refresh token'); }
       if (payload.type !== 'refresh') throw new HttpError(401, 'Invalid refresh token');
       const stored = await RefreshToken.findOneAndUpdate(
         { tokenHash: tokenHash(token), user: payload.sub, revokedAt: null, expiresAt: { $gt: new Date() } },
