@@ -38,3 +38,10 @@ export function reviewTextError(text: string): string | null {
   if (length > 1000) return 'Nhận xét tối đa 1.000 ký tự.';
   return null;
 }
+
+export function reportDetailError(detail: string): string | null {
+  const length = trimmedLength(detail);
+  if (length < 10) return 'Chi tiết cần ít nhất 10 ký tự.';
+  if (length > 2000) return 'Chi tiết tối đa 2.000 ký tự.';
+  return null;
+}
