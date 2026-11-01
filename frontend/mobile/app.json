@@ -34,7 +34,13 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "StudySpot dùng vị trí của bạn để tìm chỗ học gần đây và xác nhận khi check-in."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

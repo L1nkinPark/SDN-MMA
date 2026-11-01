@@ -5,6 +5,8 @@ export const queryKeys = {
   leaderboard: ['leaderboard'] as const,
   myReports: ['reports', 'me'] as const,
   places: ['places'] as const,
+  placeLists: ['places', 'list'] as const,
+  placeList: (query: object) => ['places', 'list', query] as const,
   place: (id: string) => ['places', id] as const,
   reviews: (placeId: string) => ['places', placeId, 'reviews'] as const,
 };
