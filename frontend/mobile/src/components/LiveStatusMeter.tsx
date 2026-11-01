@@ -4,8 +4,9 @@ import { colors, fonts, sizes, type } from '@/theme';
 import { levelLabel, type MeterKind, type MeterLevel } from '@/utils/liveStatus';
 
 /** Three bars 6px wide, 8/13/18px high, 2px apart. One bar per level in ink; level 3 fills all in red. */
-export function LiveStatusBars({ level }: { level: MeterLevel }) {
-  const fill = level === 3 ? colors.error : colors.ink;
+export function LiveStatusBars({ level, inverse = false }: { level: MeterLevel; /** White bars on an ink background. */ inverse?: boolean }) {
+  const fill = inverse ? colors.onInk : level === 3 ? colors.error : colors.ink;
+  const empty = inverse ? colors.onInk : colors.fieldLine;
   return (
     <View style={styles.bars} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {sizes.meterBarHeights.map((height, index) => {
@@ -15,7 +16,7 @@ export function LiveStatusBars({ level }: { level: MeterLevel }) {
             key={height}
             style={[
               styles.bar,
-              { height, backgroundColor: on ? fill : 'transparent', borderColor: on ? fill : colors.fieldLine },
+              { height, backgroundColor: on ? fill : 'transparent', borderColor: on ? fill : empty },
             ]}
           />
         );

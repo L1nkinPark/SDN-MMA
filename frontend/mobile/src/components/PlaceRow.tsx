@@ -16,6 +16,8 @@ type PlaceRowProps = {
   onToggleFavorite?: () => void;
   /** Disables the heart while a change is being sent. */
   favoriteBusy?: boolean;
+  /** Distance from the user, e.g. "380 m", shown on the right of the name. */
+  distance?: string | null;
 };
 
 function ratingText(place: Place): string | null {
@@ -32,7 +34,7 @@ function reportText(place: Place, known: boolean): string {
 }
 
 /** One place in a list: name, address, live status, rating and report count, separated by a 1px rule. */
-export function PlaceRow({ place, onPress, favorite, onToggleFavorite, favoriteBusy }: PlaceRowProps) {
+export function PlaceRow({ place, onPress, favorite, onToggleFavorite, favoriteBusy, distance }: PlaceRowProps) {
   const known = isStatusKnown(place.liveStatus);
   const rating = ratingText(place);
   const name = place.name ?? '';
@@ -48,6 +50,7 @@ export function PlaceRow({ place, onPress, favorite, onToggleFavorite, favoriteB
           <Text style={type.rowTitle}>{name}</Text>
           {place.address ? <Text style={type.secondary}>{place.address}</Text> : null}
         </View>
+        {distance ? <Text style={styles.distance}>{distance}</Text> : null}
         {onToggleFavorite ? (
           <Pressable
             accessibilityRole="button"
@@ -106,6 +109,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   busy: { opacity: 0.5 },
+  distance: {
+    paddingTop: 3,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.ink,
+    fontVariant: ['tabular-nums'],
+  },
   status: { flexDirection: 'row', gap: spacing.md },
   half: { flex: 1 },
   meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },

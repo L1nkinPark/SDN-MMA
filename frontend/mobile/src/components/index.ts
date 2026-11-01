@@ -3,6 +3,7 @@ export { ChoiceChip } from './ChoiceChip';
 export { Header } from './Header';
 export { Icon, type IconName } from './Icon';
 export { LiveStatusBars, LiveStatusMeter } from './LiveStatusMeter';
+export { LiveStatusLarge } from './LiveStatusLarge';
 export { LoadingList } from './LoadingList';
 export { MessageState } from './MessageState';
 export { PlaceRow } from './PlaceRow';

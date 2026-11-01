@@ -48,3 +48,11 @@ export type PlaceResponse = ResponseBody<'getPlace'>;
 export type CreatePlaceResponse = ResponseBody<'createPlace', 201>;
 export type ReviewResponse = ResponseBody<'upsertMyReview'>;
 export type CreateReportResponse = ResponseBody<'createReport', 201>;
+
+export type PlaceListQuery = NonNullable<operations['listPlaces']['parameters']['query']>;
+export type CheckinInput = RequestBody<'createCheckin'>;
+export type CheckinResponse = ResponseBody<'createCheckin', 201>;
+export type Crowd = NonNullable<LiveStatus['crowd']>;
+export type Noise = NonNullable<LiveStatus['noise']>;
+export type CheckinCrowd = CheckinInput['crowd'];
+export type CheckinNoise = CheckinInput['noise'];
