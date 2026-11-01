@@ -7,7 +7,6 @@ export const colors = {
   placeholder: '#5A647D',
   fieldLine: '#8C96AE',
   rule: '#C9D1E3',
-  margin: '#D8432B',
   error: '#B8321C',
   loading: '#E1E5EF',
   onInk: '#FFFFFF',

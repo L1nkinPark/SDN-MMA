@@ -118,7 +118,7 @@ Set `EXPO_PUBLIC_API_URL` in `frontend/mobile/.env` and commit the variable name
 
 `frontend/design/` is the visual source of truth for all 15 screens. `<screen>.dc.html` holds the layout, copy, and values for every state, and `<screen>.png` shows one state. Follow them, and don't redesign. `frontend/PLAN-B.md` explains how to read these files. People can also view them at https://claude.ai/artifact/NMFgBbUsV3toaKCAWPvoKV, which needs a shared, signed-in browser. Map areas are placeholders, and all ratings, counts, names, and review text are example data.
 
-The look is a ruled student notebook: flat paper, blue ballpoint ink, a red margin line. No gradients, shadows, emoji, glass effects, or rounded cards.
+The look is a ruled student notebook: flat paper and blue ballpoint ink. No gradients, shadows, emoji, glass effects, or rounded cards. The red margin line in `frontend/design/` and on the canvas was removed from the app; don't build it.
 
 | Token | Value |
 |---|---|
@@ -129,12 +129,11 @@ The look is a ruled student notebook: flat paper, blue ballpoint ink, a red marg
 | Placeholder text | `#5A647D` |
 | Field underline | `#8C96AE` |
 | Row rule | `#C9D1E3` |
-| Margin line | `#D8432B` |
 | Error and highest level | `#B8321C` |
 | Loading block | `#E1E5EF` |
 
 - Fonts: Barlow Condensed 700 for screen titles (44px; 68px on Login), Be Vietnam Pro for everything else. Row title 16px/600, secondary 13px, meta 12px.
-- Layout: content starts 40px from the left and ends 20px from the right. A 1px margin line runs at x=24 down to the tab bar.
+- Layout: content starts 40px from the left and ends 20px from the right.
 - Lists: separate rows with a 1px rule, not cards. A 1.5px ink rule sits under the screen title.
 - Controls: primary button 54px high, secondary 48px, radius 2px. Inputs have a 1.5px underline and no box. Touch targets are at least 44px.
 - Tab bar: 84px high, 1.5px ink rule on top, active tab has a 3px ink bar and a filled icon.

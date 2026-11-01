@@ -38,12 +38,12 @@ export function PlaceRow({ place, onPress, favorite, onToggleFavorite, favoriteB
   const name = place.name ?? '';
 
   return (
-    <View style={styles.row}>
+    <Pressable accessibilityRole="link" disabled={!onPress} onPress={onPress} style={styles.row}>
       <View style={styles.top}>
-        <Pressable accessibilityRole="link" onPress={onPress} style={styles.titleBlock}>
+        <View style={styles.titleBlock}>
           <Text style={type.rowTitle}>{name}</Text>
           {place.address ? <Text style={type.secondary}>{place.address}</Text> : null}
-        </Pressable>
+        </View>
         {onToggleFavorite ? (
           <Pressable
             accessibilityRole="button"
@@ -77,7 +77,7 @@ export function PlaceRow({ place, onPress, favorite, onToggleFavorite, favoriteB
         </View>
         <Text style={styles.metaText}>{reportText(place, known)}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

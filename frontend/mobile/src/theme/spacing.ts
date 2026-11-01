@@ -4,9 +4,6 @@ export const spacing = {
   contentLeft: 40,
   /** Content ends this far from the right edge. */
   contentRight: 20,
-  /** The red margin line sits at this x position. */
-  marginLineX: 24,
-  marginLineWidth: 1,
   /** Header top padding under the status bar area in the design. */
   headerTop: 64,
   headerBottom: 12,

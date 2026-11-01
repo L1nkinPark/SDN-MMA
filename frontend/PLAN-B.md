@@ -95,7 +95,7 @@ Map errors in one place, `src/api/errors.ts`, and never show the raw English tex
 
 - [x] **B1. Create the app.** Run `npx create-expo-app@latest mobile` in `frontend/` if `frontend/mobile` is missing. Install the libraries in the stack table of `CLAUDE.md`. Add `.env.example` with `EXPO_PUBLIC_API_URL`, and `src/theme/` with every design token. Load both fonts at startup. Add the `lint` script if the template lacks it. Remove the template's demo screens and update `CLAUDE.md` if the commands or folders differ.
 - [x] **B2. API client and session.** Build `src/api/client.ts`, `src/api/errors.ts`, `src/auth/tokens.ts` (`expo-secure-store`), and `src/auth/session.tsx`, following API client rules. Generate `src/api/schema.d.ts`. Add the TanStack Query provider. The session loads saved tokens at startup, calls `GET /api/auth/me`, and exposes `user`, `status` (`loading`, `guest`, `signed-in`), `signIn`, `signOut`, and a `requireAuth()` helper that opens login for guests. Sign-out calls `POST /api/auth/logout`, then always clears local tokens. Add `jest-expo` and test: retry after refresh, a single refresh under parallel 401s, no refresh on wrong password, failed refresh clears tokens, network failure keeps tokens, and the error mapping.
-- [x] **B3. Shared components.** In `src/components/`, build `Screen` (with the red margin line), `Header`, `Button` (primary, secondary, busy, disabled), `TextField`, `TextArea`, `ChoiceChip`, `LoadingList`, `MessageState` (heading, sentence, optional button), `LiveStatusMeter`, `RatingStars`, and `PlaceRow`. Sizes and colors come from `CLAUDE.md` and the design files. `PlaceRow` takes a `Place` from the API and handles `unknown` status and `ratingCount` of 0.
+- [x] **B3. Shared components.** In `src/components/`, build `Screen`, `Header`, `Button` (primary, secondary, busy, disabled), `TextField`, `TextArea`, `ChoiceChip`, `LoadingList`, `MessageState` (heading, sentence, optional button), `LiveStatusMeter`, `RatingStars`, and `PlaceRow`. Sizes and colors come from `CLAUDE.md` and the design files. `PlaceRow` takes a `Place` from the API and handles `unknown` status and `ratingCount` of 0.
 - [x] **B4. Navigation shell.** Create the root layout, the four-tab layout, and placeholder screens for routes owned by Person A. Placeholders show only the screen name. Guests land on Khám phá.
 - [x] **B5. Đăng nhập.** Design `login`. `POST /api/auth/login` with `{ email, password }`. Lowercase and trim the email. Validate email format and a password of 8 to 128 characters before sending. States: default, invalid input, submitting, wrong credentials. "Để sau" goes back, or to Khám phá when there is nothing to go back to. There is no forgot-password link. After success, return to the screen that asked for login.
 - [x] **B6. Đăng ký.** Design `register`. `POST /api/auth/register` with `{ name, email, password }`; a name is 2 to 80 characters. A 201 returns the same shape as login, so sign the user in. A 409 shows the error under the email field.
@@ -107,6 +107,34 @@ Map errors in one place, `src/api/errors.ts`, and never show the raw English tex
 - [x] **B12. Báo cáo địa điểm.** Design `report`. `POST /api/reports` with `{ placeId, reason, detail }`; `detail` is 10 to 2,000 characters. Reasons in order: `closed`, `incorrect_info`, `inappropriate`, `other`. States: default, invalid input, submitting, already pending (409), success.
 - [x] **B13. Báo cáo của tôi.** Design `my-reports`. `GET /api/reports/me` is paged, and `place` is only an ID, so show no place name. Status text: `pending` is `Đang chờ`, `resolved` is `Đã xử lý`, `dismissed` is `Đã bỏ qua`. Show the `Đang chờ` tag in ink and the others in secondary text. States: list, loading, empty, error.
 - [x] **B14. Đề xuất địa điểm.** Design `propose`. `POST /api/places` with `{ name, description, address, coordinates, amenities, minDrinkPrice }`: `name` is 2 to 120 characters, `address` 5 to 300, `description` up to 2,000. `coordinates` is `[longitude, latitude]`. For Wi-Fi and outlets, `Có` is `true`, `Không` is `false`, `Chưa rõ` is `null`. An empty price is `null`. Share the location through `src/location/pickedLocation.ts`, a small store that the `/pick-location` screen sets. The placeholder from B4 explains the screen isn't ready. States: default, invalid input, submitting, sent. Guests go through `requireAuth()`.
+
+## Test notes
+
+Results from testing on a real phone with Expo Go. Fix or finish these later.
+
+To fix:
+
+- [ ] Yêu thích: "Thêm vào Yêu thích" gives no feedback. Add a visible confirmation. The real button belongs to Chi tiết địa điểm (Person A), so agree the pattern with Person A first.
+
+To fix or confirm:
+
+- [x] `PlaceRow`: only the name and address opened a place. Fixed so the whole row opens it; commit `src/components/PlaceRow.tsx`.
+- [ ] Chế độ khách: retest Yêu thích, Hồ sơ, and Viết đánh giá while signed out. The first run was probably signed in.
+- [ ] Retest that a place opens from anywhere on its row, including on Yêu thích, and that the heart still works.
+
+Still to test:
+
+- [ ] Phiên đăng nhập: set `ACCESS_TOKEN_TTL=1m` in `backend/.env`, restart the backend, sign in, wait over a minute, open Hồ sơ. The app must continue without asking to sign in. Set it back to `15m`.
+- [ ] Section 8: Đề xuất địa điểm, full pass.
+- [ ] Section 9: admin changes through Swagger (approve a place, resolve a report, hide a review).
+- [ ] Section 10: offline, backend stopped, keyboard, double tap, and comparison with the design.
+
+Not bugs:
+
+- A rating shows on a place after one review. On the temporary test Khám phá it stayed stale because of its cache key, now fixed. Person A's real list must use a key under `queryKeys.places` so it refreshes after a review.
+- Reports never show on Khám phá. They go to admins only. "người báo" on a place row counts check-ins, and crowd and noise need at least 2 people.
+
+Before merging, remove the temporary test entries: `git restore frontend/mobile/src/app`.
 
 ## Session notes
 
