@@ -12,6 +12,9 @@ import { fontAssets } from '@/theme/fonts';
 
 SplashScreen.preventAutoHideAsync();
 
+/** Guests and signed-in users both start on the tabs (Khám phá). Deep links get the tabs underneath. */
+export const unstable_settings = { anchor: '(tabs)' };
+
 export default function RootLayout() {
   const [loaded, error] = useFonts(fontAssets);
   const [queryClient] = useState(createQueryClient);
