@@ -90,6 +90,7 @@ Prioritize Android, and also check on a real phone.
 | Realtime | `socket.io-client` |
 | API types | Generated with `openapi-typescript` |
 | Fonts | `@expo-google-fonts/barlow-condensed`, `@expo-google-fonts/be-vietnam-pro` |
+| Tests | `jest-expo` |
 
 ```text
 frontend/mobile/
@@ -108,9 +109,7 @@ Set `EXPO_PUBLIC_API_URL` in `frontend/mobile/.env` and commit the variable name
 
 ## Mobile: visual design
 
-The design canvas is the visual source of truth for all 15 screens: https://claude.ai/artifact/NMFgBbUsV3toaKCAWPvoKV
-
-Each artboard has every state of its screen; pick a state under Tweaks. Follow its layout and copy, and don't redesign it. The canvas needs a signed-in, shared browser session, so if you can't open it, ask for a screenshot of the screen instead of guessing. Everything below still applies. Map areas on the canvas are placeholders, and all ratings, counts, names, and review text are example data.
+`frontend/design/` is the visual source of truth for all 15 screens. `<screen>.dc.html` holds the layout, copy, and values for every state, and `<screen>.png` shows one state. Follow them, and don't redesign. `frontend/PLAN-B.md` explains how to read these files. People can also view them at https://claude.ai/artifact/NMFgBbUsV3toaKCAWPvoKV, which needs a shared, signed-in browser. Map areas are placeholders, and all ratings, counts, names, and review text are example data.
 
 The look is a ruled student notebook: flat paper, blue ballpoint ink, a red margin line. No gradients, shadows, emoji, glass effects, or rounded cards.
 
@@ -164,6 +163,14 @@ Backend gaps the screens already account for:
 - There is no endpoint for a user's own review or submitted places. Find the review in the reviews list; submitted places can't be listed.
 - `GET /api/favorites` and the leaderboard return `{ items }` with no pagination.
 
+### Work split
+
+- Person A: screens 3, 4, 5, 6, 15, and Socket.IO.
+- Person B: screens 1, 2, 7 to 14, `src/api/`, and `src/auth/`. Person B's plan, routes, and progress are in `frontend/PLAN-B.md`; read it when working on these.
+- Whoever needs a shared part first builds it at the path in `frontend/PLAN-B.md`. Reuse it rather than creating another.
+
+Don't build the other person's screens.
+
 ## Mobile: code rules
 
 - All requests go through the API client in `src/api/`. Don't call `fetch` directly from screens.
@@ -215,7 +222,7 @@ Backend gaps the screens already account for:
 
 ## Git
 
-- Branch `feature/<feature-name>` from the latest `main`. Never push directly to `main`.
+- For now `haupham` is the working branch: branch `feature/<feature-name>` from the latest `haupham` and open PRs into it. Never push directly to `main`.
 - Before opening a PR, mobile lint and type checks must pass. If you changed the backend, `npm test` must pass too.
 - Each PR covers one feature and is reviewed by the other person, even when AI wrote the code.
 - Add a line here for each new decision or recurring AI mistake.
