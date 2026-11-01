@@ -51,7 +51,7 @@ export function Button({
         { height },
         block ? styles.block : styles.inline,
         filled ? styles.primary : inactive ? styles.disabled : styles.secondary,
-        pressed && !busy ? styles.pressed : null,
+        pressed && !busy ? (filled ? styles.pressedFilled : styles.pressedOutline) : null,
         style,
       ]}>
       {busy ? <Spinner color={textColor} /> : null}
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: colors.ink },
   secondary: { borderWidth: 1.5, borderColor: colors.ink },
   disabled: { borderWidth: 1.5, borderColor: colors.fieldLine },
-  pressed: { opacity: 0.85 },
+  pressedFilled: { opacity: 0.7 },
+  pressedOutline: { backgroundColor: colors.loading },
   label: { fontFamily: fonts.semibold },
 });

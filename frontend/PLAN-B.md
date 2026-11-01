@@ -114,24 +114,30 @@ Results from testing on a real phone with Expo Go. Fix or finish these later.
 
 To fix:
 
-- [ ] Yêu thích: "Thêm vào Yêu thích" gives no feedback. Add a visible confirmation. The real button belongs to Chi tiết địa điểm (Person A), so agree the pattern with Person A first.
+- [ ] Yêu thích: the temporary Chi tiết screen shows the agreed pattern: a spinner while saving, the label switches between `Thêm vào Yêu thích` and `Bỏ khỏi Yêu thích`, and a short notice appears. Person A must build this on the real Chi tiết địa điểm screen.
 
 To fix or confirm:
 
 - [x] `PlaceRow`: only the name and address opened a place. Fixed so the whole row opens it; commit `src/components/PlaceRow.tsx`.
-- [ ] Chế độ khách: retest Yêu thích, Hồ sơ, and Viết đánh giá while signed out. The first run was probably signed in.
-- [ ] Retest that a place opens from anywhere on its row, including on Yêu thích, and that the heart still works.
+- [x] Chế độ khách: retest Yêu thích, Hồ sơ, and Viết đánh giá while signed out. The first run was probably signed in.
+- [x] Retest that a place opens from anywhere on its row, including on Yêu thích, and that the heart still works.
+
+Passed on a real phone:
+
+- [x] Đăng ký, Đăng nhập, Hồ sơ, Yêu thích, Đánh giá, Báo cáo.
+- [x] Chế độ khách, including "Để sau" on Đăng nhập.
+- [x] Đề xuất địa điểm: empty form errors, sending shows the pending message, and the form is empty when reopened.
+- [x] Admin changes through Swagger: approving a place shows it on Khám phá, resolving a report changes its tag, and hiding a review removes it and blocks editing.
 
 Still to test:
 
-- [ ] Phiên đăng nhập: set `ACCESS_TOKEN_TTL=1m` in `backend/.env`, restart the backend, sign in, wait over a minute, open Hồ sơ. The app must continue without asking to sign in. Set it back to `15m`.
-- [ ] Section 8: Đề xuất địa điểm, full pass.
-- [ ] Section 9: admin changes through Swagger (approve a place, resolve a report, hide a review).
-- [ ] Section 10: offline, backend stopped, keyboard, double tap, and comparison with the design.
+- [x] Đề xuất địa điểm: send `Cafe Test`, then confirm it is in `GET /api/admin/places?approval=pending`. The database had only one user-submitted place, so a second send still needs proof it is saved.
+- [x] Phiên đăng nhập: set `ACCESS_TOKEN_TTL=1m` in `backend/.env`, restart the backend, sign in, wait over a minute, open Hồ sơ. The app must continue without asking to sign in. Set it back to `15m`.
+- [ ] Offline, backend stopped, keyboard, double tap, and comparison with the design.
 
 Not bugs:
 
-- A rating shows on a place after one review. On the temporary test Khám phá it stayed stale because of its cache key, now fixed. Person A's real list must use a key under `queryKeys.places` so it refreshes after a review.
+- A rating shows on a place after one review. On the temporary test Khám phá it stayed stale because of its cache key, now fixed. Person A's real list must use a key under `queryKeys.places` so it refreshes after a review. It must also refetch on focus and support pull to refresh, because changes made by others, such as an admin hiding a review, do not reach the app on their own.
 - Reports never show on Khám phá. They go to admins only. "người báo" on a place row counts check-ins, and crowd and noise need at least 2 people.
 
 Before merging, remove the temporary test entries: `git restore frontend/mobile/src/app`.

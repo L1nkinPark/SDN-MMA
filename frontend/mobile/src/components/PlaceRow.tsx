@@ -38,7 +38,11 @@ export function PlaceRow({ place, onPress, favorite, onToggleFavorite, favoriteB
   const name = place.name ?? '';
 
   return (
-    <Pressable accessibilityRole="link" disabled={!onPress} onPress={onPress} style={styles.row}>
+    <Pressable
+      accessibilityRole="link"
+      disabled={!onPress}
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}>
       <View style={styles.top}>
         <View style={styles.titleBlock}>
           <Text style={type.rowTitle}>{name}</Text>
@@ -90,6 +94,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: sizes.rowRule,
     borderBottomColor: colors.rule,
   },
+  pressed: { backgroundColor: colors.loading },
   top: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm },
   titleBlock: { flex: 1, gap: 2 },
   heart: {
