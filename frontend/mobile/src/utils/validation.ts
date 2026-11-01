@@ -45,3 +45,36 @@ export function reportDetailError(detail: string): string | null {
   if (length > 2000) return 'Chi tiết tối đa 2.000 ký tự.';
   return null;
 }
+
+export function placeNameError(name: string): string | null {
+  const length = trimmedLength(name);
+  if (length < 2) return 'Tên cần ít nhất 2 ký tự.';
+  if (length > 120) return 'Tên tối đa 120 ký tự.';
+  return null;
+}
+
+export function addressError(address: string): string | null {
+  const length = trimmedLength(address);
+  if (length < 5) return 'Địa chỉ cần ít nhất 5 ký tự.';
+  if (length > 300) return 'Địa chỉ tối đa 300 ký tự.';
+  return null;
+}
+
+export function descriptionError(description: string): string | null {
+  return trimmedLength(description) > 2000 ? 'Mô tả tối đa 2.000 ký tự.' : null;
+}
+
+/**
+ * Parses a price typed as "25.000", "25,000" or "25000". Empty means null (unverified).
+ * Returns undefined when the text isn't a whole number of đồng.
+ */
+export function parsePrice(text: string): number | null | undefined {
+  const compact = text.replace(/\s/g, '');
+  if (!compact) return null;
+  if (!/^\d{1,3}([.,]\d{3})*$|^\d+$/.test(compact)) return undefined;
+  return Number(compact.replace(/[.,]/g, ''));
+}
+
+export function priceError(text: string): string | null {
+  return parsePrice(text) === undefined ? 'Giá cần là số đồng, ví dụ 25.000.' : null;
+}

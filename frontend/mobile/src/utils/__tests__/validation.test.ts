@@ -1,4 +1,16 @@
-import { emailError, isValidEmail, nameError, passwordError, ratingError, reviewTextError } from '../validation';
+import {
+  addressError,
+  descriptionError,
+  emailError,
+  isValidEmail,
+  nameError,
+  parsePrice,
+  passwordError,
+  placeNameError,
+  priceError,
+  ratingError,
+  reviewTextError,
+} from '../validation';
 
 describe('validation', () => {
   it('checks email format', () => {
@@ -26,5 +38,27 @@ describe('validation', () => {
     expect(reviewTextError(' Ok ')).toBe('Nhận xét cần ít nhất 3 ký tự.');
     expect(reviewTextError('Tốt')).toBeNull();
     expect(reviewTextError('x'.repeat(1001))).toBe('Nhận xét tối đa 1.000 ký tự.');
+  });
+});
+
+describe('place proposal validation', () => {
+  it('checks name, address and description lengths', () => {
+    expect(placeNameError('A')).toBe('Tên cần ít nhất 2 ký tự.');
+    expect(placeNameError('x'.repeat(121))).toBe('Tên tối đa 120 ký tự.');
+    expect(addressError('D1')).toBe('Địa chỉ cần ít nhất 5 ký tự.');
+    expect(addressError('Đường D1, Khu Công nghệ cao')).toBeNull();
+    expect(descriptionError('')).toBeNull();
+    expect(descriptionError('x'.repeat(2001))).toBe('Mô tả tối đa 2.000 ký tự.');
+  });
+
+  it('parses prices; empty is null', () => {
+    expect(parsePrice('')).toBeNull();
+    expect(parsePrice('  ')).toBeNull();
+    expect(parsePrice('25.000')).toBe(25000);
+    expect(parsePrice('25,000')).toBe(25000);
+    expect(parsePrice('25000')).toBe(25000);
+    expect(parsePrice('25k')).toBeUndefined();
+    expect(parsePrice('-5')).toBeUndefined();
+    expect(priceError('abc')).toBe('Giá cần là số đồng, ví dụ 25.000.');
   });
 });
