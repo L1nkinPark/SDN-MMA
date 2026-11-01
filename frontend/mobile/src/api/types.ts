@@ -44,3 +44,7 @@ export type ReportReason = NonNullable<Report['reason']>;
 export type ReportStatus = NonNullable<Report['status']>;
 
 export type ApiPath = keyof paths;
+export type PlaceResponse = ResponseBody<'getPlace'>;
+export type CreatePlaceResponse = ResponseBody<'createPlace', 201>;
+export type ReviewResponse = ResponseBody<'upsertMyReview'>;
+export type CreateReportResponse = ResponseBody<'createReport', 201>;
