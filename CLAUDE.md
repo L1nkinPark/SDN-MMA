@@ -40,14 +40,20 @@ python scripts/generate-diagrams.py             # rewrites docs/StudySpot-ERD-Sy
 
 Tests need neither `.env` nor a running MongoDB. `test/api.test.js` starts `mongodb-memory-server`, which downloads a `mongod` binary on first run. `test/unit/` uses no database.
 
-**Mobile**, run from `frontend/mobile`. The app doesn't exist yet; create it once with `npx create-expo-app@latest mobile` from `frontend/`, then update this section if its scripts differ.
+**Mobile**, run from `frontend/mobile` (Expo SDK 58, created with `create-expo-app`). Copy `.env.example` to `.env` first.
 
 ```bash
+npm ci
 npx expo start
 npm run lint
 npx tsc --noEmit
+npm test
+npx expo export --platform android                                                   # bundle check without a device
 npx openapi-typescript ../../backend/src/docs/openapi.yaml -o src/api/schema.d.ts   # rerun when the API changes
+EXPO_OFFLINE=1 npx expo install <package>                                            # add a library at the SDK version
 ```
+
+`openapi-typescript` runs through `npx` only; its TypeScript 5 peer conflicts with the app's TypeScript 6. Use `EXPO_OFFLINE=1` with `expo install` when the network blocks Expo's version API.
 
 ## Backend architecture
 
@@ -90,11 +96,12 @@ Prioritize Android, and also check on a real phone.
 | Realtime | `socket.io-client` |
 | API types | Generated with `openapi-typescript` |
 | Fonts | `@expo-google-fonts/barlow-condensed`, `@expo-google-fonts/be-vietnam-pro` |
+| Icons | `react-native-svg`, with paths copied from `frontend/design/` |
 | Tests | `jest-expo` |
 
 ```text
 frontend/mobile/
-  app/              Screens and navigation; composition only
+  src/app/          Screens and navigation (Expo Router); composition only
   src/api/          API client, generated schema, API hooks
   src/auth/         Token storage, session handling
   src/realtime/     Socket.IO connection

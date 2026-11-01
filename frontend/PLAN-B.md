@@ -93,7 +93,7 @@ Map errors in one place, `src/api/errors.ts`, and never show the raw English tex
 
 ## Tasks
 
-- [ ] **B1. Create the app.** Run `npx create-expo-app@latest mobile` in `frontend/` if `frontend/mobile` is missing. Install the libraries in the stack table of `CLAUDE.md`. Add `.env.example` with `EXPO_PUBLIC_API_URL`, and `src/theme/` with every design token. Load both fonts at startup. Add the `lint` script if the template lacks it. Remove the template's demo screens and update `CLAUDE.md` if the commands or folders differ.
+- [x] **B1. Create the app.** Run `npx create-expo-app@latest mobile` in `frontend/` if `frontend/mobile` is missing. Install the libraries in the stack table of `CLAUDE.md`. Add `.env.example` with `EXPO_PUBLIC_API_URL`, and `src/theme/` with every design token. Load both fonts at startup. Add the `lint` script if the template lacks it. Remove the template's demo screens and update `CLAUDE.md` if the commands or folders differ.
 - [ ] **B2. API client and session.** Build `src/api/client.ts`, `src/api/errors.ts`, `src/auth/tokens.ts` (`expo-secure-store`), and `src/auth/session.tsx`, following API client rules. Generate `src/api/schema.d.ts`. Add the TanStack Query provider. The session loads saved tokens at startup, calls `GET /api/auth/me`, and exposes `user`, `status` (`loading`, `guest`, `signed-in`), `signIn`, `signOut`, and a `requireAuth()` helper that opens login for guests. Sign-out calls `POST /api/auth/logout`, then always clears local tokens. Add `jest-expo` and test: retry after refresh, a single refresh under parallel 401s, no refresh on wrong password, failed refresh clears tokens, network failure keeps tokens, and the error mapping.
 - [ ] **B3. Shared components.** In `src/components/`, build `Screen` (with the red margin line), `Header`, `Button` (primary, secondary, busy, disabled), `TextField`, `TextArea`, `ChoiceChip`, `LoadingList`, `MessageState` (heading, sentence, optional button), `LiveStatusMeter`, `RatingStars`, and `PlaceRow`. Sizes and colors come from `CLAUDE.md` and the design files. `PlaceRow` takes a `Place` from the API and handles `unknown` status and `ratingCount` of 0.
 - [ ] **B4. Navigation shell.** Create the root layout, the four-tab layout, and placeholder screens for routes owned by Person A. Placeholders show only the screen name. Guests land on Khám phá.
@@ -111,3 +111,5 @@ Map errors in one place, `src/api/errors.ts`, and never show the raw English tex
 ## Session notes
 
 Add one dated line per task. Keep only what the next session needs.
+
+- 2026-11-01 B1: Expo SDK 58 app in `frontend/mobile`; routes live in `src/app/` (paths in Routes apply below it). Theme in `src/theme/` (`colors`, `spacing`, `sizes`, `fonts`, `type`). Added `react-native-svg` for design icons (in CLAUDE.md stack). The Expo version API is blocked here: use `EXPO_OFFLINE=1 npx expo install`. ESLint config is `eslint.config.js` (eslint-config-expo).
