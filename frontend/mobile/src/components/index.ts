@@ -13,3 +13,4 @@ export { TextArea } from './TextArea';
 export { TextField } from './TextField';
 export { TabBar } from './TabBar';
 export { Placeholder } from './Placeholder';
+export { FormScroll } from './FormScroll';

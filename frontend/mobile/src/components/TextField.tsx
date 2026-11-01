@@ -9,6 +9,8 @@ export type TextFieldProps = { ref?: Ref<ComponentRef<typeof TextInput>> } & Omi
   label: string;
   /** Vietnamese error text shown under the field; also turns the label and line red. */
   error?: string | null;
+  /** Turns the label and line red without a message, e.g. for wrong credentials. */
+  invalid?: boolean;
   /** Adds the show/hide password button. */
   password?: boolean;
   /** Content on the right of the input, e.g. an icon button. */
@@ -18,15 +20,16 @@ export type TextFieldProps = { ref?: Ref<ComponentRef<typeof TextInput>> } & Omi
 /** Underlined input with no box: 44px high, 1.5px line, label above. */
 export function TextField({
   ref,
-  label, error, password = false, accessory, onFocus, onBlur, ...inputProps
+  label, error, invalid = false, password = false, accessory, onFocus, onBlur, ...inputProps
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const lineColor = error ? colors.error : focused ? colors.ink : colors.fieldLine;
+  const flagged = Boolean(error) || invalid;
+  const lineColor = flagged ? colors.error : focused ? colors.ink : colors.fieldLine;
 
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, error ? styles.labelError : null]}>{label}</Text>
+      <Text style={[styles.label, flagged ? styles.labelError : null]}>{label}</Text>
       <View style={styles.inputRow}>
         <TextInput
           ref={ref}
@@ -47,7 +50,7 @@ export function TextField({
           }}
           style={[
             styles.input,
-            { borderBottomColor: lineColor, borderBottomWidth: focused && !error ? 2 : sizes.fieldLine },
+            { borderBottomColor: lineColor, borderBottomWidth: focused && !flagged ? 2 : sizes.fieldLine },
             password || accessory ? styles.inputWithAccessory : null,
           ]}
         />
