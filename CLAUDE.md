@@ -90,7 +90,7 @@ Prioritize Android, and also check on a real phone.
 | Platform | Expo, React Native, TypeScript |
 | Navigation | Expo Router |
 | Server data | TanStack Query |
-| Maps | `react-native-maps` (Android builds need a Google Maps API key) |
+| Maps | `react-native-maps` (Android builds need a Google Maps API key: `GOOGLE_MAPS_API_KEY` in `frontend/mobile/.env`, read by `app.config.ts`) |
 | Location | `expo-location` |
 | Token storage | `expo-secure-store` |
 | Realtime | `socket.io-client` |
@@ -171,7 +171,7 @@ Backend gaps the screens already account for:
 
 ### Work split
 
-- Person A: screens 3, 4, 5, 6, 15, and Socket.IO.
+- Person A: screens 3, 4, 5, 6, 15, and Socket.IO. Shared parts: `usePlaces` and `useCheckin` in `src/api/hooks/`, Socket.IO in `src/realtime/` (`usePlaceRealtime(id)` writes `place:status` into the `usePlace` cache), position helpers in `src/location/location.ts` and `useCurrentLocation.ts`, and the Khám phá filters store in `src/explore/filters.ts`.
 - Person B: screens 1, 2, 7 to 14, `src/api/`, and `src/auth/`. Person B's plan, routes, and progress are in `frontend/PLAN-B.md`; read it when working on these.
 - Whoever needs a shared part first builds it at the path in `frontend/PLAN-B.md`. Reuse it rather than creating another.
 
