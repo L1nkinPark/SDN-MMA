@@ -9,10 +9,11 @@ import { io as connectSocket } from 'socket.io-client';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import { createApp } from '../src/app.js';
 import { createHttpServer } from '../src/http.js';
-import { Checkin, Place, Report, User } from '../src/models/index.js';
+import { Booking, BookingSlot, Checkin, MerchantClaim, Place, Report, User, VisitProof } from '../src/models/index.js';
 import { refreshExpiredStatuses } from '../src/services/statusService.js';
 import { openapiSpec } from '../src/docs/spec.js';
 import { seedHcmD1Places } from '../src/services/seedService.js';
+import { reconcileBookingSlots } from '../src/services/bookingService.js';
 
 let mongo;
 let app;
@@ -30,6 +31,10 @@ before(async () => {
   await mongoose.connect(mongo.getUri());
   await Place.init();
   await Report.init();
+  await Booking.init();
+  await BookingSlot.init();
+  await MerchantClaim.init();
+  await VisitProof.init();
   app = createApp(cfg, io);
 });
 after(async () => {
@@ -193,4 +198,130 @@ test('HCM place seed is idempotent and marks unverified amenities unknown', asyn
   assert.equal(passio.minDrinkPrice, null);
   assert.equal(passio.location.coordinates[0], 106.809666);
   assert.ok(passio.source.url);
+});
+
+test('merchant claim, managed booking, verified visit, review badge and admin user controls', async () => {
+  const signUp = async (name, email) => (await request(app).post('/api/auth/register')
+    .send({ name, email, password: 'Password123!' }).expect(201)).body;
+  const applicant = await signUp('Shop Owner', 'owner@example.com');
+  const visitor = await signUp('Visitor Student', 'visitor@example.com');
+  const another = await signUp('Second Student', 'second@example.com');
+  const auth = token => ({ Authorization: `Bearer ${token}` });
+  const adminLogin = await request(app).post('/api/auth/login')
+    .send({ email: 'admin@example.com', password: 'AdminPassword123!' }).expect(200);
+  const adminAuth = auth(adminLogin.body.accessToken);
+  const ownerAuth = auth(applicant.accessToken);
+  const visitorAuth = auth(visitor.accessToken);
+  const secondAuth = auth(another.accessToken);
+
+  const created = await request(app).post('/api/places').set(ownerAuth).send({
+    name: 'Study Cafe', address: '99 Campus Road', coordinates: [105.81, 21.01]
+  }).expect(201);
+  const placeId = created.body.place._id;
+  await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
+    .send({ approval: 'approved' }).expect(200);
+  const claim = await request(app).post('/api/merchant/claims').set(ownerAuth).send({
+    placeId, businessName: 'Study Cafe Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/proof.jpg']
+  }).expect(201);
+  await request(app).post('/api/merchant/claims').set(ownerAuth).send({
+    placeId, businessName: 'Study Cafe Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/proof.jpg']
+  }).expect(409);
+  await request(app).get('/api/merchant/claims/me').set(ownerAuth).expect(200);
+  await request(app).get('/api/admin/merchant-claims').set(adminAuth).query({ status: 'pending' }).expect(200);
+  await request(app).patch(`/api/admin/merchant-claims/${claim.body.claim._id}`).set(adminAuth)
+    .send({ status: 'approved', decisionNote: 'Ownership evidence accepted' }).expect(200);
+  assert.equal((await User.findById(applicant.user.id)).role, 'merchant');
+  await request(app).patch(`/api/merchant/places/${placeId}`).set(visitorAuth)
+    .send({ temporaryClosed: true }).expect(403);
+  const hours = Array.from({ length: 7 }, (_, day) => ({ day, open: '08:00', close: '22:00' }));
+  await request(app).patch(`/api/merchant/places/${placeId}`).set(ownerAuth).send({
+    openingHours: hours, seatingCapacity: 20, bookingEnabled: true, capacityPerSlot: 2, slotMinutes: 60,
+    wifi: true, outlets: true, minDrinkPrice: 25000
+  }).expect(200);
+  await request(app).get('/api/merchant/places').set(ownerAuth).expect(200);
+  const day = new Date();
+  day.setUTCDate(day.getUTCDate() + 2);
+  day.setUTCHours(3, 0, 0, 0);
+  const startsAt = day.toISOString();
+  const beforeOpening = new Date(day);
+  beforeOpening.setUTCHours(0, 0, 0, 0);
+  await request(app).post('/api/bookings').set(visitorAuth)
+    .send({ placeId, startsAt: beforeOpening.toISOString(), partySize: 1 }).expect(409);
+  const first = await request(app).post('/api/bookings').set(visitorAuth)
+    .send({ placeId, startsAt, partySize: 1 }).expect(201);
+  const repeat = await request(app).post('/api/bookings').set(visitorAuth)
+    .send({ placeId, startsAt, partySize: 1 }).expect(200);
+  assert.equal(repeat.body.alreadyExists, true);
+  const second = await request(app).post('/api/bookings').set(secondAuth)
+    .send({ placeId, startsAt, partySize: 1 }).expect(201);
+  const third = await signUp('Third Student', 'third@example.com');
+  await request(app).post('/api/bookings').set(auth(third.accessToken))
+    .send({ placeId, startsAt, partySize: 1 }).expect(409);
+  const slot = await BookingSlot.findOne({ place: placeId, startsAt: new Date(startsAt) });
+  assert.equal(slot.reserved, 2);
+  const availability = await request(app).get(`/api/places/${placeId}/availability`)
+    .query({ date: startsAt.slice(0, 10) }).expect(200);
+  assert.equal(availability.body.slots[0].reserved, 2);
+  await request(app).post(`/api/bookings/${second.body.booking._id}/cancel`).set(secondAuth).expect(200);
+  assert.equal((await BookingSlot.findById(slot._id)).reserved, 1);
+  await request(app).get('/api/bookings/me').set(visitorAuth).expect(200);
+  await request(app).get(`/api/merchant/places/${placeId}/bookings`).set(ownerAuth).expect(200);
+
+  const code = await request(app).post(`/api/merchant/places/${placeId}/visit-code`).set(ownerAuth).expect(200);
+  const expiredCode = jwt.sign({ type: 'visit_qr', place: placeId, owner: applicant.user.id },
+    cfg.accessSecret, { expiresIn: -1 });
+  await request(app).post(`/api/places/${placeId}/checkins`).set(visitorAuth).send({
+    crowd: 'low', noise: 'quiet', coordinates: [105.81, 21.01], accuracyMeters: 10, visitCode: expiredCode
+  }).expect(403);
+  await request(app).post(`/api/places/${placeId}/checkins`).set(ownerAuth).send({
+    crowd: 'low', noise: 'quiet', coordinates: [105.81, 21.01]
+  }).expect(403);
+  await request(app).put(`/api/places/${placeId}/reviews/me`).set(ownerAuth)
+    .send({ rating: 5, text: 'Owner review must be rejected' }).expect(403);
+  await request(app).post(`/api/places/${placeId}/checkins`).set(visitorAuth).send({
+    crowd: 'low', noise: 'quiet', coordinates: [105.81, 21.01], accuracyMeters: 60, visitCode: code.body.code
+  }).expect(403);
+  const checkin = await request(app).post(`/api/places/${placeId}/checkins`).set(visitorAuth).send({
+    crowd: 'low', noise: 'quiet', coordinates: [105.81, 21.01], accuracyMeters: 10, visitCode: code.body.code
+  }).expect(201);
+  assert.equal(checkin.body.checkin.verificationLevel, 'qr_verified');
+  assert.equal(await VisitProof.countDocuments({ user: visitor.user.id, place: placeId }), 1);
+  const review = await request(app).put(`/api/places/${placeId}/reviews/me`).set(visitorAuth)
+    .send({ rating: 5, text: 'Verified visit review' }).expect(200);
+  assert.ok(review.body.review.verifiedVisit);
+  const thirdBooking = await request(app).post('/api/bookings').set(auth(third.accessToken))
+    .send({ placeId, startsAt, partySize: 1 }).expect(201);
+  await request(app).patch(`/api/bookings/${thirdBooking.body.booking._id}/merchant-decision`)
+    .set(ownerAuth).send({ action: 'arrived' }).expect(409);
+  const arrivalStart = new Date(Date.now() - 5 * 60000);
+  await Booking.updateOne({ _id: thirdBooking.body.booking._id },
+    { $set: { startsAt: arrivalStart, endsAt: new Date(Date.now() + 55 * 60000) } });
+  const arrival = await request(app).patch(`/api/bookings/${thirdBooking.body.booking._id}/merchant-decision`)
+    .set(ownerAuth).send({ action: 'arrived' }).expect(200);
+  assert.equal(arrival.body.booking.status, 'completed');
+  const staffReview = await request(app).put(`/api/places/${placeId}/reviews/me`).set(auth(third.accessToken))
+    .send({ rating: 4, text: 'Staff confirmed my arrival' }).expect(200);
+  assert.ok(staffReview.body.review.verifiedVisit);
+
+  await request(app).patch(`/api/admin/users/${visitor.user.id}`).set(adminAuth)
+    .send({ status: 'suspended' }).expect(200);
+  await request(app).get('/api/auth/me').set(visitorAuth).expect(403);
+  await request(app).post('/api/auth/login').send({ email: 'visitor@example.com', password: 'Password123!' }).expect(403);
+  await request(app).post('/api/auth/refresh').send({ refreshToken: visitor.refreshToken }).expect(401);
+  await request(app).patch(`/api/admin/users/${visitor.user.id}`).set(adminAuth)
+    .send({ status: 'active' }).expect(200);
+  const users = await request(app).get('/api/admin/users').set(adminAuth).query({ q: 'visitor@example.com' }).expect(200);
+  assert.equal(users.body.total, 1);
+  const audit = await request(app).get('/api/admin/audit').set(adminAuth).expect(200);
+  assert.ok(audit.body.total >= 3);
+  const bookings = await request(app).get('/api/admin/bookings').set(adminAuth).expect(200);
+  assert.ok(bookings.body.total >= 2);
+  await request(app).post(`/api/admin/bookings/${first.body.booking._id}/cancel`).set(adminAuth)
+    .send({ reason: 'Store maintenance planned' }).expect(200);
+  assert.equal((await BookingSlot.findById(slot._id)).reserved, 1);
+  await BookingSlot.updateOne({ _id: slot._id }, { $set: { reserved: 99 } });
+  await reconcileBookingSlots();
+  assert.equal((await BookingSlot.findById(slot._id)).reserved, 0);
 });

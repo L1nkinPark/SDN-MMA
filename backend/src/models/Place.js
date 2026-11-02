@@ -18,6 +18,18 @@ const schema = new Schema({
   images: [{ type: String }],
   approval: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   submittedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  owner: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  business: {
+    phone: { type: String, default: null },
+    openingHours: [{ day: { type: Number, min: 0, max: 6 }, open: String, close: String }],
+    temporaryClosed: { type: Boolean, default: false },
+    seatingCapacity: { type: Number, min: 1, default: null }
+  },
+  booking: {
+    enabled: { type: Boolean, default: false },
+    slotMinutes: { type: Number, default: 60 },
+    capacityPerSlot: { type: Number, min: 1, default: null }
+  },
   ratingAverage: { type: Number, default: 0 },
   ratingCount: { type: Number, default: 0 },
   liveStatus: {

@@ -5,3 +5,8 @@ export { Review } from './Review.js';
 export { Report } from './Report.js';
 export { RefreshToken } from './RefreshToken.js';
 export { ReputationEvent } from './ReputationEvent.js';
+export { MerchantClaim } from './MerchantClaim.js';
+export { Booking } from './Booking.js';
+export { BookingSlot } from './BookingSlot.js';
+export { VisitProof } from './VisitProof.js';
+export { AuditEvent } from './AuditEvent.js';

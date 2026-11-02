@@ -8,6 +8,8 @@ import { placesRouter } from './routes/placeRoutes.js';
 import { communityRouter } from './routes/communityRoutes.js';
 import { adminRouter } from './routes/adminRoutes.js';
 import { reputationRouter } from './routes/reputationRoutes.js';
+import { merchantRouter } from './routes/merchantRoutes.js';
+import { bookingRouter } from './routes/bookingRoutes.js';
 import { errorHandler } from './middleware/error.js';
 import { openapiSpec } from './docs/spec.js';
 
@@ -30,6 +32,8 @@ export function createApp(cfg, io) {
   app.use('/api/auth', rateLimit({ windowMs: 15 * 60000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false }), authRouter(cfg));
   app.use('/api/places', placesRouter(cfg, io));
   app.use('/api/reputation', reputationRouter());
+  app.use('/api/merchant', merchantRouter(cfg));
+  app.use('/api/bookings', bookingRouter(cfg));
   app.use('/api/admin', adminRouter(cfg));
   app.use('/api', communityRouter(cfg));
   app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));

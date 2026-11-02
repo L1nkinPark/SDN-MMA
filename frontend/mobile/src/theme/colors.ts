@@ -1,4 +1,4 @@
-/** Design tokens from CLAUDE.md "Mobile: visual design". Never hard-code these in screens. */
+/** Shared StudySpot design tokens. */
 export const colors = {
   paper: '#F6F7F9',
   ink: '#16308F',

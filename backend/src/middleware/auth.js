@@ -12,6 +12,7 @@ export function requireAuth(cfg) {
     if (payload.type !== 'access' || !mongoose.isValidObjectId(payload.sub)) throw new HttpError(401, 'Invalid access token');
     const user = await User.findById(payload.sub);
     if (!user) throw new HttpError(401, 'User no longer exists');
+    if (user.status === 'suspended') throw new HttpError(403, 'Account suspended');
     req.user = user;
     next();
   });
@@ -19,5 +20,10 @@ export function requireAuth(cfg) {
 
 export function requireAdmin(req, _res, next) {
   if (req.user?.role !== 'admin') return next(new HttpError(403, 'Admin access required'));
+  next();
+}
+
+export function requireMerchant(req, _res, next) {
+  if (!['merchant', 'admin'].includes(req.user?.role)) return next(new HttpError(403, 'Merchant access required'));
   next();
 }

@@ -161,7 +161,7 @@ export interface paths {
         put?: never;
         /**
          * Check-in và báo độ đông/ồn
-         * @description Cần ở trong bán kính 250 m; một lần mỗi 15 phút. Check-in hiệu lực mặc định 120 phút. Dưới 2 mẫu, trạng thái là unknown.
+         * @description GPS trong 250 m; một lần mỗi 15 phút. Để xác minh đã ghé quán, gửi thêm visitCode QR 90 giây và accuracyMeters tối đa 50 m, trong bán kính 100 m. GPS/QR không bảo đảm tuyệt đối người dùng đã ngồi trong quán.
          */
         post: operations["createCheckin"];
         delete?: never;
@@ -432,6 +432,312 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/merchant/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gửi hồ sơ nhận quyền quản lý địa điểm đã duyệt */
+        post: operations["submitMerchantClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/claims/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hồ sơ nhận quyền của tôi */
+        get: operations["myMerchantClaims"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Địa điểm tôi được duyệt quản lý */
+        get: operations["myMerchantPlaces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/places/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Cập nhật tiện ích, giờ mở cửa, sức chứa và cấu hình đặt chỗ */
+        patch: operations["updateMerchantPlace"];
+        trace?: never;
+    };
+    "/api/merchant/places/{id}/visit-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tạo mã QR lượt ghé hiệu lực 90 giây */
+        post: operations["merchantVisitCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/places/{id}/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Xem booking tại địa điểm mình quản lý */
+        get: operations["merchantPlaceBookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/places/{id}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cấu hình và số chỗ đã đặt của ngày tại quán */
+        get: operations["bookingAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Đặt chỗ trước 1 giờ đến 14 ngày, giới hạn 3 booking sắp tới */
+        post: operations["createBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Booking của tôi */
+        get: operations["myBookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Người đặt hủy trước giờ đến ít nhất 1 giờ */
+        post: operations["cancelMyBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings/{id}/merchant-decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Nhân viên xác nhận khách đến, hủy hoặc ghi nhận không đến */
+        patch: operations["merchantBookingDecision"];
+        trace?: never;
+    };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Xem user, lọc email, vai trò và trạng thái */
+        get: operations["adminListUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Khóa hoặc mở tài khoản không phải admin */
+        patch: operations["adminUpdateUser"];
+        trace?: never;
+    };
+    "/api/admin/merchant-claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Danh sách hồ sơ chủ quán */
+        get: operations["adminListMerchantClaims"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/merchant-claims/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Duyệt hoặc từ chối quyền chủ quán */
+        patch: operations["adminDecideMerchantClaim"];
+        trace?: never;
+    };
+    "/api/admin/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Xem toàn bộ booking */
+        get: operations["adminListBookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/bookings/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hủy booking đang hiệu lực với lý do */
+        post: operations["adminCancelBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lịch sử thao tác quản trị mới */
+        get: operations["adminListAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -477,7 +783,9 @@ export interface components {
             /** Format: email */
             email?: string;
             /** @enum {string} */
-            role?: "student" | "admin";
+            role?: "student" | "merchant" | "admin";
+            /** @enum {string} */
+            status?: "active" | "suspended";
             reputation?: number;
             favorites?: string[];
         };
@@ -530,6 +838,26 @@ export interface components {
             /** @enum {string} */
             approval?: "pending" | "approved" | "rejected";
             submittedBy?: string;
+            owner?: string | null;
+            business?: {
+                phone?: string | null;
+                openingHours?: {
+                    /** @description 0=Chủ nhật */
+                    day?: number;
+                    /** @example 08:00 */
+                    open?: string;
+                    /** @example 22:00 */
+                    close?: string;
+                }[];
+                temporaryClosed?: boolean;
+                seatingCapacity?: number | null;
+            };
+            booking?: {
+                enabled?: boolean;
+                /** @enum {integer} */
+                slotMinutes?: 30 | 60 | 120;
+                capacityPerSlot?: number | null;
+            };
             ratingAverage?: number;
             ratingCount?: number;
             liveStatus?: components["schemas"]["LiveStatus"];
@@ -549,6 +877,8 @@ export interface components {
             rating?: number;
             text?: string;
             hidden?: boolean;
+            /** @description ID bằng chứng QR hoặc nhân viên xác nhận trong 14 ngày gần nhất khi viết đánh giá */
+            verifiedVisit?: string | null;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -560,8 +890,38 @@ export interface components {
             crowd?: "low" | "medium" | "high";
             /** @enum {string} */
             noise?: "quiet" | "moderate" | "loud";
+            /** @enum {string} */
+            verificationLevel?: "gps_only" | "qr_verified" | "staff_verified";
+            /** Format: date-time */
+            verifiedAt?: string | null;
             /** Format: date-time */
             expiresAt?: string;
+        };
+        MerchantClaim: {
+            _id?: string;
+            applicant?: string;
+            place?: string;
+            businessName?: string;
+            contactPhone?: string;
+            evidenceUrls?: string[];
+            /** @enum {string} */
+            status?: "pending" | "approved" | "rejected";
+            decisionNote?: string | null;
+        };
+        Booking: {
+            _id?: string;
+            user?: string;
+            place?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            partySize?: number;
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "completed" | "no_show";
+            note?: string;
+            /** Format: date-time */
+            arrivedAt?: string | null;
         };
         Report: {
             _id?: string;
@@ -915,6 +1275,10 @@ export interface operations {
                     /** @enum {string} */
                     noise: "quiet" | "moderate" | "loud";
                     coordinates: components["schemas"]["Coordinates"];
+                    /** @description Bắt buộc khi gửi visitCode */
+                    accuracyMeters?: number;
+                    /** @description Mã từ /api/merchant/places/{id}/visit-code */
+                    visitCode?: string;
                 };
             };
         };
@@ -1529,11 +1893,491 @@ export interface operations {
                         pendingReports?: number;
                         reviews?: number;
                         activeCheckins?: number;
+                        merchants?: number;
+                        pendingClaims?: number;
+                        upcomingBookings?: number;
+                        verifiedVisits?: number;
                     };
                 };
             };
             /** @description Cần quyền admin */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    submitMerchantClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    placeId: string;
+                    businessName: string;
+                    contactPhone: string;
+                    evidenceUrls: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Hồ sơ đã gửi; chờ admin duyệt */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Đã có chủ hoặc hồ sơ đang chờ */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    myMerchantClaims: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách hồ sơ */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    myMerchantPlaces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách địa điểm */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cần quyền merchant */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateMerchantPlace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description MongoDB ObjectId của địa điểm */
+                id: components["parameters"]["PlaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    phone?: string | null;
+                    openingHours?: {
+                        day: number;
+                        /** @example 08:00 */
+                        open: string;
+                        /** @example 22:00 */
+                        close: string;
+                    }[];
+                    temporaryClosed?: boolean;
+                    seatingCapacity?: number | null;
+                    bookingEnabled?: boolean;
+                    /** @enum {integer} */
+                    slotMinutes?: 30 | 60 | 120;
+                    capacityPerSlot?: number | null;
+                    wifi?: boolean | null;
+                    outlets?: boolean | null;
+                    minDrinkPrice?: number | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Địa điểm đã cập nhật */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Không sở hữu địa điểm */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    merchantVisitCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description MongoDB ObjectId của địa điểm */
+                id: components["parameters"]["PlaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mã code và thời hạn */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Không sở hữu địa điểm */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    merchantPlaceBookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description MongoDB ObjectId của địa điểm */
+                id: components["parameters"]["PlaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách booking */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    bookingAvailability: {
+        parameters: {
+            query: {
+                date: string;
+            };
+            header?: never;
+            path: {
+                /** @description MongoDB ObjectId của địa điểm */
+                id: components["parameters"]["PlaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Giờ mở cửa và các slot đã phát sinh */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    placeId: string;
+                    /**
+                     * Format: date-time
+                     * @example 2026-11-04T10:00:00+07:00
+                     */
+                    startsAt: string;
+                    partySize: number;
+                    note?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Booking cùng user/quán/giờ đã tồn tại */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Booking đã xác nhận */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Hết chỗ hoặc quán chưa nhận booking */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    myBookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách booking */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancelMyBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Booking đã hủy, slot được trả lại */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Không thể hủy */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    merchantBookingDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    action: "arrived" | "cancel" | "no_show";
+                };
+            };
+        };
+        responses: {
+            /** @description Đã cập nhật booking; arrived tạo bằng chứng đã ghé */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Không sở hữu địa điểm */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminListUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách user, không có passwordHash */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminUpdateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "active" | "suspended";
+                };
+            };
+        };
+        responses: {
+            /** @description Trạng thái đã cập nhật; refresh tokens bị thu hồi khi khóa */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminListMerchantClaims: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách hồ sơ */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminDecideMerchantClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "approved" | "rejected";
+                    decisionNote: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Hồ sơ đã xử lý, quyền merchant được cấp khi duyệt */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminListBookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách booking */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminCancelBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Đã hủy và ghi audit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminListAudit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách sự kiện quản trị */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

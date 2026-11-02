@@ -19,6 +19,8 @@ tags:
   - name: Favorites
   - name: Reports
   - name: Reputation
+  - name: Merchants
+  - name: Bookings
   - name: Admin
 components:
   securitySchemes:
@@ -80,7 +82,8 @@ components:
         id: { type: string }
         name: { type: string }
         email: { type: string, format: email }
-        role: { type: string, enum: [student, admin] }
+        role: { type: string, enum: [student, merchant, admin] }
+        status: { type: string, enum: [active, suspended] }
         reputation: { type: integer }
         favorites:
           type: array
@@ -134,6 +137,27 @@ components:
           items: { type: string, format: uri }
         approval: { type: string, enum: [pending, approved, rejected] }
         submittedBy: { type: string }
+        owner: { type: string, nullable: true }
+        business:
+          type: object
+          properties:
+            phone: { type: string, nullable: true }
+            openingHours:
+              type: array
+              items:
+                type: object
+                properties:
+                  day: { type: integer, minimum: 0, maximum: 6, description: '0=Chủ nhật' }
+                  open: { type: string, example: '08:00' }
+                  close: { type: string, example: '22:00' }
+            temporaryClosed: { type: boolean }
+            seatingCapacity: { type: integer, nullable: true }
+        booking:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            slotMinutes: { type: integer, enum: [30, 60, 120] }
+            capacityPerSlot: { type: integer, nullable: true }
         ratingAverage: { type: number }
         ratingCount: { type: integer }
         liveStatus: { $ref: '#/components/schemas/LiveStatus' }
@@ -155,6 +179,7 @@ components:
         rating: { type: integer, minimum: 1, maximum: 5 }
         text: { type: string }
         hidden: { type: boolean }
+        verifiedVisit: { type: string, nullable: true, description: 'ID bằng chứng QR hoặc nhân viên xác nhận trong 14 ngày gần nhất khi viết đánh giá' }
         createdAt: { type: string, format: date-time }
     Checkin:
       type: object
@@ -164,7 +189,32 @@ components:
         place: { type: string }
         crowd: { type: string, enum: [low, medium, high] }
         noise: { type: string, enum: [quiet, moderate, loud] }
+        verificationLevel: { type: string, enum: [gps_only, qr_verified, staff_verified] }
+        verifiedAt: { type: string, format: date-time, nullable: true }
         expiresAt: { type: string, format: date-time }
+    MerchantClaim:
+      type: object
+      properties:
+        _id: { type: string }
+        applicant: { type: string }
+        place: { type: string }
+        businessName: { type: string }
+        contactPhone: { type: string }
+        evidenceUrls: { type: array, items: { type: string, format: uri } }
+        status: { type: string, enum: [pending, approved, rejected] }
+        decisionNote: { type: string, nullable: true }
+    Booking:
+      type: object
+      properties:
+        _id: { type: string }
+        user: { type: string }
+        place: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        partySize: { type: integer }
+        status: { type: string, enum: [confirmed, cancelled, completed, no_show] }
+        note: { type: string }
+        arrivedAt: { type: string, format: date-time, nullable: true }
     Report:
       type: object
       properties:
@@ -368,7 +418,7 @@ paths:
       tags: [Check-ins]
       summary: Check-in và báo độ đông/ồn
       operationId: createCheckin
-      description: Cần ở trong bán kính 250 m; một lần mỗi 15 phút. Check-in hiệu lực mặc định 120 phút. Dưới 2 mẫu, trạng thái là unknown.
+      description: GPS trong 250 m; một lần mỗi 15 phút. Để xác minh đã ghé quán, gửi thêm visitCode QR 90 giây và accuracyMeters tối đa 50 m, trong bán kính 100 m. GPS/QR không bảo đảm tuyệt đối người dùng đã ngồi trong quán.
       security: [{ bearerAuth: [] }]
       parameters:
         - { $ref: '#/components/parameters/PlaceId' }
@@ -383,6 +433,8 @@ paths:
                 crowd: { type: string, enum: [low, medium, high] }
                 noise: { type: string, enum: [quiet, moderate, loud] }
                 coordinates: { $ref: '#/components/schemas/Coordinates' }
+                accuracyMeters: { type: number, minimum: 0, description: 'Bắt buộc khi gửi visitCode' }
+                visitCode: { type: string, description: 'Mã từ /api/merchant/places/{id}/visit-code' }
       responses:
         '201':
           description: Check-in đã lưu và trạng thái mới
@@ -749,4 +801,264 @@ paths:
                   pendingReports: { type: integer }
                   reviews: { type: integer }
                   activeCheckins: { type: integer }
+                  merchants: { type: integer }
+                  pendingClaims: { type: integer }
+                  upcomingBookings: { type: integer }
+                  verifiedVisits: { type: integer }
         '403': { description: Cần quyền admin }
+  /api/merchant/claims:
+    post:
+      tags: [Merchants]
+      summary: Gửi hồ sơ nhận quyền quản lý địa điểm đã duyệt
+      operationId: submitMerchantClaim
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [placeId, businessName, contactPhone, evidenceUrls]
+              properties:
+                placeId: { type: string }
+                businessName: { type: string, minLength: 2 }
+                contactPhone: { type: string, minLength: 8 }
+                evidenceUrls: { type: array, minItems: 1, maxItems: 5, items: { type: string, format: uri } }
+      responses:
+        '201': { description: Hồ sơ đã gửi; chờ admin duyệt }
+        '409': { description: Đã có chủ hoặc hồ sơ đang chờ }
+  /api/merchant/claims/me:
+    get:
+      tags: [Merchants]
+      summary: Hồ sơ nhận quyền của tôi
+      operationId: myMerchantClaims
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách hồ sơ }
+  /api/merchant/places:
+    get:
+      tags: [Merchants]
+      summary: Địa điểm tôi được duyệt quản lý
+      operationId: myMerchantPlaces
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách địa điểm }
+        '403': { description: Cần quyền merchant }
+  /api/merchant/places/{id}:
+    patch:
+      tags: [Merchants]
+      summary: Cập nhật tiện ích, giờ mở cửa, sức chứa và cấu hình đặt chỗ
+      operationId: updateMerchantPlace
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone: { type: string, nullable: true }
+                openingHours:
+                  type: array
+                  items:
+                    type: object
+                    required: [day, open, close]
+                    properties:
+                      day: { type: integer, minimum: 0, maximum: 6 }
+                      open: { type: string, example: '08:00' }
+                      close: { type: string, example: '22:00' }
+                temporaryClosed: { type: boolean }
+                seatingCapacity: { type: integer, nullable: true }
+                bookingEnabled: { type: boolean }
+                slotMinutes: { type: integer, enum: [30, 60, 120] }
+                capacityPerSlot: { type: integer, nullable: true }
+                wifi: { type: boolean, nullable: true }
+                outlets: { type: boolean, nullable: true }
+                minDrinkPrice: { type: number, nullable: true }
+      responses:
+        '200': { description: Địa điểm đã cập nhật }
+        '404': { description: Không sở hữu địa điểm }
+  /api/merchant/places/{id}/visit-code:
+    post:
+      tags: [Merchants]
+      summary: Tạo mã QR lượt ghé hiệu lực 90 giây
+      operationId: merchantVisitCode
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      responses:
+        '200': { description: Mã code và thời hạn }
+        '404': { description: Không sở hữu địa điểm }
+  /api/merchant/places/{id}/bookings:
+    get:
+      tags: [Merchants]
+      summary: Xem booking tại địa điểm mình quản lý
+      operationId: merchantPlaceBookings
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      responses:
+        '200': { description: Danh sách booking }
+  /api/places/{id}/availability:
+    get:
+      tags: [Bookings]
+      summary: Cấu hình và số chỗ đã đặt của ngày tại quán
+      operationId: bookingAvailability
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+        - { name: date, in: query, required: true, schema: { type: string, format: date, example: '2026-11-04' } }
+      responses:
+        '200': { description: Giờ mở cửa và các slot đã phát sinh }
+  /api/bookings:
+    post:
+      tags: [Bookings]
+      summary: Đặt chỗ trước 1 giờ đến 14 ngày, giới hạn 3 booking sắp tới
+      operationId: createBooking
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [placeId, startsAt, partySize]
+              properties:
+                placeId: { type: string }
+                startsAt: { type: string, format: date-time, example: '2026-11-04T10:00:00+07:00' }
+                partySize: { type: integer, minimum: 1, maximum: 20 }
+                note: { type: string, maxLength: 500 }
+      responses:
+        '201': { description: Booking đã xác nhận }
+        '200': { description: Booking cùng user/quán/giờ đã tồn tại }
+        '409': { description: Hết chỗ hoặc quán chưa nhận booking }
+  /api/bookings/me:
+    get:
+      tags: [Bookings]
+      summary: Booking của tôi
+      operationId: myBookings
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách booking }
+  /api/bookings/{id}/cancel:
+    post:
+      tags: [Bookings]
+      summary: Người đặt hủy trước giờ đến ít nhất 1 giờ
+      operationId: cancelMyBooking
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: 'Booking đã hủy, slot được trả lại' }
+        '409': { description: Không thể hủy }
+  /api/bookings/{id}/merchant-decision:
+    patch:
+      tags: [Merchants]
+      summary: Nhân viên xác nhận khách đến, hủy hoặc ghi nhận không đến
+      operationId: merchantBookingDecision
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [arrived, cancel, no_show] }
+      responses:
+        '200': { description: Đã cập nhật booking; arrived tạo bằng chứng đã ghé }
+        '403': { description: Không sở hữu địa điểm }
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: Xem user, lọc email, vai trò và trạng thái
+      operationId: adminListUsers
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: 'Danh sách user, không có passwordHash' }
+  /api/admin/users/{id}:
+    patch:
+      tags: [Admin]
+      summary: Khóa hoặc mở tài khoản không phải admin
+      operationId: adminUpdateUser
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [active, suspended] }
+      responses:
+        '200': { description: Trạng thái đã cập nhật; refresh tokens bị thu hồi khi khóa }
+  /api/admin/merchant-claims:
+    get:
+      tags: [Admin]
+      summary: Danh sách hồ sơ chủ quán
+      operationId: adminListMerchantClaims
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách hồ sơ }
+  /api/admin/merchant-claims/{id}:
+    patch:
+      tags: [Admin]
+      summary: Duyệt hoặc từ chối quyền chủ quán
+      operationId: adminDecideMerchantClaim
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status, decisionNote]
+              properties:
+                status: { type: string, enum: [approved, rejected] }
+                decisionNote: { type: string, minLength: 5 }
+      responses:
+        '200': { description: 'Hồ sơ đã xử lý, quyền merchant được cấp khi duyệt' }
+  /api/admin/bookings:
+    get:
+      tags: [Admin]
+      summary: Xem toàn bộ booking
+      operationId: adminListBookings
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách booking }
+  /api/admin/bookings/{id}/cancel:
+    post:
+      tags: [Admin]
+      summary: Hủy booking đang hiệu lực với lý do
+      operationId: adminCancelBooking
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 5 }
+      responses:
+        '200': { description: Đã hủy và ghi audit }
+  /api/admin/audit:
+    get:
+      tags: [Admin]
+      summary: Lịch sử thao tác quản trị mới
+      operationId: adminListAudit
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách sự kiện quản trị }

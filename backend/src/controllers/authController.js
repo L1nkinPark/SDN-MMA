@@ -26,6 +26,7 @@ export function authController(cfg) {
       const body = parse(credentials, req.body);
       const user = await User.findOne({ email: body.email }).select('+passwordHash');
       if (!user || !(await bcrypt.compare(body.password, user.passwordHash))) throw new HttpError(401, 'Invalid email or password');
+      if (user.status === 'suspended') throw new HttpError(403, 'Account suspended');
       await issue(user, res);
     },
     refresh: async (req, res) => {
@@ -40,6 +41,7 @@ export function authController(cfg) {
       if (!stored) throw new HttpError(401, 'Refresh token already used or revoked');
       const user = await User.findById(payload.sub);
       if (!user) throw new HttpError(401, 'User no longer exists');
+      if (user.status === 'suspended') throw new HttpError(403, 'Account suspended');
       await issue(user, res);
     },
     logout: async (req, res) => {

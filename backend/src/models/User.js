@@ -5,7 +5,8 @@ const schema = new Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true, select: false },
-  role: { type: String, enum: ['student', 'admin'], default: 'student' },
+  role: { type: String, enum: ['student', 'merchant', 'admin'], default: 'student' },
+  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
   favorites: [{ type: Schema.Types.ObjectId, ref: 'Place' }],
   reputation: { type: Number, default: 0 }
 }, { timestamps: true, versionKey: false });
