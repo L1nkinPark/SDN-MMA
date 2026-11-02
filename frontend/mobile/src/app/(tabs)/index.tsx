@@ -7,9 +7,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { errorMessage } from '@/api/errors';
 import { usePlaces } from '@/api/hooks/usePlaces';
 import { useRefetchOnFocus } from '@/api/hooks/useRefetchOnFocus';
-import type { Place, PlaceListQuery } from '@/api/types';
+import type { Place } from '@/api/types';
 import { Icon, LoadingList, MessageState, PlaceRow, Screen } from '@/components';
-import { countActiveFilters, hidesUnverified, resetPlaceFilters, usePlaceFilters } from '@/explore/filters';
+import { countActiveFilters, hidesUnverified, placeListQuery, resetPlaceFilters, usePlaceFilters } from '@/explore/filters';
+import { markerOffsets } from '@/explore/markerOffsets';
 import { DEFAULT_CENTER, distanceMeters, formatDistance, fromCoordinates, openLocationSettings, type LatLng } from '@/location/location';
 import { useCurrentLocation } from '@/location/useCurrentLocation';
 import { colors, fonts, sizes, spacing, type } from '@/theme';
@@ -18,6 +19,7 @@ import { crowdLevel, isStatusKnown } from '@/utils/liveStatus';
 type Mode = 'map' | 'list';
 
 const MAP_DELTA = { latitudeDelta: 0.03, longitudeDelta: 0.03 };
+const MAP_FIT_PADDING = { top: 64, right: 64, bottom: 64, left: 64 };
 /** Same top spacing as the shared Header: 64px in the 844px design, ~44px of it status bar. */
 const HEADER_TOP = spacing.headerTop - 44;
 
@@ -30,11 +32,15 @@ function distanceTo(origin: LatLng | null, place: Place): string | null {
   return origin && position ? formatDistance(distanceMeters(origin, position)) : null;
 }
 
+function markerSize(selected: boolean): number {
+  return selected ? 26 : 20;
+}
+
 /** Unknown status: white dot with ink ring. Known: ink, or red when it is crowded. */
 function PlaceMarker({ place, selected }: { place: Place; selected: boolean }) {
   const known = isStatusKnown(place.liveStatus);
   const fill = !known ? colors.paper : crowdLevel(place.liveStatus?.crowd) === 3 ? colors.error : colors.ink;
-  const size = selected ? 26 : 20;
+  const size = markerSize(selected);
   return (
     <View
       style={[
@@ -52,6 +58,7 @@ export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [q, setQ] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapLoads, setMapLoads] = useState(0);
   const filters = usePlaceFilters();
   const location = useCurrentLocation();
   const origin = location.coords;
@@ -62,24 +69,37 @@ export default function ExploreScreen() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // The map may open before the position is known; move there once it is.
+  // The map may open before the position is known; move there once it is. Search results keep the map.
   useEffect(() => {
-    if (origin) mapRef.current?.animateToRegion({ ...origin, ...MAP_DELTA });
-  }, [origin]);
+    if (origin && !q) mapRef.current?.animateToRegion({ ...origin, ...MAP_DELTA });
+  }, [origin, q]);
 
-  const query = useMemo<Omit<PlaceListQuery, 'page' | 'limit'>>(() => {
-    const { radius, ...rest } = filters;
-    return {
-      ...rest,
-      q: q || undefined,
-      // lat, lng and radius only work together; without them the API sorts by newest.
-      ...(origin ? { lat: origin.latitude, lng: origin.longitude, radius } : {}),
-    };
-  }, [filters, q, origin]);
+  const query = useMemo(() => placeListQuery(filters, q, origin), [filters, q, origin]);
 
   // Wait for the first location answer so the list isn't fetched twice on open.
   const places = usePlaces(query, location.status !== 'loading' || origin !== null);
   const items = places.items;
+
+  const offsets = useMemo(
+    () =>
+      markerOffsets(
+        (places.data?.pages.flatMap((page) => page.items ?? []) ?? []).flatMap((place) => {
+          const position = fromCoordinates(place.location?.coordinates);
+          return place._id && position ? [{ id: place._id, position }] : [];
+        }),
+      ),
+    [places.data],
+  );
+
+  // Search results can be far from the user, so bring them into view. A map that just opened
+  // ignores this until it is ready, hence `mapLoads`.
+  useEffect(() => {
+    if (!q) return;
+    const points = (places.data?.pages.flatMap((page) => page.items ?? []) ?? []).flatMap((place) => fromCoordinates(place.location?.coordinates) ?? []);
+    if (points.length === 1) mapRef.current?.animateToRegion({ ...points[0], ...MAP_DELTA });
+    else if (points.length > 1) mapRef.current?.fitToCoordinates(points, { edgePadding: MAP_FIT_PADDING, animated: true });
+  }, [q, places.data, mapLoads]);
+
   // Others' check-ins, reviews and admin changes don't reach the list by themselves.
   useRefetchOnFocus(places.refetch);
   const activeFilters = countActiveFilters(filters);
@@ -157,16 +177,19 @@ export default function ExploreScreen() {
     body = (
       <View style={styles.flex}>
         <View style={styles.flex}>
-          <MapView ref={mapRef} style={StyleSheet.absoluteFill} initialRegion={{ ...center, ...MAP_DELTA }} toolbarEnabled={false}>
+          <MapView ref={mapRef} style={StyleSheet.absoluteFill} initialRegion={{ ...center, ...MAP_DELTA }} toolbarEnabled={false} onMapReady={() => setMapLoads((count) => count + 1)}>
             {items.map((place) => {
               const coordinate = fromCoordinates(place.location?.coordinates);
               if (!coordinate || !place._id) return null;
               const isSelected = place._id === selected?._id;
+              const offset = offsets.get(place._id) ?? 0;
               return (
                 <Marker
                   key={place._id}
                   coordinate={coordinate}
-                  anchor={{ x: 0.5, y: 0.5 }}
+                  // Android and iOS each read their own prop for the shift.
+                  anchor={{ x: Math.min(1, Math.max(0, 0.5 - offset / markerSize(isSelected))), y: 0.5 }}
+                  centerOffset={{ x: offset, y: 0 }}
                   zIndex={isSelected ? 2 : 1}
                   accessibilityLabel={place.name}
                   onPress={() => setSelectedId(place._id ?? null)}>

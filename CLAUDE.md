@@ -236,6 +236,7 @@ frontend/admin/src/
 - `null` for `amenities.wifi`, `amenities.outlets`, or `minDrinkPrice` means unverified, not "none".
 - Filtering on `wifi`, `outlets`, or `maxPrice` excludes places where that value is `null`. Seed data uses `null` for all of them, so these filters may return nothing.
 - `crowd` and `noise` can be `unknown` when too few people have checked in. A check-in may only send `low | medium | high` and `quiet | moderate | loud`.
+- With `lat` and `lng`, `GET /api/places` keeps only places inside `radius` (default 5000), even with `q`. Khám phá therefore drops the position and distance filter when searching (`placeListQuery` in `src/explore/filters.ts`).
 
 **Auth**
 - `accessToken` expires after 15 minutes, and each `refreshToken` works only once.

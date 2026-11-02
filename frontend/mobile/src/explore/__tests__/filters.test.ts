@@ -1,6 +1,6 @@
 import { nextPlacePage } from '@/api/hooks/usePlaces';
 
-import { countActiveFilters, DEFAULT_FILTERS, hidesUnverified } from '../filters';
+import { countActiveFilters, DEFAULT_FILTERS, hidesUnverified, placeListQuery } from '../filters';
 
 describe('place filters', () => {
   it('counts nothing for the defaults', () => {
@@ -16,6 +16,29 @@ describe('place filters', () => {
     expect(hidesUnverified({ radius: 5000, crowd: 'low' })).toBe(false);
     expect(hidesUnverified({ radius: 5000, outlets: true })).toBe(true);
     expect(hidesUnverified({ radius: 5000, maxPrice: 0 })).toBe(true);
+  });
+});
+
+describe('placeListQuery', () => {
+  const origin = { latitude: 10.77, longitude: 106.7 };
+
+  it('stays near the user when browsing', () => {
+    expect(placeListQuery(DEFAULT_FILTERS, '', origin)).toMatchObject({ lat: 10.77, lng: 106.7, radius: 5000 });
+  });
+
+  it.each([5000, 10000])('searches every place for a keyword with distance %d', (radius) => {
+    const query = placeListQuery({ radius }, 'fpt', origin);
+    expect(query).toMatchObject({ q: 'fpt' });
+    expect(query).not.toHaveProperty('lat');
+    expect(query).not.toHaveProperty('radius');
+  });
+
+  it('keeps other filters while searching', () => {
+    expect(placeListQuery({ radius: 5000, wifi: true }, 'fpt', origin)).toMatchObject({ q: 'fpt', wifi: true });
+  });
+
+  it('sends no position when it is unknown', () => {
+    expect(placeListQuery(DEFAULT_FILTERS, '', null)).not.toHaveProperty('lat');
   });
 });
 
