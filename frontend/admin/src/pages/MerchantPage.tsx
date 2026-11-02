@@ -7,7 +7,7 @@ import { Button, FormAlert, LoadingRows, PageHeader, Select, StateMessage, TextA
 
 type Place = { _id: string; name: string; address: string; approval: string; amenities?: { wifi?: boolean | null; outlets?: boolean | null };
   minDrinkPrice?: number | null; business?: { phone?: string; temporaryClosed?: boolean; seatingCapacity?: number | null;
-  openingHours?: { day: number; open: string; close: string }[] };
+  openingHours?: { day: number; open: string; close: string }[]; closedDates?: string[] };
   booking?: { enabled?: boolean; approvalMode?: 'auto' | 'manual'; capacityPerSlot?: number; slotMinutes?: number } };
 type Booking = { _id: string; status: string; startsAt: string; partySize: number; note?: string; user?: { name?: string; email?: string } };
 type Claim = { _id: string; status: string; place?: { name?: string }; decisionNote?: string };
@@ -26,6 +26,20 @@ function OpeningHours({ place, save }: { place: Place; save: (hours: { day: numb
       <input type="time" aria-label={`Đóng cửa ${DAYS[index]}`} value={h.close} disabled={!h.enabled} onChange={e => setHours(all => all.map((x, i) => i === index ? { ...x, close: e.target.value } : x))} />
     </div>)}
     <Button variant="secondary" disabled={hours.some(h => h.enabled && h.open >= h.close)} onClick={() => save(hours.filter(h => h.enabled).map(({ day, open, close }) => ({ day, open, close })))}>Lưu giờ mở cửa</Button>
+  </div>;
+}
+
+function ClosedDates({ place, save }: { place: Place; save: (dates: string[]) => void }) {
+  const [dates, setDates] = useState<string[]>(place.business?.closedDates || []);
+  const [date, setDate] = useState('');
+  const [today] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }));
+  const active = dates.filter(value => value >= today).sort();
+  return <div className="merchant-hours"><h3>Lịch nghỉ</h3><p>Ngày nghỉ sẽ không hiện khung giờ đặt chỗ. Hãy xử lý booking đã có trước khi lưu.</p>
+    <div className="merchant-hour"><input aria-label="Ngày nghỉ mới" type="date" min={today} value={date} onChange={event => setDate(event.target.value)} />
+      <Button variant="secondary" disabled={!date || date < today || active.includes(date)} onClick={() => { setDates([...active, date].sort()); setDate(''); }}>Thêm ngày nghỉ</Button></div>
+    {active.map(value => <div className="merchant-hour" key={value}><span>{value}</span>
+      <Button variant="secondary" onClick={() => setDates(active.filter(item => item !== value))}>Bỏ ngày</Button></div>)}
+    <Button variant="secondary" onClick={() => save(active)}>Lưu lịch nghỉ</Button>
   </div>;
 }
 
@@ -128,6 +142,7 @@ export function MerchantPage() {
               {code ? <div className="merchant-qr"><QRCodeSVG value={code} size={220} /><span>Hết hạn lúc {new Date(expires).toLocaleTimeString('vi-VN')}</span></div> : null}</div>
           </div>
           <OpeningHours key={current._id} place={current} save={openingHours => send(`/api/merchant/places/${enc(current._id)}`, { openingHours }, 'PATCH')} />
+          <ClosedDates key={`${current._id}-closed`} place={current} save={closedDates => send(`/api/merchant/places/${enc(current._id)}`, { closedDates }, 'PATCH')} />
           <h3>Đề nghị sửa thông tin công khai</h3><div className="merchant-grid">
             <TextField label="Tên mới" value={change.name} onChange={e => setChange({ ...change, name: e.target.value })} />
             <TextField label="Địa chỉ mới" value={change.address} onChange={e => setChange({ ...change, address: e.target.value })} />

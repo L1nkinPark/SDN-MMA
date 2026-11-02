@@ -12,5 +12,6 @@ export { VisitProof } from './VisitProof.js';
 export { AuditEvent } from './AuditEvent.js';
 export { PasswordReset } from './PasswordReset.js';
 export { Notification } from './Notification.js';
+export { EmailOutbox } from './EmailOutbox.js';
 export { PlaceChangeRequest } from './PlaceChangeRequest.js';
 export { FraudFlag } from './FraudFlag.js';

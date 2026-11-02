@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AuditEvent, Booking, Checkin, FraudFlag, MerchantClaim, Place, PlaceChangeRequest, RefreshToken, Report, Review, User, VisitProof } from '../models/index.js';
+import { AuditEvent, Booking, Checkin, EmailOutbox, FraudFlag, MerchantClaim, Place, PlaceChangeRequest, RefreshToken, Report, Review, User, VisitProof } from '../models/index.js';
 import { HttpError, assertId, coordinates, escapeRegex, pageQuery, parse } from '../utils/common.js';
 import { updateRating } from '../services/ratingService.js';
 import { uploadPlaceImage } from '../services/imageService.js';
@@ -332,14 +332,15 @@ export const adminController = {
   },
   analytics: async (_req, res) => {
     const [users, approvedPlaces, pendingPlaces, pendingReports, reviews, activeCheckins,
-      merchants, pendingClaims, upcomingBookings, verifiedVisits, pendingFraudFlags] = await Promise.all([
+      merchants, pendingClaims, upcomingBookings, verifiedVisits, pendingFraudFlags, pendingEmails, failedEmails] = await Promise.all([
       User.countDocuments(), Place.countDocuments({ approval: 'approved' }), Place.countDocuments({ approval: 'pending' }),
       Report.countDocuments({ status: 'pending' }), Review.countDocuments({ hidden: false }), Checkin.countDocuments({ expiresAt: { $gt: new Date() } }),
       User.countDocuments({ role: 'merchant' }), MerchantClaim.countDocuments({ status: 'pending' }),
       Booking.countDocuments({ status: 'confirmed', startsAt: { $gt: new Date() } }), VisitProof.countDocuments(),
-      FraudFlag.countDocuments({ status: 'pending' })
+      FraudFlag.countDocuments({ status: 'pending' }), EmailOutbox.countDocuments({ status: { $in: ['pending', 'sending'] } }),
+      EmailOutbox.countDocuments({ status: 'failed' })
     ]);
     res.json({ users, approvedPlaces, pendingPlaces, pendingReports, reviews, activeCheckins,
-      merchants, pendingClaims, upcomingBookings, verifiedVisits, pendingFraudFlags });
+      merchants, pendingClaims, upcomingBookings, verifiedVisits, pendingFraudFlags, pendingEmails, failedEmails });
   }
 };

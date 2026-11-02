@@ -2,12 +2,12 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { User, RefreshToken, PasswordReset, Booking, Checkin, FraudFlag, MerchantClaim,
+import { User, RefreshToken, PasswordReset, Booking, Checkin, EmailOutbox, FraudFlag, MerchantClaim,
   Notification, Place, PlaceChangeRequest, Report, ReputationEvent, Review, VisitProof } from '../models/index.js';
 import { HttpError, parse } from '../utils/common.js';
 import { accessToken, refreshToken, tokenHash } from '../services/tokenService.js';
 import { publicUser } from '../views/userView.js';
-import { sendEmail } from '../services/notificationService.js';
+import { queueEmail } from '../services/notificationService.js';
 import { releaseSlot } from '../services/bookingService.js';
 import { updateRating } from '../services/ratingService.js';
 import { recalculateStatus } from '../services/statusService.js';
@@ -86,13 +86,13 @@ export function authController(cfg) {
       const user = await User.findOne({ email, status: 'active' });
       if (user) {
         const token = crypto.randomBytes(32).toString('hex');
+        await EmailOutbox.deleteMany({ to: user.email, subject: '[StudySpot] Đặt lại mật khẩu', status: 'pending' });
         await PasswordReset.findOneAndUpdate({ user: user._id },
           { $set: { tokenHash: tokenHash(token), expiresAt: new Date(Date.now() + 30 * 60000) } },
           { upsert: true, new: true });
-        try {
-          await sendEmail(cfg, { to: user.email, subject: '[StudySpot] Đặt lại mật khẩu',
-            text: `Mã đặt lại mật khẩu của bạn: ${token}\nMã có hiệu lực 30 phút. Nếu không yêu cầu, bạn có thể bỏ qua email này.` });
-        } catch (error) { console.error('Password reset email failed:', error); }
+        await queueEmail(cfg, { to: user.email, subject: '[StudySpot] Đặt lại mật khẩu',
+          text: `Mã đặt lại mật khẩu của bạn: ${token}\nMã có hiệu lực 30 phút. Nếu không yêu cầu, bạn có thể bỏ qua email này.`,
+          expiresAt: new Date(Date.now() + 30 * 60000) });
       }
       res.status(202).json({ message: 'If this account exists, a reset email has been sent' });
     },
@@ -107,6 +107,7 @@ export function authController(cfg) {
       user.tokenVersion += 1;
       await user.save();
       await RefreshToken.updateMany({ user: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
+      await EmailOutbox.deleteMany({ to: user.email, subject: '[StudySpot] Đặt lại mật khẩu', status: 'pending' });
       res.status(204).end();
     },
     exportMe: async (req, res) => {
@@ -140,6 +141,7 @@ export function authController(cfg) {
         Report.deleteMany({ user: userId }), VisitProof.deleteMany({ user: userId }),
         FraudFlag.deleteMany({ user: userId }), MerchantClaim.deleteMany({ applicant: userId }),
         PlaceChangeRequest.deleteMany({ merchant: userId }), Notification.deleteMany({ user: userId }),
+        EmailOutbox.deleteMany({ to: user.email }),
         ReputationEvent.deleteMany({ user: userId }), PasswordReset.deleteMany({ user: userId }),
         RefreshToken.deleteMany({ user: userId }), Place.updateMany({ owner: userId }, { $set: { owner: null } })
       ]);

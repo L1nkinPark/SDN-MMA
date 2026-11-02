@@ -3,10 +3,11 @@ import { HttpError } from '../utils/common.js';
 
 export function localVisitTime(date) {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Ho_Chi_Minh', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    timeZone: 'Asia/Ho_Chi_Minh', weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
   }).formatToParts(date).map(part => [part.type, part.value]));
   return { day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(parts.weekday),
-    clock: `${parts.hour}:${parts.minute}`, minute: Number(parts.minute) };
+    date: `${parts.year}-${parts.month}-${parts.day}`, clock: `${parts.hour}:${parts.minute}`, minute: Number(parts.minute) };
 }
 
 export function ensureBookable(place, startsAt) {
@@ -16,6 +17,7 @@ export function ensureBookable(place, startsAt) {
   if (!Number.isInteger(capacity) || capacity < 1) throw new HttpError(409, 'Booking capacity not configured');
   const duration = place.booking.slotMinutes || 60;
   const local = localVisitTime(startsAt);
+  if (place.business?.closedDates?.includes(local.date)) throw new HttpError(409, 'Place is closed on this date');
   if (local.minute % Math.min(duration, 60) !== 0 ||
     (duration === 120 && Number(local.clock.slice(0, 2)) % 2 !== 0)) {
     throw new HttpError(400, 'Start time must align with slot duration');

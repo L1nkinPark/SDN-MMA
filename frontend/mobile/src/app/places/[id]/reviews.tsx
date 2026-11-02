@@ -22,7 +22,10 @@ function ReviewItem({ review }: { review: Review }) {
         <RatingStars value={review.rating ?? 0} />
       </View>
       {review.text ? <Text style={styles.text}>{review.text}</Text> : null}
-      <Text style={styles.date}>{review.verifiedVisit ? '✓ Đã xác minh lượt ghé' : 'Lượt ghé chưa xác minh'}</Text>
+      <Text style={styles.date}>{review.verifiedVisit
+        ? typeof review.verifiedVisit === 'object' && review.verifiedVisit.method === 'staff_booking'
+          ? '✓ Nhân viên quán xác nhận đã đến' : '✓ Đã quét QR tại quán'
+        : 'Lượt ghé chưa xác minh'}</Text>
       <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
     </View>
   );

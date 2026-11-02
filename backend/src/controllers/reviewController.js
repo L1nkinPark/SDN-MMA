@@ -14,7 +14,8 @@ export const reviewController = {
     const { page, limit } = parse(pageQuery, req.query);
     const query = { place: placeId, hidden: false };
     const [items, total] = await Promise.all([
-      Review.find(query).populate('user', 'name reputation').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Review.find(query).populate('user', 'name reputation').populate('verifiedVisit', 'method')
+        .sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       Review.countDocuments(query)
     ]);
     res.json({ items, page, limit, total });

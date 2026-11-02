@@ -11,7 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Kiểm tra API đang chạy */
+        /** Kiểm tra API và kết nối MongoDB */
         get: operations["health"];
         put?: never;
         post?: never;
@@ -1630,6 +1630,7 @@ export interface components {
                     /** @example 22:00 */
                     close?: string;
                 }[];
+                closedDates?: string[];
                 temporaryClosed?: boolean;
                 seatingCapacity?: number | null;
             };
@@ -1661,8 +1662,11 @@ export interface components {
             text?: string;
             hidden?: boolean;
             moderationNote?: string | null;
-            /** @description ID bằng chứng QR hoặc nhân viên xác nhận trong 14 ngày gần nhất khi viết đánh giá */
-            verifiedVisit?: string | null;
+            verifiedVisit?: (string | {
+                _id?: string;
+                /** @enum {string} */
+                method?: "qr" | "staff_booking";
+            }) | null;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -1772,8 +1776,17 @@ export interface operations {
                     "application/json": {
                         /** @example true */
                         ok?: boolean;
+                        /** @enum {string} */
+                        database?: "connected" | "unavailable";
                     };
                 };
+            };
+            /** @description MongoDB không phản hồi */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2688,6 +2701,8 @@ export interface operations {
                         upcomingBookings?: number;
                         verifiedVisits?: number;
                         pendingFraudFlags?: number;
+                        pendingEmails?: number;
+                        failedEmails?: number;
                     };
                 };
             };
@@ -2791,6 +2806,7 @@ export interface operations {
                         /** @example 22:00 */
                         close: string;
                     }[];
+                    closedDates?: string[];
                     temporaryClosed?: boolean;
                     seatingCapacity?: number | null;
                     bookingEnabled?: boolean;
@@ -2815,6 +2831,13 @@ export interface operations {
             };
             /** @description Không sở hữu địa điểm */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cần xử lý booking tương lai trước khi đóng cửa hoặc thay lịch */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2885,7 +2908,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Giờ mở cửa và các slot đã phát sinh */
+            /** @description Giờ mở cửa và các slot đã phát sinh, có cờ closedOnDate */
             200: {
                 headers: {
                     [name: string]: unknown;

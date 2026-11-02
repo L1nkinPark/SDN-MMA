@@ -5,8 +5,10 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import { createApp } from '../src/app.js';
-import { Booking, BookingSlot, Checkin, FraudFlag, MerchantClaim, Notification, Place, PlaceChangeRequest, User } from '../src/models/index.js';
+import { Booking, BookingSlot, Checkin, EmailOutbox, FraudFlag, MerchantClaim, Notification, PasswordReset, Place, PlaceChangeRequest, User } from '../src/models/index.js';
 import { processBookingDeadlines } from '../src/services/bookingJobs.js';
+import { localVisitTime } from '../src/services/bookingService.js';
+import { processEmailOutbox, queueEmail } from '../src/services/notificationService.js';
 
 const cfg = {
   accessSecret: 'test-business-access-secret-1234567890',
@@ -25,7 +27,7 @@ before(async () => {
   mongo = await MongoMemoryServer.create();
   await mongoose.connect(mongo.getUri());
   await Promise.all([Place.init(), Booking.init(), BookingSlot.init(), MerchantClaim.init(),
-    PlaceChangeRequest.init(), FraudFlag.init(), Notification.init()]);
+    PlaceChangeRequest.init(), FraudFlag.init(), Notification.init(), EmailOutbox.init(), PasswordReset.init()]);
   app = createApp(cfg, io);
 });
 after(async () => {
@@ -167,4 +169,62 @@ test('booking deadline worker releases pending seats and records no-show', async
   const afterStart = await processBookingDeadlines(cfg, new Date(start.getTime() + 16 * 60000));
   assert.equal(afterStart.noShows, 1);
   assert.equal((await Booking.findById(auto.body.booking._id)).status, 'no_show');
+});
+
+test('merchant closing dates cannot invalidate existing bookings and block new bookings', async () => {
+  const owner = await register('Calendar Owner', 'calendar-owner@example.com');
+  const guest = await register('Calendar Guest', 'calendar-guest@example.com');
+  await User.updateOne({ _id: owner.user.id }, { $set: { role: 'merchant' } });
+  const place = await Place.create({ name: 'Calendar Cafe', address: '10 Campus Road',
+    location: { type: 'Point', coordinates: [105.81, 21.01] }, submittedBy: owner.user.id,
+    owner: owner.user.id, approval: 'approved', booking: { enabled: true, capacityPerSlot: 4 },
+    business: { openingHours: Array.from({ length: 7 }, (_, day) => ({ day, open: '08:00', close: '22:00' })) } });
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() + 2);
+  start.setUTCHours(3, 0, 0, 0);
+  const date = localVisitTime(start).date;
+  const booked = await request(app).post('/api/bookings').set(auth(guest.accessToken))
+    .send({ placeId: String(place._id), startsAt: start.toISOString(), partySize: 1 }).expect(201);
+  await request(app).patch(`/api/merchant/places/${place._id}`).set(auth(owner.accessToken))
+    .send({ closedDates: [date] }).expect(409);
+  await request(app).patch(`/api/merchant/places/${place._id}`).set(auth(owner.accessToken))
+    .send({ temporaryClosed: true }).expect(409);
+  await request(app).patch(`/api/merchant/places/${place._id}`).set(auth(owner.accessToken))
+    .send({ openingHours: [] }).expect(409);
+  await request(app).patch(`/api/merchant/places/${place._id}`).set(auth(owner.accessToken))
+    .send({ capacityPerSlot: 1 }).expect(409);
+  await request(app).post(`/api/bookings/${booked.body.booking._id}/cancel`).set(auth(guest.accessToken)).expect(200);
+  await request(app).patch(`/api/merchant/places/${place._id}`).set(auth(owner.accessToken))
+    .send({ closedDates: [date] }).expect(200);
+  const availability = await request(app).get(`/api/places/${place._id}/availability`).query({ date }).expect(200);
+  assert.equal(availability.body.closedOnDate, true);
+  assert.equal(availability.body.enabled, false);
+  await request(app).post('/api/bookings').set(auth(guest.accessToken))
+    .send({ placeId: String(place._id), startsAt: start.toISOString(), partySize: 1 }).expect(409);
+});
+
+test('email outbox retries and password reset token is delivered once', async () => {
+  const emailCfg = { ...cfg, smtp: { host: 'smtp.example.test', from: 'StudySpot <noreply@example.test>' } };
+  const created = await queueEmail(emailCfg, { to: 'retry@example.test', subject: 'Retry', text: 'Hello' });
+  const now = new Date();
+  const first = await processEmailOutbox(emailCfg, now, async () => { throw new Error('temporary SMTP failure'); });
+  assert.equal(first.retried, 1);
+  assert.equal((await EmailOutbox.findById(created._id)).status, 'pending');
+  const delivered = [];
+  const second = await processEmailOutbox(emailCfg, new Date(now.getTime() + 61000), async (_cfg, mail) => delivered.push(mail));
+  assert.equal(second.sent, 1);
+  assert.equal(delivered[0].to, 'retry@example.test');
+  assert.equal((await EmailOutbox.findById(created._id)).text, '');
+
+  const user = await register('Reset Guest', 'reset-guest@example.com');
+  const smtpApp = createApp(emailCfg, io);
+  await request(smtpApp).post('/api/auth/forgot-password').send({ email: 'reset-guest@example.com' }).expect(202);
+  const resetMail = await EmailOutbox.findOne({ to: 'reset-guest@example.com' });
+  const token = resetMail.text.match(/mật khẩu của bạn: ([a-f0-9]+)/)?.[1];
+  assert.ok(token);
+  await request(smtpApp).post('/api/auth/reset-password').send({ token, newPassword: 'NewPassword123!' }).expect(204);
+  await request(smtpApp).post('/api/auth/reset-password').send({ token, newPassword: 'OtherPassword123!' }).expect(400);
+  await request(smtpApp).get('/api/auth/me').set(auth(user.accessToken)).expect(401);
+  await request(smtpApp).post('/api/auth/login')
+    .send({ email: 'reset-guest@example.com', password: 'NewPassword123!' }).expect(200);
 });

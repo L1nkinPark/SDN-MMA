@@ -162,6 +162,9 @@ components:
                   day: { type: integer, minimum: 0, maximum: 6, description: '0=Chủ nhật' }
                   open: { type: string, example: '08:00' }
                   close: { type: string, example: '22:00' }
+            closedDates:
+              type: array
+              items: { type: string, format: date }
             temporaryClosed: { type: boolean }
             seatingCapacity: { type: integer, nullable: true }
         booking:
@@ -193,7 +196,14 @@ components:
         text: { type: string }
         hidden: { type: boolean }
         moderationNote: { type: string, nullable: true }
-        verifiedVisit: { type: string, nullable: true, description: 'ID bằng chứng QR hoặc nhân viên xác nhận trong 14 ngày gần nhất khi viết đánh giá' }
+        verifiedVisit:
+          nullable: true
+          oneOf:
+            - { type: string }
+            - type: object
+              properties:
+                _id: { type: string }
+                method: { type: string, enum: [qr, staff_booking] }
         createdAt: { type: string, format: date-time }
     Checkin:
       type: object
@@ -267,7 +277,7 @@ paths:
   /health:
     get:
       tags: [System]
-      summary: Kiểm tra API đang chạy
+      summary: Kiểm tra API và kết nối MongoDB
       operationId: health
       responses:
         '200':
@@ -278,6 +288,8 @@ paths:
                 type: object
                 properties:
                   ok: { type: boolean, example: true }
+                  database: { type: string, enum: [connected, unavailable] }
+        '503': { description: MongoDB không phản hồi }
   /api/auth/register:
     post:
       tags: [Auth]
@@ -859,6 +871,8 @@ paths:
                   upcomingBookings: { type: integer }
                   verifiedVisits: { type: integer }
                   pendingFraudFlags: { type: integer }
+                  pendingEmails: { type: integer }
+                  failedEmails: { type: integer }
         '403': { description: Cần quyền admin }
   /api/merchant/claims:
     post:
@@ -942,6 +956,10 @@ paths:
                       day: { type: integer, minimum: 0, maximum: 6 }
                       open: { type: string, example: '08:00' }
                       close: { type: string, example: '22:00' }
+                closedDates:
+                  type: array
+                  maxItems: 90
+                  items: { type: string, format: date }
                 temporaryClosed: { type: boolean }
                 seatingCapacity: { type: integer, nullable: true }
                 bookingEnabled: { type: boolean }
@@ -953,6 +971,7 @@ paths:
                 minDrinkPrice: { type: number, nullable: true }
       responses:
         '200': { description: Địa điểm đã cập nhật }
+        '409': { description: Cần xử lý booking tương lai trước khi đóng cửa hoặc thay lịch }
         '404': { description: Không sở hữu địa điểm }
   /api/merchant/places/{id}/visit-code:
     post:
@@ -984,7 +1003,7 @@ paths:
         - { $ref: '#/components/parameters/PlaceId' }
         - { name: date, in: query, required: true, schema: { type: string, format: date, example: '2026-11-04' } }
       responses:
-        '200': { description: Giờ mở cửa và các slot đã phát sinh }
+        '200': { description: 'Giờ mở cửa và các slot đã phát sinh, có cờ closedOnDate' }
   /api/bookings:
     post:
       tags: [Bookings]

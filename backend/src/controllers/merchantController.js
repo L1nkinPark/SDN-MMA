@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { MerchantClaim, Place, PlaceChangeRequest } from '../models/index.js';
+import { Booking, BookingSlot, MerchantClaim, Place, PlaceChangeRequest } from '../models/index.js';
 import { HttpError, assertId, pageQuery, parse } from '../utils/common.js';
 import { notifyAdmins } from '../services/notificationService.js';
 import { placeBody, assertNoDuplicatePlace } from './placeController.js';
 import { uploadPlaceImage } from '../services/imageService.js';
+import { ensureBookable, localVisitTime } from '../services/bookingService.js';
 
 const claimBody = z.object({
   placeId: z.string(), businessName: z.string().trim().min(2).max(120),
@@ -16,6 +17,7 @@ const businessBody = z.object({
   phone: z.string().trim().min(8).max(20).nullable().optional(),
   openingHours: z.array(z.object({ day: z.number().int().min(0).max(6), open: clock, close: clock }))
     .max(7).optional(),
+  closedDates: z.array(z.iso.date()).max(90).optional(),
   temporaryClosed: z.boolean().optional(), seatingCapacity: z.number().int().min(1).max(10000).nullable().optional(),
   bookingEnabled: z.boolean().optional(), slotMinutes: z.union([z.literal(30), z.literal(60), z.literal(120)]).optional(),
   approvalMode: z.enum(['auto', 'manual']).optional(),
@@ -125,9 +127,37 @@ export function merchantController(cfg) {
         if (new Set(body.openingHours.map(h => h.day)).size !== body.openingHours.length ||
           body.openingHours.some(h => h.open >= h.close)) throw new HttpError(400, 'Invalid opening hours');
       }
+      if (body.closedDates) {
+        const today = localVisitTime(new Date()).date;
+        const latest = new Date(Date.now() + 366 * 86400000).toISOString().slice(0, 10);
+        if (new Set(body.closedDates).size !== body.closedDates.length ||
+          body.closedDates.some(date => date < today || date > latest)) {
+          throw new HttpError(400, 'Closed dates must be unique and within the next year');
+        }
+      }
       const changes = {};
-      for (const key of ['phone', 'openingHours', 'temporaryClosed', 'seatingCapacity']) {
+      for (const key of ['phone', 'openingHours', 'closedDates', 'temporaryClosed', 'seatingCapacity']) {
         if (body[key] !== undefined) changes[`business.${key}`] = body[key];
+      }
+      if (body.temporaryClosed === true || body.closedDates || body.openingHours || body.bookingEnabled === false ||
+        body.slotMinutes || body.capacityPerSlot) {
+        const existing = await Place.findOne({ _id: id, owner: req.user._id, approval: 'approved' });
+        if (!existing) throw new HttpError(404, 'Owned place not found');
+        const proposed = existing.toObject();
+        for (const [path, value] of Object.entries(changes)) {
+          const [section, field] = path.split('.');
+          if (field) proposed[section][field] = value;
+          else proposed[path] = value;
+        }
+        const active = await Booking.find({ place: id, status: { $in: ['pending', 'confirmed'] },
+          startsAt: { $gt: new Date() } }).select('startsAt').lean();
+        if (active.length && (body.slotMinutes !== undefined || body.capacityPerSlot !== undefined)) {
+          throw new HttpError(409, 'Cancel future bookings before changing slot duration or capacity');
+        }
+        if (active.some(booking => {
+          try { ensureBookable(proposed, booking.startsAt); return false; }
+          catch { return true; }
+        })) throw new HttpError(409, 'Cancel affected future bookings before changing availability');
       }
       for (const [from, to] of [['bookingEnabled', 'booking.enabled'], ['slotMinutes', 'booking.slotMinutes'],
         ['approvalMode', 'booking.approvalMode'],
@@ -138,6 +168,10 @@ export function merchantController(cfg) {
       const place = await Place.findOneAndUpdate({ _id: id, owner: req.user._id, approval: 'approved' },
         { $set: changes }, { new: true, runValidators: true });
       if (!place) throw new HttpError(404, 'Owned place not found');
+      if (body.capacityPerSlot !== undefined) {
+        await BookingSlot.updateMany({ place: id, startsAt: { $gt: new Date() } },
+          { $set: { capacity: body.capacityPerSlot } });
+      }
       res.json({ place });
     },
     visitCode: async (req, res) => {

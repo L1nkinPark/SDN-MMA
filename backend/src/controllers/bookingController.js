@@ -19,9 +19,10 @@ export const bookingController = {
     const end = new Date(start.getTime() + 86400000);
     const slots = await BookingSlot.find({ place: placeId, startsAt: { $gte: start, $lt: end } })
       .sort({ startsAt: 1 }).lean();
-    res.json({ placeId, date, enabled: Boolean(place.booking?.enabled && !place.business?.temporaryClosed),
+    const closedOnDate = place.business?.closedDates?.includes(date) || false;
+    res.json({ placeId, date, closedOnDate, enabled: Boolean(place.booking?.enabled && !place.business?.temporaryClosed && !closedOnDate),
       capacityPerSlot: place.booking?.capacityPerSlot || null, slotMinutes: place.booking?.slotMinutes || 60,
-      openingHours: place.business?.openingHours || [], slots });
+      openingHours: place.business?.openingHours || [], closedDates: place.business?.closedDates || [], slots });
   },
   create: async (req, res) => {
     const body = parse(createBody, req.body);

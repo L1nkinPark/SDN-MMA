@@ -2,5 +2,6 @@ node_modules/
 .env
 coverage/
 *.log
+backups/
 **/docs/.$*.bkp
 **/docs/*.drawio.png

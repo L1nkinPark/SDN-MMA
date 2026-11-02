@@ -47,3 +47,11 @@ npm start
 Trong mobile `.env`, `EXPO_PUBLIC_API_URL=http://10.0.2.2:4000` cho Android emulator. Điện thoại thật cần IP LAN của máy chạy backend, ví dụ `http://192.168.x.x:4000`; thêm origin tương ứng vào `CLIENT_ORIGINS` nếu chạy Expo web. Camera QR cần quyền camera trên thiết bị. Chỉ thử QR tại quán đã được admin duyệt và có chủ quán.
 
 Luồng vận hành: tài khoản sinh viên đăng nhập web quản lý để gửi hồ sơ quán/nhận quyền quán; admin duyệt hồ sơ và minh chứng; chủ quán cấu hình giờ mở, sức chứa và booking; sinh viên đặt chỗ trên mobile; chủ quán duyệt nếu chế độ thủ công; khách quét QR tại quầy hoặc nhân viên xác nhận booking. Admin xem cờ bất thường và nhật ký trong web.
+
+Chủ quán có thể đặt ngày nghỉ trong trang quản lý. Hệ thống không cho lưu lịch nghỉ hoặc tạm đóng cửa nếu còn booking tương lai bị ảnh hưởng; chủ quán cần xử lý các booking đó trước. Email được xếp hàng trong MongoDB và thử gửi lại tối đa 5 lần khi SMTP lỗi. Mã đặt lại mật khẩu và email chứa mã hết hạn sau 30 phút.
+
+`GET /health` trả 200 khi MongoDB phản hồi ping và 503 khi mất kết nối. Dùng endpoint này cho health check của hosting; cảnh báo khi trả 503 hoặc tiến trình dừng.
+
+Sao lưu MongoDB local: cài MongoDB Database Tools, rồi chạy `powershell -File backend/scripts/backup-local.ps1` từ thư mục gốc. Bản sao lưu nằm trong `backend/backups/` và được Git bỏ qua. Thử khôi phục định kỳ vào cơ sở dữ liệu riêng, ví dụ `mongorestore --host 127.0.0.1 --port 27017 --db studyspot_restore backend/backups/<thời-gian>/studyspot`. Với MongoDB Atlas, cấu hình automated backups trong Atlas.
+
+GPS từ điện thoại có thể bị giả. QR tại quầy và vị trí chỉ là bằng chứng hỗ trợ; để xác nhận khách đã vào quán, nhân viên phải đánh dấu `Đã đến` trên booking. Admin cần kiểm tra cờ di chuyển bất thường trước khi tin báo cáo hoặc đánh giá.

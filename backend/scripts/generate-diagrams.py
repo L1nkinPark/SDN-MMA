@@ -99,7 +99,7 @@ entity(erd, "place", "PLACE  ·  study location", [
     "location: GeoJSON Point [lng, lat]", "amenities: { wifi, outlets }",
     "minDrinkPrice: Number | null", "images: Cloudinary URL[]",
     "approval: pending | approved | rejected", "moderationNote, onboardingEvidenceUrls", "submittedBy, owner: User ObjectId",
-    "business: hours, capacity, phone, closed", "booking: enabled, mode, slot, capacity",
+    "business: hours, closedDates, capacity", "booking: enabled, mode, slot, capacity",
     "ratingAverage, ratingCount: Number", "liveStatus: { crowd, noise, sampleCount,",
     "  updatedAt, validUntil }", "source: { url, retrievedAt, accuracy, note }",
     "seedKey: String (unique, optional)", "createdAt, updatedAt: Date",
@@ -232,7 +232,7 @@ architecture_card("controllers", "Controllers + JSON views",
 architecture_card("services", "Domain services",
                   "Trạng thái, rating, booking, email<br/>Token, ảnh, reputation, jobs", 1132, 696, 490, 104, "#22C55E")
 architecture_card("models", "Mongoose models",
-                  "User · Place · Checkin · Review · Report<br/>Claim · Booking · Slot · Proof · Audit · Notification · Fraud", 78, 821, 754, 91, "#16A34A")
+                  "User · Place · Checkin · Review · Report<br/>Claim · Booking · Slot · Proof · Audit · Notification · Outbox · Fraud", 78, 821, 754, 91, "#16A34A")
 architecture_card("job", "Background interval",
                   "Hết hạn check-in, booking pending; nhắc lịch, no-show", 868, 821, 754, 91, "#84CC16")
 
@@ -326,7 +326,7 @@ vertex(extension, "ext-note",
        65, 2020, 1770, 90, fill="#EFF6FF", stroke="#BFDBFE", font_size=15)
 
 
-operations = page(mxfile, "04 - Operations ERD", "studyspot-operations-erd", 1900, 1470)
+operations = page(mxfile, "04 - Operations ERD", "studyspot-operations-erd", 1900, 1770)
 text(operations, "ops-title", "StudySpot | Operations & trust data model", 65, 35, 1700, 55, 29, "#0F172A", True)
 text(operations, "ops-subtitle", "Change approval · notification retention · password recovery · fraud review", 65, 90, 1700, 35, 16)
 entity(operations, "ops-user", "USER  ·  identity", [
@@ -354,6 +354,12 @@ for cell_id, title, fields, top, accent, has_place in operation_entities:
     if has_place:
         edge(operations, "ops-place-" + cell_id, "ops-" + cell_id, "ops-place", "place N:1", color="#0D9488",
              end="none", extra="exitX=1;exitY=0.5;entryX=0;entryY=1;")
+
+entity(operations, "ops-outbox", "EmailOutbox", ["_id: ObjectId (PK)", "to: email String", "subject, text: String",
+    "status: pending | sending | sent | failed", "attempts, nextAttemptAt, lockedUntil", "sentAt, lastError, expiresAt (TTL)"],
+    660, 1450, 580, accent="#0891B2")
+edge(operations, "ops-user-outbox", "ops-user", "ops-outbox", "to = User.email", color="#3B82F6",
+     end="none", extra="exitX=1;exitY=1;entryX=0;entryY=0.5;")
 
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)

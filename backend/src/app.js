@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
@@ -29,7 +30,15 @@ export function createApp(cfg, io) {
     places: '/api/places',
     docs: '/api/docs'
   }));
-  app.get('/health', (_req, res) => res.json({ ok: true }));
+  app.get('/health', async (_req, res) => {
+    try {
+      if (mongoose.connection.readyState !== 1) throw new Error('MongoDB disconnected');
+      await mongoose.connection.db.admin().ping();
+      res.json({ ok: true, database: 'connected' });
+    } catch {
+      res.status(503).json({ ok: false, database: 'unavailable' });
+    }
+  });
   app.get('/api/openapi.json', (_req, res) => res.json(openapiSpec));
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, { explorer: true, customSiteTitle: 'StudySpot API Docs' }));
   app.use('/api/auth', rateLimit({ windowMs: 15 * 60000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false }), authRouter(cfg));

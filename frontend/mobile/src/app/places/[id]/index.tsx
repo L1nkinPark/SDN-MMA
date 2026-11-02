@@ -75,7 +75,10 @@ function ReviewPreview({ review }: { review: Review }) {
         <RatingStars value={review.rating ?? 0} />
       </View>
       {review.text ? <Text style={styles.reviewText}>{review.text}</Text> : null}
-      <Text style={type.meta}>{review.verifiedVisit ? '✓ Đã xác minh lượt ghé' : 'Lượt ghé chưa xác minh'}</Text>
+      <Text style={type.meta}>{review.verifiedVisit
+        ? typeof review.verifiedVisit === 'object' && review.verifiedVisit.method === 'staff_booking'
+          ? '✓ Nhân viên quán xác nhận đã đến' : '✓ Đã quét QR tại quán'
+        : 'Lượt ghé chưa xác minh'}</Text>
       <Text style={type.meta}>{formatDate(review.createdAt)}</Text>
     </View>
   );

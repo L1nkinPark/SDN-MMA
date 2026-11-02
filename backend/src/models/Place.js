@@ -24,6 +24,7 @@ const schema = new Schema({
   business: {
     phone: { type: String, default: null },
     openingHours: [{ day: { type: Number, min: 0, max: 6 }, open: String, close: String }],
+    closedDates: { type: [String], default: [] },
     temporaryClosed: { type: Boolean, default: false },
     seatingCapacity: { type: Number, min: 1, default: null }
   },

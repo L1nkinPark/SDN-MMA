@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<mxfile host="app.diagrams.net" modified="2026-11-02T17:52:36+00:00" version="24.7.17" type="device">
+<mxfile host="app.diagrams.net" modified="2026-11-02T18:06:55+00:00" version="24.7.17" type="device">
   <diagram id="studyspot-architecture" name="02 - System Architecture">
     <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1240" math="0" shadow="0">
       <root>
@@ -101,7 +101,7 @@
         <mxCell id="services-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#22C55E;strokeColor=#22C55E;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
           <mxGeometry x="1132" y="696" width="7" height="104" as="geometry" />
         </mxCell>
-        <mxCell id="models" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Mongoose models&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;User · Place · Checkin · Review · Report&lt;br/&gt;Claim · Booking · Slot · Proof · Audit · Notification · Fraud&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="models" value="&lt;div style='font-family:Arial,sans-serif;line-height:1.4'&gt;&lt;div style='font-size:19px;font-weight:bold;color:#0F172A'&gt;Mongoose models&lt;/div&gt;&lt;div style='font-size:14px;color:#475569;margin-top:7px'&gt;User · Place · Checkin · Review · Report&lt;br/&gt;Claim · Booking · Slot · Proof · Audit · Notification · Outbox · Fraud&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E2E8F0;fontColor=#0F172A;fontSize=15;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;strokeWidth=1.5;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="78" y="821" width="754" height="91" as="geometry" />
         </mxCell>
         <mxCell id="models-accent" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#16A34A;strokeColor=#16A34A;fontColor=#0F172A;fontSize=14;align=left;verticalAlign=middle;spacingLeft=14;spacingRight=12;spacingTop=9;spacingBottom=8;shadow=0;dashed=0;" vertex="1" parent="1">
