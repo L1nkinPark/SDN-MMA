@@ -569,10 +569,13 @@
 /* ---------- Login ---------- */
 .login {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  max-width: 480px;
-  padding: 60px var(--content-right) 40px var(--content-left);
+  justify-content: center;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
 .login__brand {
