@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Chọn vị trí</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#141A2E;text-decoration:none}a:hover{color:#16308F}
+input::placeholder,textarea::placeholder{color:#5A647D;opacity:1}
+input:focus,textarea:focus{outline:none;border-bottom-color:#16308F;box-shadow:0 1px 0 #16308F}
+button:focus-visible,a:focus-visible{outline:2px solid #16308F;outline-offset:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+</helmet>
+<sc-if value="{{s0}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  
+  <div style="position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden">
+  <svg role="img" aria-label="Bản đồ minh họa quanh Đường D1, Khu Công nghệ cao" width="390" height="700" viewBox="0 0 390 700" style="display: block; background: #E9EDF3">
+    <polyline points="0,89 62,130 152,213 234,379 324,557 457,891" fill="none" stroke="#FFFFFF" stroke-width="10"></polyline>
+    <polyline points="152,213 249,0" fill="none" stroke="#FFFFFF" stroke-width="6"></polyline><polyline points="234,379 54,1209" fill="none" stroke="#FFFFFF" stroke-width="6"></polyline><polyline points="324,557 390,375" fill="none" stroke="#FFFFFF" stroke-width="6"></polyline>
+    
+    
+  </svg>
+  <button type="button" aria-label="Quay lại" style="position: absolute; left: 20px; top: 52px; width: 44px; height: 44px; padding: 0; border: 1.5px solid #16308F; border-radius: 2px; background: #F6F7F9; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button>
+  <span style="position: absolute; left: 76px; top: 66px; padding: 4px 8px; background: #F6F7F9; font-size: 12px; line-height: 16px; color: #3F4963">Bản đồ minh họa</span>
+  <span aria-hidden="true" style="position: absolute; left: 179px; top: 288px; color: #B8321C"><svg width="32" height="44" viewBox="0 0 32 44"><path d="M16 42S3 26 3 15.5a13 13 0 0 1 26 0C29 26 16 42 16 42Z" fill="currentColor"></path><circle cx="16" cy="15.5" r="5" fill="#FFFFFF"></circle></svg></span>
+  <button type="button" aria-label="Về vị trí của tôi" style="position: absolute; right: 20px; bottom: 16px; width: 44px; height: 44px; padding: 0; border: 1.5px solid #16308F; border-radius: 2px; background: #F6F7F9; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-4a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12 2v3M12 19v3M2 12h3M19 12h3"></path></svg></button>
+</div>
+<div style="flex: none; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px 32px; border-top: 1.5px solid #16308F; background: #F6F7F9">
+  <div style="display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600">Kéo bản đồ để chọn vị trí</h1><span style="font-size: 14px; line-height: 20px; color: #3F4963; font-variant-numeric: tabular-nums">10.84500, 106.80400</span></div>
+  <button type="button" style="height: 54px; width: 100%; flex: none; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; ">Xác nhận vị trí</button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{s1}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  
+  <div style="position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden">
+  <svg role="img" aria-label="Bản đồ minh họa quanh Đường D1, Khu Công nghệ cao" width="390" height="700" viewBox="0 0 390 700" style="display: block; background: #E9EDF3">
+    <polyline points="0,89 62,130 152,213 234,379 324,557 457,891" fill="none" stroke="#FFFFFF" stroke-width="10"></polyline>
+    <polyline points="152,213 249,0" fill="none" stroke="#FFFFFF" stroke-width="6"></polyline><polyline points="234,379 54,1209" fill="none" stroke="#FFFFFF" stroke-width="6"></polyline><polyline points="324,557 390,375" fill="none" stroke="#FFFFFF" stroke-width="6"></polyline>
+    
+    
+  </svg>
+  <button type="button" aria-label="Quay lại" style="position: absolute; left: 20px; top: 52px; width: 44px; height: 44px; padding: 0; border: 1.5px solid #16308F; border-radius: 2px; background: #F6F7F9; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button>
+  <span style="position: absolute; left: 76px; top: 66px; padding: 4px 8px; background: #F6F7F9; font-size: 12px; line-height: 16px; color: #3F4963">Bản đồ minh họa</span>
+  <span aria-hidden="true" style="position: absolute; left: 179px; top: 288px; color: #B8321C"><svg width="32" height="44" viewBox="0 0 32 44"><path d="M16 42S3 26 3 15.5a13 13 0 0 1 26 0C29 26 16 42 16 42Z" fill="currentColor"></path><circle cx="16" cy="15.5" r="5" fill="#FFFFFF"></circle></svg></span>
+  <button type="button" aria-label="Về vị trí của tôi" style="position: absolute; right: 20px; bottom: 16px; width: 44px; height: 44px; padding: 0; border: 1.5px solid #16308F; border-radius: 2px; background: #F6F7F9; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-4a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12 2v3M12 19v3M2 12h3M19 12h3"></path></svg></button>
+</div>
+<div style="flex: none; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px 32px; border-top: 1.5px solid #16308F; background: #F6F7F9">
+  <div style="display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600">Kéo bản đồ để chọn vị trí</h1><span style="font-size: 14px; line-height: 20px; color: #3F4963; font-variant-numeric: tabular-nums">Chưa có vị trí hiện tại, kéo bản đồ để chọn thủ công</span></div>
+  <button type="button" style="height: 54px; width: 100%; flex: none; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; ">Xác nhận vị trí</button>
+</div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["Đang chọn","Chưa bật vị trí"],"default":"Đang chọn"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = ["Đang chọn","Chưa bật vị trí"];
+    const state = this.props.state ?? names[0];
+    return Object.fromEntries(names.map((name, index) => ['s' + index, name === state]));
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Đăng ký</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#141A2E;text-decoration:none}a:hover{color:#16308F}
+input::placeholder,textarea::placeholder{color:#5A647D;opacity:1}
+input:focus,textarea:focus{outline:none;border-bottom-color:#16308F;box-shadow:0 1px 0 #16308F}
+button:focus-visible,a:focus-visible{outline:2px solid #16308F;outline-offset:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+</helmet>
+<sc-if value="{{s0}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Tạo tài khoản</h1>
+    
+  </div>
+</header>
+<main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><div style="display: flex; flex-direction: column; gap: 20px; padding: 20px 20px 20px 40px"><div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-name" style="font-size: 13px; font-weight: 600; color: #3F4963">Họ và tên</label>
+  <div style="position: relative">
+    <input id="reg-name" type="text" placeholder="Nguyễn Văn An" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-email" style="font-size: 13px; font-weight: 600; color: #3F4963">Email</label>
+  <div style="position: relative">
+    <input id="reg-email" type="email" placeholder="ten@fpt.edu.vn" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-pass" style="font-size: 13px; font-weight: 600; color: #3F4963">Mật khẩu</label>
+  <div style="position: relative">
+    <input id="reg-pass" type="password" placeholder="Ít nhất 8 ký tự" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 44px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    <button type="button" aria-label="Hiện mật khẩu" style="position: absolute; right: 0; top: 0; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #3F4963; cursor: pointer; display: flex; align-items: center; justify-content: flex-end"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+  </div>
+  
+  
+</div>
+</div></main>
+<div style="flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 40px 40px; background: #F6F7F9"><button type="button" style="height: 54px; width: 100%; flex: none; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; ">Đăng ký</button><div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #3F4963"><span>Đã có tài khoản?</span><a href="#dang-nhap" style="display: flex; align-items: center; min-height: 44px; font-weight: 600; color: #16308F; text-decoration: underline">Đăng nhập</a></div></div>
+</div>
+</sc-if>
+<sc-if value="{{s1}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Tạo tài khoản</h1>
+    
+  </div>
+</header>
+<main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><div style="display: flex; flex-direction: column; gap: 20px; padding: 20px 20px 20px 40px"><div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-name" style="font-size: 13px; font-weight: 600; color: #B8321C">Họ và tên</label>
+  <div style="position: relative">
+    <input id="reg-name" type="text" value="A" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #B8321C; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  <p style="margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #B8321C">Họ tên cần ít nhất 2 ký tự.</p>
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-email" style="font-size: 13px; font-weight: 600; color: #B8321C">Email</label>
+  <div style="position: relative">
+    <input id="reg-email" type="email" value="sinhvien@fpt" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #B8321C; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  <p style="margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #B8321C">Email chưa đúng định dạng.</p>
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-pass" style="font-size: 13px; font-weight: 600; color: #B8321C">Mật khẩu</label>
+  <div style="position: relative">
+    <input id="reg-pass" type="password" value="1234" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 44px 0 0; border: 0; border-bottom: 1.5px solid #B8321C; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    <button type="button" aria-label="Hiện mật khẩu" style="position: absolute; right: 0; top: 0; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #3F4963; cursor: pointer; display: flex; align-items: center; justify-content: flex-end"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+  </div>
+  <p style="margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #B8321C">Mật khẩu cần ít nhất 8 ký tự.</p>
+  
+</div>
+</div></main>
+<div style="flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 40px 40px; background: #F6F7F9"><button type="button" style="height: 54px; width: 100%; flex: none; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; ">Đăng ký</button><div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #3F4963"><span>Đã có tài khoản?</span><a href="#dang-nhap" style="display: flex; align-items: center; min-height: 44px; font-weight: 600; color: #16308F; text-decoration: underline">Đăng nhập</a></div></div>
+</div>
+</sc-if>
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Tạo tài khoản</h1>
+    
+  </div>
+</header>
+<main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><div style="display: flex; flex-direction: column; gap: 20px; padding: 20px 20px 20px 40px"><div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-name" style="font-size: 13px; font-weight: 600; color: #3F4963">Họ và tên</label>
+  <div style="position: relative">
+    <input id="reg-name" type="text" value="Nguyễn Văn An" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-email" style="font-size: 13px; font-weight: 600; color: #3F4963">Email</label>
+  <div style="position: relative">
+    <input id="reg-email" type="email" value="sinhvien@fpt.edu.vn" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-pass" style="font-size: 13px; font-weight: 600; color: #3F4963">Mật khẩu</label>
+  <div style="position: relative">
+    <input id="reg-pass" type="password" value="matkhau123" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 44px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    <button type="button" aria-label="Hiện mật khẩu" style="position: absolute; right: 0; top: 0; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #3F4963; cursor: pointer; display: flex; align-items: center; justify-content: flex-end"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+  </div>
+  
+  
+</div>
+</div></main>
+<div style="flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 40px 40px; background: #F6F7F9"><button type="button" disabled="true" aria-busy="true" style="height: 54px; width: 100%; flex: none; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px"><svg class="spinner" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"></path></svg><span>Đang tạo tài khoản</span></button><div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #3F4963"><span>Đã có tài khoản?</span><a href="#dang-nhap" style="display: flex; align-items: center; min-height: 44px; font-weight: 600; color: #16308F; text-decoration: underline">Đăng nhập</a></div></div>
+</div>
+</sc-if>
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Tạo tài khoản</h1>
+    
+  </div>
+</header>
+<main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><div style="display: flex; flex-direction: column; gap: 20px; padding: 20px 20px 20px 40px"><div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-name" style="font-size: 13px; font-weight: 600; color: #3F4963">Họ và tên</label>
+  <div style="position: relative">
+    <input id="reg-name" type="text" value="Nguyễn Văn An" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-email" style="font-size: 13px; font-weight: 600; color: #B8321C">Email</label>
+  <div style="position: relative">
+    <input id="reg-email" type="email" value="sinhvien@fpt.edu.vn" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 0px 0 0; border: 0; border-bottom: 1.5px solid #B8321C; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    
+  </div>
+  <p style="margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #B8321C">Email này đã có tài khoản. Hãy đăng nhập.</p>
+  
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+  <label for="reg-pass" style="font-size: 13px; font-weight: 600; color: #3F4963">Mật khẩu</label>
+  <div style="position: relative">
+    <input id="reg-pass" type="password" value="matkhau123" style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 44px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+    <button type="button" aria-label="Hiện mật khẩu" style="position: absolute; right: 0; top: 0; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #3F4963; cursor: pointer; display: flex; align-items: center; justify-content: flex-end"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+  </div>
+  
+  
+</div>
+</div></main>
+<div style="flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 40px 40px; background: #F6F7F9"><button type="button" style="height: 54px; width: 100%; flex: none; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; ">Đăng ký</button><div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #3F4963"><span>Đã có tài khoản?</span><a href="#dang-nhap" style="display: flex; align-items: center; min-height: 44px; font-weight: 600; color: #16308F; text-decoration: underline">Đăng nhập</a></div></div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["Mặc định","Sai định dạng","Đang tạo","Email đã dùng"],"default":"Mặc định"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = ["Mặc định","Sai định dạng","Đang tạo","Email đã dùng"];
+    const state = this.props.state ?? names[0];
+    return Object.fromEntries(names.map((name, index) => ['s' + index, name === state]));
+  }
+}
+</script>
+</body>
+</html>

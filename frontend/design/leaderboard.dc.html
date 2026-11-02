@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Xếp hạng</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#141A2E;text-decoration:none}a:hover{color:#16308F}
+input::placeholder,textarea::placeholder{color:#5A647D;opacity:1}
+input:focus,textarea:focus{outline:none;border-bottom-color:#16308F;box-shadow:0 1px 0 #16308F}
+button:focus-visible,a:focus-visible{outline:2px solid #16308F;outline-offset:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+</helmet>
+<sc-if value="{{s0}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 84px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 64px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Xếp hạng</h1>
+    <span style="flex: none; font-size: 13px; font-weight: 500; color: #3F4963">Top 20</span>
+  </div>
+</header><main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; ">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 30px; line-height: 1; color: #16308F; font-variant-numeric: tabular-nums">1</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 500">Trần Minh Anh</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">42 điểm</span>
+</div><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; ">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 30px; line-height: 1; color: #16308F; font-variant-numeric: tabular-nums">2</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 500">Lê Hoàng Nam</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">38 điểm</span>
+</div><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; background: #E1E5EF;">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 30px; line-height: 1; color: #16308F; font-variant-numeric: tabular-nums">3</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 600">Nguyễn Văn An (bạn)</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">36 điểm</span>
+</div><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; ">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 22px; line-height: 1; color: #3F4963; font-variant-numeric: tabular-nums">4</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 500">Phạm Thu Hà</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">29 điểm</span>
+</div><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; ">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 22px; line-height: 1; color: #3F4963; font-variant-numeric: tabular-nums">5</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 500">Đỗ Quốc Bảo</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">24 điểm</span>
+</div><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; ">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 22px; line-height: 1; color: #3F4963; font-variant-numeric: tabular-nums">6</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 500">Vũ Khánh Linh</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">19 điểm</span>
+</div><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; ">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 22px; line-height: 1; color: #3F4963; font-variant-numeric: tabular-nums">7</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 500">Bùi Gia Huy</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">15 điểm</span>
+</div><div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #C9D1E3; ">
+  <span style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 22px; line-height: 1; color: #3F4963; font-variant-numeric: tabular-nums">8</span>
+  <span style="font-size: 15px; line-height: 22px; font-weight: 500">Hoàng Mai Chi</span>
+  <span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">12 điểm</span>
+</div></main><nav aria-label="Điều hướng chính" style="flex: none; height: 84px; box-sizing: border-box; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #F6F7F9; border-top: 1.5px solid #16308F; padding-bottom: 24px; position: relative">
+<button type="button" aria-label="Khám phá" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Zm0-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg><span>Khám phá</span></button><button type="button" aria-label="Yêu thích" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 20.5 3.6 12.2a5.1 5.1 0 0 1 7.2-7.2L12 6.2 13.2 5a5.1 5.1 0 0 1 7.2 7.2L12 20.5Z"></path></svg><span>Yêu thích</span></button><button type="button" aria-label="Xếp hạng" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid #16308F; margin-top: -1.5px; background: none; color: #16308F; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 20V12h5v8M9.5 20V5h5v15M15 20v-6h5v6M3 20h18"></path></svg><span>Xếp hạng</span></button><button type="button" aria-label="Hồ sơ" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.6-3.7 3.6-6 7.5-6s6.9 2.3 7.5 6"></path></svg><span>Hồ sơ</span></button>
+</nav>
+</div>
+</sc-if>
+<sc-if value="{{s1}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 84px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 64px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Xếp hạng</h1>
+    
+  </div>
+</header><main aria-busy="true" aria-label="Đang tải" style="flex: 1 1 auto; min-height: 0; overflow: hidden"><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 214px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 268px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 186px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 240px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 228px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 256px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 200px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 224px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div></main><nav aria-label="Điều hướng chính" style="flex: none; height: 84px; box-sizing: border-box; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #F6F7F9; border-top: 1.5px solid #16308F; padding-bottom: 24px; position: relative">
+<button type="button" aria-label="Khám phá" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Zm0-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg><span>Khám phá</span></button><button type="button" aria-label="Yêu thích" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 20.5 3.6 12.2a5.1 5.1 0 0 1 7.2-7.2L12 6.2 13.2 5a5.1 5.1 0 0 1 7.2 7.2L12 20.5Z"></path></svg><span>Yêu thích</span></button><button type="button" aria-label="Xếp hạng" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid #16308F; margin-top: -1.5px; background: none; color: #16308F; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 20V12h5v8M9.5 20V5h5v15M15 20v-6h5v6M3 20h18"></path></svg><span>Xếp hạng</span></button><button type="button" aria-label="Hồ sơ" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.6-3.7 3.6-6 7.5-6s6.9 2.3 7.5 6"></path></svg><span>Hồ sơ</span></button>
+</nav>
+</div>
+</sc-if>
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 84px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 64px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Xếp hạng</h1>
+    
+  </div>
+</header><main style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 20px 0 40px">
+  <h2 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; color: #141A2E">Chưa có ai trên bảng xếp hạng</h2>
+  <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Check-in hoặc viết đánh giá để có điểm đầu tiên.</p>
+  <div style="margin-top: 8px"><button type="button" style="height: 48px;  flex: none; padding: 0 20px; border: 1.5px solid #16308F; border-radius: 2px; background: none; color: #16308F; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Tìm địa điểm</button></div>
+</main><nav aria-label="Điều hướng chính" style="flex: none; height: 84px; box-sizing: border-box; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #F6F7F9; border-top: 1.5px solid #16308F; padding-bottom: 24px; position: relative">
+<button type="button" aria-label="Khám phá" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Zm0-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg><span>Khám phá</span></button><button type="button" aria-label="Yêu thích" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 20.5 3.6 12.2a5.1 5.1 0 0 1 7.2-7.2L12 6.2 13.2 5a5.1 5.1 0 0 1 7.2 7.2L12 20.5Z"></path></svg><span>Yêu thích</span></button><button type="button" aria-label="Xếp hạng" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid #16308F; margin-top: -1.5px; background: none; color: #16308F; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 20V12h5v8M9.5 20V5h5v15M15 20v-6h5v6M3 20h18"></path></svg><span>Xếp hạng</span></button><button type="button" aria-label="Hồ sơ" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.6-3.7 3.6-6 7.5-6s6.9 2.3 7.5 6"></path></svg><span>Hồ sơ</span></button>
+</nav>
+</div>
+</sc-if>
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 84px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 64px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Xếp hạng</h1>
+    
+  </div>
+</header><main style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 20px 0 40px">
+  <h2 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; color: #B8321C">Chưa tải được bảng xếp hạng</h2>
+  <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Kiểm tra kết nối mạng rồi thử lại.</p>
+  <div style="margin-top: 8px"><button type="button" style="height: 48px;  flex: none; padding: 0 20px; border: 1.5px solid #16308F; border-radius: 2px; background: none; color: #16308F; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Thử lại</button></div>
+</main><nav aria-label="Điều hướng chính" style="flex: none; height: 84px; box-sizing: border-box; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #F6F7F9; border-top: 1.5px solid #16308F; padding-bottom: 24px; position: relative">
+<button type="button" aria-label="Khám phá" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Zm0-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg><span>Khám phá</span></button><button type="button" aria-label="Yêu thích" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 20.5 3.6 12.2a5.1 5.1 0 0 1 7.2-7.2L12 6.2 13.2 5a5.1 5.1 0 0 1 7.2 7.2L12 20.5Z"></path></svg><span>Yêu thích</span></button><button type="button" aria-label="Xếp hạng" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid #16308F; margin-top: -1.5px; background: none; color: #16308F; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 20V12h5v8M9.5 20V5h5v15M15 20v-6h5v6M3 20h18"></path></svg><span>Xếp hạng</span></button><button type="button" aria-label="Hồ sơ" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-top: 3px solid transparent; margin-top: -1.5px; background: none; color: #3F4963; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.6-3.7 3.6-6 7.5-6s6.9 2.3 7.5 6"></path></svg><span>Hồ sơ</span></button>
+</nav>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["Có dữ liệu","Đang tải","Trống","Lỗi tải"],"default":"Có dữ liệu"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = ["Có dữ liệu","Đang tải","Trống","Lỗi tải"];
+    const state = this.props.state ?? names[0];
+    return Object.fromEntries(names.map((name, index) => ['s' + index, name === state]));
+  }
+}
+</script>
+</body>
+</html>

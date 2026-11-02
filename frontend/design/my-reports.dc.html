@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Báo cáo của tôi</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#141A2E;text-decoration:none}a:hover{color:#16308F}
+input::placeholder,textarea::placeholder{color:#5A647D;opacity:1}
+input:focus,textarea:focus{outline:none;border-bottom-color:#16308F;box-shadow:0 1px 0 #16308F}
+button:focus-visible,a:focus-visible{outline:2px solid #16308F;outline-offset:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+</helmet>
+<sc-if value="{{s0}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Báo cáo của tôi</h1>
+    <span style="flex: none; font-size: 13px; font-weight: 500; color: #3F4963">3 báo cáo</span>
+  </div>
+</header><main style="flex: 1 1 auto; min-height: 0; overflow-y: auto; "><article style="display: flex; flex-direction: column; gap: 6px; padding: 12px 20px 12px 40px; border-bottom: 1px solid #C9D1E3"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Thông tin chưa đúng</span><span style="flex: none; padding: 2px 8px; border: 1.5px solid #16308F; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 600; color: #16308F">Đang chờ</span></div><p style="margin: 0; font-size: 14px; line-height: 21px">Giờ mở cửa ghi trên app không đúng với bảng tại quán.</p><span style="font-size: 12px; line-height: 16px; color: #3F4963">20/10/2026</span></article><article style="display: flex; flex-direction: column; gap: 6px; padding: 12px 20px 12px 40px; border-bottom: 1px solid #C9D1E3"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Địa điểm đã đóng cửa</span><span style="flex: none; padding: 2px 8px; border: 1.5px solid #3F4963; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 600; color: #3F4963">Đã xử lý</span></div><p style="margin: 0; font-size: 14px; line-height: 21px">Quán đã chuyển sang địa chỉ khác từ tháng 9.</p><span style="font-size: 12px; line-height: 16px; color: #3F4963">02/10/2026</span></article><article style="display: flex; flex-direction: column; gap: 6px; padding: 12px 20px 12px 40px; border-bottom: 1px solid #C9D1E3"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Lý do khác</span><span style="flex: none; padding: 2px 8px; border: 1.5px solid #3F4963; border-radius: 2px; font-size: 12px; line-height: 16px; font-weight: 600; color: #3F4963">Đã bỏ qua</span></div><p style="margin: 0; font-size: 14px; line-height: 21px">Marker trên bản đồ lệch so với lối vào chính.</p><span style="font-size: 12px; line-height: 16px; color: #3F4963">15/09/2026</span></article></main>
+</div>
+</sc-if>
+<sc-if value="{{s1}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Báo cáo của tôi</h1>
+    
+  </div>
+</header><main aria-busy="true" aria-label="Đang tải" style="flex: 1 1 auto; min-height: 0; overflow: hidden"><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 214px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 268px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 186px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 240px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 228px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 256px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div><div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 16px 40px; border-bottom: 1px solid #C9D1E3">
+  <div style="width: 200px; height: 16px; background: #E1E5EF"></div>
+  <div style="width: 224px; height: 12px; background: #E1E5EF"></div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="height: 16px; background: #E1E5EF"></div><div style="height: 16px; background: #E1E5EF"></div></div>
+</div></main>
+</div>
+</sc-if>
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Báo cáo của tôi</h1>
+    
+  </div>
+</header><main style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 20px 0 40px">
+  <h2 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; color: #141A2E">Bạn chưa gửi báo cáo nào</h2>
+  <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Khi thấy thông tin sai, hãy báo cáo từ trang chi tiết địa điểm.</p>
+  
+</main>
+</div>
+</sc-if>
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 0px; bottom: 0px; width: 1px; background: #D8432B"></div>
+  <header style="flex: none; display: flex; flex-direction: column; padding: 52px 20px 12px 40px; border-bottom: 1.5px solid #16308F">
+  <div style="display: flex; justify-content: flex-start; margin: 0 0px 0 -12px"><button type="button" aria-label="Quay lại" style="flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #16308F; cursor: pointer; display: flex; align-items: center; justify-content: center; "><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="round" ><path d="M15 5l-7 7 7 7"></path></svg></button></div>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.06; color: #16308F">Báo cáo của tôi</h1>
+    
+  </div>
+</header><main style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 20px 0 40px">
+  <h2 style="margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; color: #B8321C">Chưa tải được danh sách</h2>
+  <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Kiểm tra kết nối mạng rồi thử lại.</p>
+  <div style="margin-top: 8px"><button type="button" style="height: 48px;  flex: none; padding: 0 20px; border: 1.5px solid #16308F; border-radius: 2px; background: none; color: #16308F; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Thử lại</button></div>
+</main>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["Có dữ liệu","Đang tải","Trống","Lỗi tải"],"default":"Có dữ liệu"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = ["Có dữ liệu","Đang tải","Trống","Lỗi tải"];
+    const state = this.props.state ?? names[0];
+    return Object.fromEntries(names.map((name, index) => ['s' + index, name === state]));
+  }
+}
+</script>
+</body>
+</html>

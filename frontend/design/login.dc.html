@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <title>Đăng nhập</title>
+  <script src="./support.js"></script>
+</head>
+
+<body>
+  <x-dc>
+    <helmet>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap"
+        rel="stylesheet">
+      <style>
+        body {
+          margin: 0
+        }
+
+        a {
+          color: #16308F
+        }
+
+        a:hover {
+          color: #0E2070
+        }
+
+        input::placeholder {
+          color: #5A647D;
+          opacity: 1
+        }
+
+        input:focus {
+          outline: none;
+          border-bottom-color: #16308F;
+          box-shadow: 0 1px 0 #16308F
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg)
+          }
+        }
+
+        .spinner {
+          animation: spin .8s linear infinite
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+          .spinner {
+            animation: none
+          }
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+          outline: 2px solid #16308F;
+          outline-offset: 2px
+        }
+      </style>
+    </helmet>
+    <div
+      style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F6F7F9; color: #141A2E; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; padding: 60px 20px 40px 40px">
+      <div aria-hidden="true"
+        style="position: absolute; left: 24px; top: 0; bottom: 0; width: 1px; background: #D8432B"></div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <div
+          style="font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 24px; line-height: 1; color: #16308F">
+          StudySpot</div>
+        <button type="button"
+          style="min-height: 44px; padding: 0 0 0 16px; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 500; color: #16308F; cursor: pointer">Để
+          sau</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 72px">
+        <h1
+          style="margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 68px; line-height: 1.06; letter-spacing: -0.5px; color: #16308F; white-space: pre-line">
+          Hôm nay
+          học ở đâu?</h1>
+        <p style="margin: 0; font-size: 15px; line-height: 22px; color: #3F4963">Xem chỗ nào vắng và yên tĩnh trước khi
+          đến.</p>
+      </div>
+
+      <form style="display: flex; flex-direction: column; gap: 18px; margin-top: auto">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <label for="login-email" style="font-size: 13px; font-weight: 600; color: {{emailLabel}}">Email</label>
+          <sc-if value="{{hasValues}}" hint-placeholder-val="{{ false }}">
+            <input id="login-email" type="email" value="{{emailValue}}"
+              style="height: 44px; width: 100%; box-sizing: border-box; padding: 0; border: 0; border-bottom: 1.5px solid {{emailLine}}; background: none; font: inherit; font-size: 16px; color: #141A2E">
+          </sc-if>
+          <sc-if value="{{isDefault}}" hint-placeholder-val="{{ true }}">
+            <input id="login-email" type="email" autocomplete="email" placeholder="ten@fpt.edu.vn"
+              style="height: 44px; width: 100%; box-sizing: border-box; padding: 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+          </sc-if>
+          <sc-if value="{{isInvalid}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #B8321C">Email chưa
+              đúng định dạng.</p>
+          </sc-if>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <label for="login-password" style="font-size: 13px; font-weight: 600; color: {{passwordLabel}}">Mật
+            khẩu</label>
+          <div style="position: relative">
+            <sc-if value="{{hasValues}}" hint-placeholder-val="{{ false }}">
+              <input id="login-password" type="password" value="{{passwordValue}}"
+                style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 44px 0 0; border: 0; border-bottom: 1.5px solid {{passwordLine}}; background: none; font: inherit; font-size: 16px; color: #141A2E">
+            </sc-if>
+            <sc-if value="{{isDefault}}" hint-placeholder-val="{{ true }}">
+              <input id="login-password" type="password" autocomplete="current-password" placeholder="Ít nhất 8 ký tự"
+                style="height: 44px; width: 100%; box-sizing: border-box; padding: 0 44px 0 0; border: 0; border-bottom: 1.5px solid #8C96AE; background: none; font: inherit; font-size: 16px; color: #141A2E">
+            </sc-if>
+            <button type="button" aria-label="Hiện mật khẩu"
+              style="position: absolute; right: 0; top: 0; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #3F4963; cursor: pointer; display: flex; align-items: center; justify-content: flex-end">
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.7" stroke-linecap="square">
+                <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <sc-if value="{{isInvalid}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #B8321C">Mật khẩu
+              cần ít nhất 8 ký tự.</p>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+          <p role="alert" style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: #B8321C">Email
+            hoặc mật khẩu không đúng. Kiểm tra lại rồi thử lần nữa.</p>
+        </sc-if>
+
+        <sc-if value="{{isSubmitting}}" hint-placeholder-val="{{ false }}">
+          <button type="button" disabled="true" aria-busy="true"
+            style="height: 54px; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px">
+            <svg class="spinner" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+              <path d="M12 3a9 9 0 1 0 9 9"></path>
+            </svg>
+            <span>Đang đăng nhập</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{canSubmit}}" hint-placeholder-val="{{ true }}">
+          <button type="submit"
+            style="height: 54px; border: 0; border-radius: 2px; background: #16308F; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Đăng
+            nhập</button>
+        </sc-if>
+
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #3F4963">
+          <span>Chưa có tài khoản?</span>
+          <a href="#dang-ky" style="display: flex; align-items: center; min-height: 44px; font-weight: 600">Đăng ký</a>
+        </div>
+      </form>
+    </div>
+  </x-dc>
+  <script type="text/x-dc" data-dc-script
+    data-props='{"state":{"editor":"enum","options":["Mặc định","Sai định dạng","Đang đăng nhập","Lỗi đăng nhập"],"default":"Mặc định"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const state = this.props.state ?? 'Mặc định';
+    const isInvalid = state === 'Sai định dạng';
+    const isSubmitting = state === 'Đang đăng nhập';
+    const isError = state === 'Lỗi đăng nhập';
+    const flagged = isInvalid || isError;
+    const label = flagged ? '#B8321C' : '#3F4963';
+    const line = flagged ? '#B8321C' : '#8C96AE';
+    return {
+      isInvalid,
+      isSubmitting,
+      isError,
+      isDefault: state === 'Mặc định',
+      hasValues: state !== 'Mặc định',
+      canSubmit: !isSubmitting,
+      emailValue: isInvalid ? 'sinhvien@fpt' : 'sinhvien@fpt.edu.vn',
+      passwordValue: isInvalid ? '1234' : 'matkhau123',
+      emailLabel: label,
+      passwordLabel: label,
+      emailLine: line,
+      passwordLine: line
+    };
+  }
+}
+</script>
+</body>
+
+</html>
