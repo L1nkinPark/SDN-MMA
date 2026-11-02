@@ -10,7 +10,7 @@ StudySpot helps students find study places near campus and see how crowded and n
 
 - `backend/`: the finished API (Node 20+, ESM, Express 5, Mongoose, Socket.IO, Zod). It returns JSON only and renders no HTML.
 - `frontend/mobile`: the student mobile app. **Build this first.**
-- `frontend/admin`: the web admin. **Build this later**, only after mobile is done. Until then, perform admin actions through Swagger UI at `http://localhost:4000/api/docs`.
+- `frontend/admin`: the web admin (built after mobile was finished). It covers every `/api/admin` endpoint plus creating approved places; Swagger UI at `http://localhost:4000/api/docs` is still there for anything else.
 - **Out of scope because the backend has no API for them:** password reset, profile editing, image upload by students.
 
 Mobile feature order: accounts and place discovery → check-in and realtime → reviews, favorites, reports, place submission, leaderboard → polish.
@@ -54,6 +54,18 @@ EXPO_OFFLINE=1 npx expo install <package>                                       
 ```
 
 `openapi-typescript` runs through `npx` only; its TypeScript 5 peer conflicts with the app's TypeScript 6. Use `EXPO_OFFLINE=1` with `expo install` when the network blocks Expo's version API.
+
+**Admin**, run from `frontend/admin` (Vite, React, TypeScript). Copy `.env.example` to `.env`; `VITE_API_URL` is the backend URL without `/api`.
+
+```bash
+npm ci
+npm run dev                     # http://localhost:3000, already in the backend's default CLIENT_ORIGINS
+npm run lint                    # oxlint
+npm run typecheck               # tsc -b
+npm test                        # vitest
+npm run build
+npx openapi-typescript ../../backend/src/docs/openapi.yaml -o src/api/schema.d.ts   # rerun when the API changes
+```
 
 ## Backend architecture
 
@@ -185,6 +197,35 @@ Don't build the other person's screens.
 - Screens that show lists or call the API must handle loading, empty, and error states.
 - Colors and spacing come from `src/theme/`, not hard-coded values in screens.
 - All user-facing text is in Vietnamese.
+
+## Admin web
+
+Only accounts with `role: 'admin'` can sign in; others are signed out at once with "Tài khoản này không có quyền quản trị." Create admins with `npm run create-admin`.
+
+| Concern | Choice |
+|---|---|
+| Build | Vite, React, TypeScript |
+| Routing | `react-router` |
+| Server data | TanStack Query |
+| Fonts | `@fontsource/barlow-condensed`, `@fontsource/be-vietnam-pro` |
+| Tests | `vitest` |
+
+```text
+frontend/admin/src/
+  pages/        Tổng quan, Địa điểm (inline editor, image upload), Thêm địa điểm, Báo cáo, Đánh giá, Đăng nhập
+  components/   ui.tsx (Button, fields, FilterTabs, StateMessage, LoadingRows, Pagination...), Layout, PlaceForm
+  api/          client.ts, errors.ts, endpoints.ts, hooks.ts, types.ts, generated schema.d.ts
+  auth/         tokens.ts, session.tsx, sessionContext.ts
+  utils/        format, labels, validation, placeForm, placeDiff
+  theme.css     Design tokens as CSS variables; app.css uses only these
+```
+
+- There are no admin designs. The admin reuses the mobile notebook look (tokens, fonts, 1px row rules, 1.5px ink title rule, 2px radius, underlined inputs, no margin line) with wide layouts and row lists instead of cards.
+- The API client follows the same rules as mobile (single refresh, retry once, no refresh on auth endpoints, network failure keeps tokens). The access token lives in memory; the refresh token is in `localStorage` so a reload keeps the session.
+- `PATCH /api/admin/places/{id}` gets only the fields that changed (`utils/placeDiff.ts`). There is no admin endpoint to read one place in any approval state, so editing happens inline from the list.
+- The admin lists populate `user` (`name`, `email`) and `place` (`name`, `address`), but `openapi.yaml` types them as ID strings. Read them through `populated()` in `api/types.ts`; don't hand-write types.
+- Coordinates are typed as latitude and longitude fields and sent as `[longitude, latitude]`. There is no map library in the admin.
+- Image upload needs Cloudinary on the backend; without it the API answers 503 and the editor says so.
 
 ## API conventions and easy mistakes
 
