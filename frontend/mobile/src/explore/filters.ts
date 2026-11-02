@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
-import type { Crowd, Noise } from '@/api/types';
+import type { Crowd, Noise, PlaceListQuery } from '@/api/types';
+import type { LatLng } from '@/location/location';
 
 /** Filters chosen on /filter and applied on Khám phá. Distance only applies when the location is known. */
 export type PlaceFilters = {
@@ -46,6 +47,20 @@ export function usePlaceFilters(): PlaceFilters {
 export function countActiveFilters(filters: PlaceFilters): number {
   const { radius, ...rest } = filters;
   return Object.values(rest).filter((value) => value !== undefined).length + (radius === DEFAULT_FILTERS.radius ? 0 : 1);
+}
+
+/**
+ * `GET /api/places` params for Khám phá. A keyword searches every place at any distance: the API
+ * can't sort by distance without also cutting off at `radius`.
+ */
+export function placeListQuery(filters: PlaceFilters, q: string, origin: LatLng | null): Omit<PlaceListQuery, 'page' | 'limit'> {
+  const { radius, ...rest } = filters;
+  return {
+    ...rest,
+    q: q || undefined,
+    // lat, lng and radius only work together; without them the API sorts by newest.
+    ...(origin && !q ? { lat: origin.latitude, lng: origin.longitude, radius } : {}),
+  };
 }
 
 /** True when a filter that hides places with unverified data (null) is on. */

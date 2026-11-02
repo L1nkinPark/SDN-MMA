@@ -1,0 +1,95 @@
+/* Design tokens from CLAUDE.md "Mobile: visual design", reused for the admin. Use the variables, never raw values. */
+:root {
+  --paper: #f6f7f9;
+  --ink: #16308f;
+  --text: #141a2e;
+  --text-secondary: #3f4963;
+  --placeholder: #5a647d;
+  --field-line: #8c96ae;
+  --rule: #c9d1e3;
+  --error: #b8321c;
+  --loading: #e1e5ef;
+  --on-ink: #ffffff;
+
+  --font-title: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+
+  --content-left: 40px;
+  --content-right: 20px;
+  --radius: 2px;
+  --button-primary: 54px;
+  --button-secondary: 48px;
+  --touch: 44px;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder);
+  opacity: 1;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none !important;
+  }
+}
