@@ -5,6 +5,8 @@ export function publicUser(user) {
     email: user.email,
     role: user.role,
     status: user.status,
+    notificationSettings: user.notificationSettings,
+    ...(user.role === 'admin' ? { adminPermissions: user.adminPermissions } : {}),
     reputation: user.reputation,
     favorites: user.favorites
   };

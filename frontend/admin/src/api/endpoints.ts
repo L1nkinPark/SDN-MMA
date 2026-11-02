@@ -50,11 +50,11 @@ export const adminApi = {
 
   listReports: (page: number, status?: ReportStatus) =>
     api.request<ReportPage>('/api/admin/reports', { query: { page, limit: PAGE_SIZE, status } }),
-  updateReport: (id: string, status: 'resolved' | 'dismissed') =>
-    api.request<ReportResponse>(`/api/admin/reports/${enc(id)}`, { method: 'PATCH', body: { status } }),
+  updateReport: (id: string, status: 'resolved' | 'dismissed', reason?: string) =>
+    api.request<ReportResponse>(`/api/admin/reports/${enc(id)}`, { method: 'PATCH', body: { status, reason } }),
 
   listReviews: (page: number, hidden?: boolean) =>
     api.request<ReviewPage>('/api/admin/reviews', { query: { page, limit: PAGE_SIZE, hidden } }),
-  updateReview: (id: string, hidden: boolean) =>
-    api.request<ReviewResponse>(`/api/admin/reviews/${enc(id)}`, { method: 'PATCH', body: { hidden } }),
+  updateReview: (id: string, hidden: boolean, reason?: string) =>
+    api.request<ReviewResponse>(`/api/admin/reviews/${enc(id)}`, { method: 'PATCH', body: { hidden, reason } }),
 };

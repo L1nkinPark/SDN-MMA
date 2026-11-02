@@ -1,10 +1,11 @@
 import { useSearchParams } from 'react-router';
+import { useState } from 'react';
 
 import { PAGE_SIZE } from '../api/endpoints';
 import { errorMessage } from '../api/errors';
 import { useReports, useUpdateReport } from '../api/hooks';
 import { populated, type Report, type ReportStatus } from '../api/types';
-import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, StateMessage, Tag } from '../components/ui';
+import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, StateMessage, Tag, TextField } from '../components/ui';
 import { formatDateTime } from '../utils/format';
 import { REPORT_REASON_LABELS, REPORT_STATUS_LABELS } from '../utils/labels';
 
@@ -33,6 +34,7 @@ function ReportRow({ report }: { report: Report }) {
   const place = populated(report.place);
   const user = populated(report.user);
   const status = report.status ?? 'pending';
+  const [reason, setReason] = useState('');
 
   return (
     <li className="row">
@@ -46,6 +48,8 @@ function ReportRow({ report }: { report: Report }) {
           {place?.address ? ` · ${place.address}` : ''}
         </span>
         {report.detail ? <p className="row__body">{report.detail}</p> : null}
+        {report.resolutionNote ? <p className="row__body">Xử lý: {report.resolutionNote}</p> : null}
+        {status === 'pending' ? <TextField label="Lý do xử lý (ít nhất 5 ký tự)" value={reason} onChange={e => setReason(e.target.value)} /> : null}
         <span className="row__meta">
           <span>
             Người báo: {user?.name ?? 'Không rõ'}
@@ -60,16 +64,16 @@ function ReportRow({ report }: { report: Report }) {
             <Button
               size="small"
               busy={update.isPending && update.variables?.status === 'resolved'}
-              disabled={update.isPending}
-              onClick={() => update.mutate({ id: report._id as string, status: 'resolved' })}>
+              disabled={update.isPending || reason.trim().length < 5}
+              onClick={() => update.mutate({ id: report._id as string, status: 'resolved', reason: reason.trim() })}>
               Đã xử lý
             </Button>
             <Button
               variant="secondary"
               size="small"
               busy={update.isPending && update.variables?.status === 'dismissed'}
-              disabled={update.isPending}
-              onClick={() => update.mutate({ id: report._id as string, status: 'dismissed' })}>
+              disabled={update.isPending || reason.trim().length < 5}
+              onClick={() => update.mutate({ id: report._id as string, status: 'dismissed', reason: reason.trim() })}>
               Bỏ qua
             </Button>
           </>

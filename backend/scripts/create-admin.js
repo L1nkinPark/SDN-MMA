@@ -12,7 +12,7 @@ await mongoose.connect(MONGODB_URI);
 const email = ADMIN_EMAIL.trim().toLowerCase();
 await User.findOneAndUpdate(
   { email },
-  { $set: { name: ADMIN_NAME || 'StudySpot Admin', role: 'admin', passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 12) } },
+  { $set: { name: ADMIN_NAME || 'StudySpot Admin', role: 'admin', adminPermissions: ['*'], passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 12) } },
   { upsert: true, new: true }
 );
 console.log(`Admin account ready: ${email}`);

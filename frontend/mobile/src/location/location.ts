@@ -13,7 +13,7 @@ export const DEFAULT_CENTER: LatLng = { latitude: 10.8414, longitude: 106.8097 }
 export const CHECKIN_RADIUS_M = 250;
 
 export type LocationResult =
-  | { status: 'granted'; coords: LatLng }
+  | { status: 'granted'; coords: LatLng; accuracyMeters: number | null }
   /** `canAskAgain` false means only the system settings can grant it now. */
   | { status: 'denied'; canAskAgain: boolean }
   | { status: 'unavailable' };
@@ -35,7 +35,8 @@ export async function getCurrentLocation({ ask = true } = {}): Promise<LocationR
     const position =
       (await Location.getLastKnownPositionAsync(RECENT_FIX)) ??
       (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }));
-    return { status: 'granted', coords: { latitude: position.coords.latitude, longitude: position.coords.longitude } };
+    return { status: 'granted', coords: { latitude: position.coords.latitude, longitude: position.coords.longitude },
+      accuracyMeters: position.coords.accuracy };
   } catch {
     return { status: 'unavailable' };
   }

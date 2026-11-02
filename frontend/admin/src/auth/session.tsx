@@ -47,7 +47,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       .me()
       .then(({ user: me }) => {
         if (!active) return;
-        if (me?.role !== 'admin') {
+        if (!me || !['admin', 'merchant', 'student'].includes(me.role || '')) {
           void revoke(api.tokens.getRefreshToken());
           endSession(NOT_ADMIN_MESSAGE);
           return;
@@ -74,7 +74,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (result: AuthTokens) => {
       if (!result.accessToken || !result.refreshToken) throw new Error('Missing tokens');
-      if (result.user?.role !== 'admin') {
+      if (!result.user || !['admin', 'merchant', 'student'].includes(result.user.role || '')) {
         await revoke(result.refreshToken);
         throw new NotAdminError();
       }

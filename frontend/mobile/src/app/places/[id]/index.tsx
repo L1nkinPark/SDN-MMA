@@ -75,6 +75,7 @@ function ReviewPreview({ review }: { review: Review }) {
         <RatingStars value={review.rating ?? 0} />
       </View>
       {review.text ? <Text style={styles.reviewText}>{review.text}</Text> : null}
+      <Text style={type.meta}>{review.verifiedVisit ? '✓ Đã xác minh lượt ghé' : 'Lượt ghé chưa xác minh'}</Text>
       <Text style={type.meta}>{formatDate(review.createdAt)}</Text>
     </View>
   );
@@ -236,6 +237,7 @@ export default function PlaceDetailScreen() {
 
         <View style={styles.info}>
           <InfoRow label="Wi-Fi" value={amenityText(place.amenities?.wifi)} />
+          {place.business?.openingHours?.length ? <InfoRow label="Giờ mở cửa" value="Xem theo ngày khi đặt chỗ" /> : null}
           <InfoRow label="Ổ cắm" value={amenityText(place.amenities?.outlets)} />
           <InfoRow
             label="Giá nước từ"
@@ -262,6 +264,9 @@ export default function PlaceDetailScreen() {
           )}
         </View>
 
+        {place.booking?.enabled ? <Pressable accessibilityRole="link" onPress={() => {
+          if (requireAuth()) router.push({ pathname: '/places/[id]/booking', params: { id } });
+        }} style={styles.report}><Text style={styles.reportText}>Đặt chỗ tại quán</Text></Pressable> : null}
         <Pressable accessibilityRole="link" onPress={() => openSignedIn('/places/[id]/report')} style={styles.report}>
           <Text style={styles.reportText}>Báo cáo địa điểm</Text>
         </Pressable>

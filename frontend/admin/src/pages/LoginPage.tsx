@@ -45,8 +45,8 @@ export function LoginPage() {
   return (
     <div className="login">
       <div className="login__brand">StudySpot</div>
-      <h1 className="login__title">Trang quản trị</h1>
-      <p className="state__sentence">Duyệt địa điểm, xử lý báo cáo và kiểm duyệt đánh giá. Chỉ tài khoản quản trị đăng nhập được.</p>
+      <h1 className="login__title">Quản lý StudySpot</h1>
+      <p className="state__sentence">Admin quản trị hệ thống. Chủ quán đăng nhập để gửi hồ sơ, xác minh lượt ghé và quản lý đặt chỗ.</p>
       <form className="login__form" onSubmit={submit} noValidate>
         <TextField
           label="Email"

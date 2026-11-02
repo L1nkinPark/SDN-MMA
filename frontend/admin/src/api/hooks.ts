@@ -66,7 +66,7 @@ export function useCreatePlace() {
 export function useUpdateReport() {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'resolved' | 'dismissed' }) => adminApi.updateReport(id, status),
+    mutationFn: ({ id, status, reason }: { id: string; status: 'resolved' | 'dismissed'; reason?: string }) => adminApi.updateReport(id, status, reason),
     onSuccess: () => invalidate(queryKeys.reports),
   });
 }
@@ -74,7 +74,7 @@ export function useUpdateReport() {
 export function useUpdateReview() {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: ({ id, hidden }: { id: string; hidden: boolean }) => adminApi.updateReview(id, hidden),
+    mutationFn: ({ id, hidden, reason }: { id: string; hidden: boolean; reason?: string }) => adminApi.updateReview(id, hidden, reason),
     onSuccess: () => invalidate(queryKeys.reviews),
   });
 }

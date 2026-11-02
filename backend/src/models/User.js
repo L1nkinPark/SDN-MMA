@@ -6,7 +6,10 @@ const schema = new Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: ['student', 'merchant', 'admin'], default: 'student' },
-  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+  status: { type: String, enum: ['active', 'suspended', 'deleted'], default: 'active' },
+  tokenVersion: { type: Number, default: 0 },
+  adminPermissions: { type: [String], default: function () { return this.role === 'admin' ? ['*'] : []; } },
+  notificationSettings: { email: { type: Boolean, default: true }, inApp: { type: Boolean, default: true } },
   favorites: [{ type: Schema.Types.ObjectId, ref: 'Place' }],
   reputation: { type: Number, default: 0 }
 }, { timestamps: true, versionKey: false });

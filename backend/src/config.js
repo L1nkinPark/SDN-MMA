@@ -26,6 +26,15 @@ export function config() {
     origins: (process.env.CLIENT_ORIGINS || 'http://localhost:3000,http://localhost:8081').split(',').map(s => s.trim()).filter(Boolean),
     checkinMinutes: positiveInteger('CHECKIN_DURATION_MINUTES', 120, 1440),
     minSamples: positiveInteger('STATUS_MIN_SAMPLES', 2, 100),
-    refreshMs: positiveInteger('STATUS_REFRESH_MS', 60000)
+    refreshMs: positiveInteger('STATUS_REFRESH_MS', 60000),
+    smtp: process.env.SMTP_HOST && process.env.SMTP_FROM ? {
+      host: process.env.SMTP_HOST,
+      port: positiveInteger('SMTP_PORT', 587, 65535),
+      secure: process.env.SMTP_SECURE === 'true',
+      requireTLS: process.env.SMTP_REQUIRE_TLS !== 'false',
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASSWORD || '',
+      from: process.env.SMTP_FROM
+    } : null
   };
 }

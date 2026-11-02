@@ -98,7 +98,7 @@ function validMinutes(result: CheckinResponse): number {
 
 /** Screen 6. Sends a fresh position with the answer; the API checks the 250 m radius and 15-minute cooldown. */
 export default function CheckinScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, visitCode } = useLocalSearchParams<{ id: string; visitCode?: string }>();
   const { status: sessionStatus } = useSession();
   const placeQuery = usePlace(id);
   const location = useCurrentLocation();
@@ -194,7 +194,8 @@ export default function CheckinScreen() {
       return;
     }
     checkin.mutate(
-      { crowd, noise, coordinates: [current.coords.longitude, current.coords.latitude] },
+      { crowd, noise, coordinates: [current.coords.longitude, current.coords.latitude],
+        ...(visitCode ? { visitCode, accuracyMeters: current.accuracyMeters ?? 10000 } : {}) },
       {
         onSuccess: setResult,
         onError: (failure) => {
@@ -222,6 +223,9 @@ export default function CheckinScreen() {
 
         <ChoiceGroup title="Chỗ này đang đông không?" options={crowdOptions} value={crowd} onChange={setCrowd} />
         <ChoiceGroup title="Có ồn không?" options={noiseOptions} value={noise} onChange={setNoise} />
+
+        <Button label={visitCode ? 'Đã quét mã QR của quán' : 'Quét QR tại quầy để xác minh lượt ghé'} variant="secondary"
+          onPress={() => router.push({ pathname: '/places/[id]/scan', params: { id } })} />
 
         {alert ? (
           <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.alert}>

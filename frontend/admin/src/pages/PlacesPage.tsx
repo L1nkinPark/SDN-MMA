@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../api/client';
 import { useNavigate, useSearchParams } from 'react-router';
 
 import { errorMessage } from '../api/errors';
@@ -6,7 +8,7 @@ import { usePlaces, useUpdatePlace, useUploadImage } from '../api/hooks';
 import { PAGE_SIZE } from '../api/endpoints';
 import type { Approval, Place } from '../api/types';
 import { PlaceForm } from '../components/PlaceForm';
-import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, Select, StateMessage, Tag } from '../components/ui';
+import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, Select, StateMessage, Tag, TextField } from '../components/ui';
 import { amenityText, formatDateTime, formatRating, priceText } from '../utils/format';
 import { APPROVAL_LABELS } from '../utils/labels';
 import { placeChanges } from '../utils/placeDiff';
@@ -105,6 +107,13 @@ function PlaceEditor({ place, onDone }: { place: Place; onDone: () => void }) {
   const update = useUpdatePlace();
   const [approval, setApproval] = useState<Approval>(place.approval ?? 'pending');
   const [localError, setLocalError] = useState<string | null>(null);
+  const [decisionNote, setDecisionNote] = useState('');
+  const [ownerId, setOwnerId] = useState(place.owner || '');
+  const [reason, setReason] = useState('');
+  const client = useQueryClient();
+  const transfer = useMutation({ mutationFn: () => api.request(`/api/admin/places/${encodeURIComponent(place._id || '')}/owner`,
+    { method: 'PATCH', body: { ownerId: ownerId.trim() || null, reason: reason.trim() } }),
+    onSuccess: () => { void client.invalidateQueries({ queryKey: ['admin', 'places'] }); onDone(); } });
 
   return (
     <div className="row__editor">
@@ -120,6 +129,10 @@ function PlaceEditor({ place, onDone }: { place: Place; onDone: () => void }) {
         }}
         onSubmit={(input) => {
           const changes = placeChanges(place, input, approval);
+          if (approval !== place.approval) {
+            if (decisionNote.trim().length < 5) { setLocalError('Ghi lý do duyệt ít nhất 5 ký tự.'); return; }
+            changes.decisionNote = decisionNote.trim();
+          }
           if (!Object.keys(changes).length) {
             setLocalError('Chưa có thay đổi nào để lưu.');
             return;
@@ -136,8 +149,17 @@ function PlaceEditor({ place, onDone }: { place: Place; onDone: () => void }) {
           }}
           options={(Object.keys(APPROVAL_LABELS) as Approval[]).map((value) => ({ value, label: APPROVAL_LABELS[value] }))}
         />
+        <TextField label="Lý do quyết định (khi đổi trạng thái duyệt)" value={decisionNote} onChange={e => setDecisionNote(e.target.value)} />
         <ImageUploader place={place} />
       </PlaceForm>
+      <div className="section">
+        <h3>Chủ quán & minh chứng</h3>
+        {place.onboardingEvidenceUrls?.map(url => <p key={url}><a href={url} target="_blank" rel="noreferrer">{url}</a></p>)}
+        <TextField label="ID chủ quán (để trống nếu chưa có)" value={ownerId} onChange={e => setOwnerId(e.target.value)} />
+        <TextField label="Lý do chuyển quyền" value={reason} onChange={e => setReason(e.target.value)} />
+        <Button variant="secondary" disabled={reason.trim().length < 5} busy={transfer.isPending} onClick={() => transfer.mutate()}>Chuyển quyền quản lý</Button>
+        <FormAlert message={transfer.isError ? errorMessage(transfer.error) : null} />
+      </div>
     </div>
   );
 }
@@ -146,9 +168,11 @@ function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; 
   const update = useUpdatePlace();
   const id = place._id as string;
   const [lng, lat] = place.location?.coordinates ?? [];
+  const [decisionNote, setDecisionNote] = useState('');
 
   function setApproval(approval: Approval) {
-    update.mutate({ id, changes: { approval } });
+    if (decisionNote.trim().length < 5) return;
+    update.mutate({ id, changes: { approval, decisionNote: decisionNote.trim() } });
   }
 
   return (
@@ -174,10 +198,12 @@ function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; 
           ) : null}
           <span>Tạo lúc {formatDateTime(place.createdAt)}</span>
         </span>
+        <span className="row__secondary">{place.moderationNote ? `Lý do duyệt: ${place.moderationNote}` : null}</span>
+        <TextField label="Lý do duyệt / từ chối" value={decisionNote} onChange={e => setDecisionNote(e.target.value)} />
       </div>
       <div className="row__actions">
         {place.approval !== 'approved' ? (
-          <Button size="small" busy={update.isPending && update.variables?.changes.approval === 'approved'} disabled={update.isPending} onClick={() => setApproval('approved')}>
+          <Button size="small" busy={update.isPending && update.variables?.changes.approval === 'approved'} disabled={update.isPending || decisionNote.trim().length < 5} onClick={() => setApproval('approved')}>
             Duyệt
           </Button>
         ) : null}
@@ -186,7 +212,7 @@ function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; 
             variant="danger"
             size="small"
             busy={update.isPending && update.variables?.changes.approval === 'rejected'}
-            disabled={update.isPending}
+            disabled={update.isPending || decisionNote.trim().length < 5}
             onClick={() => setApproval('rejected')}>
             Từ chối
           </Button>

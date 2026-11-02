@@ -69,6 +69,9 @@ export default function ProfileScreen() {
           <Text style={type.secondary}>+1 cho check-in đầu tiên trong ngày tại một địa điểm, +2 cho đánh giá đầu tiên.</Text>
         </View>
         <LinkRow label="Báo cáo của tôi" onPress={() => router.push('/my-reports')} />
+        <LinkRow label="Đặt chỗ của tôi" onPress={() => router.push('/my-bookings')} />
+        <LinkRow label="Thông báo" onPress={() => router.push('/notifications')} />
+        <LinkRow label="Tài khoản & bảo mật" onPress={() => router.push('/account')} />
         <LinkRow label="Đề xuất địa điểm" onPress={() => router.push('/propose')} />
         <View style={styles.signOutRow}>
           <Pressable

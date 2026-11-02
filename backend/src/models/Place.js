@@ -16,7 +16,9 @@ const schema = new Schema({
     note: { type: String, default: null }
   },
   images: [{ type: String }],
+  onboardingEvidenceUrls: { type: [String], default: [], select: false },
   approval: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  moderationNote: { type: String, default: null },
   submittedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   owner: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   business: {
@@ -27,6 +29,7 @@ const schema = new Schema({
   },
   booking: {
     enabled: { type: Boolean, default: false },
+    approvalMode: { type: String, enum: ['auto', 'manual'], default: 'auto' },
     slotMinutes: { type: Number, default: 60 },
     capacityPerSlot: { type: Number, min: 1, default: null }
   },

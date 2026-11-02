@@ -83,7 +83,15 @@ components:
         name: { type: string }
         email: { type: string, format: email }
         role: { type: string, enum: [student, merchant, admin] }
-        status: { type: string, enum: [active, suspended] }
+        status: { type: string, enum: [active, suspended, deleted] }
+        adminPermissions:
+          type: array
+          items: { type: string, enum: ['*', users, places, moderation, bookings, fraud, audit, analytics] }
+        notificationSettings:
+          type: object
+          properties:
+            email: { type: boolean }
+            inApp: { type: boolean }
         reputation: { type: integer }
         favorites:
           type: array
@@ -135,7 +143,11 @@ components:
         images:
           type: array
           items: { type: string, format: uri }
+        onboardingEvidenceUrls:
+          type: array
+          items: { type: string, format: uri }
         approval: { type: string, enum: [pending, approved, rejected] }
+        moderationNote: { type: string, nullable: true }
         submittedBy: { type: string }
         owner: { type: string, nullable: true }
         business:
@@ -157,6 +169,7 @@ components:
           properties:
             enabled: { type: boolean }
             slotMinutes: { type: integer, enum: [30, 60, 120] }
+            approvalMode: { type: string, enum: [auto, manual] }
             capacityPerSlot: { type: integer, nullable: true }
         ratingAverage: { type: number }
         ratingCount: { type: integer }
@@ -179,6 +192,7 @@ components:
         rating: { type: integer, minimum: 1, maximum: 5 }
         text: { type: string }
         hidden: { type: boolean }
+        moderationNote: { type: string, nullable: true }
         verifiedVisit: { type: string, nullable: true, description: 'ID bằng chứng QR hoặc nhân viên xác nhận trong 14 ngày gần nhất khi viết đánh giá' }
         createdAt: { type: string, format: date-time }
     Checkin:
@@ -212,8 +226,9 @@ components:
         startsAt: { type: string, format: date-time }
         endsAt: { type: string, format: date-time }
         partySize: { type: integer }
-        status: { type: string, enum: [confirmed, cancelled, completed, no_show] }
+        status: { type: string, enum: [pending, confirmed, cancelled, completed, no_show] }
         note: { type: string }
+        cancellationReason: { type: string, nullable: true }
         arrivedAt: { type: string, format: date-time, nullable: true }
     Report:
       type: object
@@ -224,6 +239,7 @@ components:
         reason: { type: string, enum: [closed, incorrect_info, inappropriate, other] }
         detail: { type: string }
         status: { type: string, enum: [pending, resolved, dismissed] }
+        resolutionNote: { type: string, nullable: true }
         resolvedBy: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
     PlacePage:
@@ -349,6 +365,40 @@ paths:
                 properties:
                   user: { $ref: '#/components/schemas/User' }
         '401': { description: Chưa đăng nhập }
+    patch:
+      tags: [Auth]
+      summary: Cập nhật tên và tùy chọn thông báo
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 2 }
+                notificationSettings:
+                  type: object
+                  properties:
+                    email: { type: boolean }
+                    inApp: { type: boolean }
+      responses:
+        '200': { description: Hồ sơ đã cập nhật }
+    delete:
+      tags: [Auth]
+      summary: Xóa dữ liệu cá nhân và vô hiệu hóa tài khoản
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, minLength: 8 }
+      responses:
+        '204': { description: Đã xóa tài khoản }
   /api/places:
     get:
       tags: [Places]
@@ -649,6 +699,7 @@ paths:
                 amenities: { $ref: '#/components/schemas/Amenities' }
                 minDrinkPrice: { type: number, minimum: 0, nullable: true }
                 approval: { type: string, enum: [pending, approved, rejected] }
+                decisionNote: { type: string, minLength: 5, description: 'Lý do quyết định để lưu vào audit' }
       responses:
         '200':
           description: Địa điểm đã cập nhật
@@ -725,6 +776,7 @@ paths:
               required: [status]
               properties:
                 status: { type: string, enum: [resolved, dismissed] }
+                reason: { type: string, minLength: 5 }
       responses:
         '200':
           description: Báo cáo đã xử lý
@@ -753,6 +805,7 @@ paths:
               required: [hidden]
               properties:
                 hidden: { type: boolean }
+                reason: { type: string, minLength: 5 }
       responses:
         '200':
           description: Đánh giá đã cập nhật
@@ -805,6 +858,7 @@ paths:
                   pendingClaims: { type: integer }
                   upcomingBookings: { type: integer }
                   verifiedVisits: { type: integer }
+                  pendingFraudFlags: { type: integer }
         '403': { description: Cần quyền admin }
   /api/merchant/claims:
     post:
@@ -838,12 +892,31 @@ paths:
   /api/merchant/places:
     get:
       tags: [Merchants]
-      summary: Địa điểm tôi được duyệt quản lý
+      summary: Địa điểm do tôi gửi hoặc quản lý
       operationId: myMerchantPlaces
       security: [{ bearerAuth: [] }]
       responses:
         '200': { description: Danh sách địa điểm }
-        '403': { description: Cần quyền merchant }
+    post:
+      tags: [Merchants]
+      summary: Chủ quán gửi quán mới cùng minh chứng để admin duyệt
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/PlaceInput' }
+                - type: object
+                  required: [contactPhone, evidenceUrls]
+                  properties:
+                    contactPhone: { type: string }
+                    evidenceUrls:
+                      type: array
+                      items: { type: string, format: uri }
+      responses:
+        '201': { description: Quán đang chờ duyệt }
   /api/merchant/places/{id}:
     patch:
       tags: [Merchants]
@@ -873,6 +946,7 @@ paths:
                 seatingCapacity: { type: integer, nullable: true }
                 bookingEnabled: { type: boolean }
                 slotMinutes: { type: integer, enum: [30, 60, 120] }
+                approvalMode: { type: string, enum: [auto, manual] }
                 capacityPerSlot: { type: integer, nullable: true }
                 wifi: { type: boolean, nullable: true }
                 outlets: { type: boolean, nullable: true }
@@ -955,7 +1029,7 @@ paths:
   /api/bookings/{id}/merchant-decision:
     patch:
       tags: [Merchants]
-      summary: Nhân viên xác nhận khách đến, hủy hoặc ghi nhận không đến
+      summary: Chủ quán duyệt booking, xác nhận khách đến hoặc hủy
       operationId: merchantBookingDecision
       security: [{ bearerAuth: [] }]
       parameters:
@@ -968,7 +1042,8 @@ paths:
               type: object
               required: [action]
               properties:
-                action: { type: string, enum: [arrived, cancel, no_show] }
+                action: { type: string, enum: [approve, reject, arrived, cancel, no_show] }
+                reason: { type: string, minLength: 5, description: 'Lý do từ chối hoặc hủy' }
       responses:
         '200': { description: Đã cập nhật booking; arrived tạo bằng chứng đã ghé }
         '403': { description: Không sở hữu địa điểm }
@@ -1062,3 +1137,246 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         '200': { description: Danh sách sự kiện quản trị }
+  /api/auth/me/export:
+    get:
+      tags: [Auth]
+      summary: Xuất dữ liệu cá nhân dạng JSON
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Dữ liệu người dùng và lịch sử liên quan }
+  /api/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Đổi mật khẩu và thu hồi toàn bộ phiên
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string, minLength: 8 }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        '204': { description: Đã đổi mật khẩu }
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Gửi mã đặt lại qua SMTP nếu tài khoản tồn tại
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '202': { description: Đã nhận yêu cầu }
+        '503': { description: SMTP chưa được cấu hình }
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Đặt lại mật khẩu bằng mã email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        '204': { description: Đã đặt lại mật khẩu }
+  /api/notifications:
+    get:
+      tags: [Auth]
+      summary: Danh sách thông báo cá nhân
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200': { description: Thông báo phân trang }
+  /api/notifications/{id}/read:
+    patch:
+      tags: [Auth]
+      summary: Đánh dấu thông báo đã đọc
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Thông báo đã đọc }
+  /api/notifications/read-all:
+    post:
+      tags: [Auth]
+      summary: Đánh dấu toàn bộ thông báo đã đọc
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Số thông báo cập nhật }
+  /api/merchant/change-requests/me:
+    get:
+      tags: [Merchants]
+      summary: Lịch sử yêu cầu sửa quán
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách yêu cầu }
+  /api/merchant/places/{id}/change-requests:
+    post:
+      tags: [Merchants]
+      summary: Đề nghị sửa tên, mô tả, địa chỉ hoặc tọa độ quán
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                address: { type: string }
+                coordinates: { $ref: '#/components/schemas/Coordinates' }
+      responses:
+        '201': { description: Đang chờ admin duyệt }
+  /api/merchant/places/{id}/images:
+    post:
+      tags: [Merchants]
+      summary: Tải ảnh quán lên để admin duyệt
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image: { type: string, format: binary }
+      responses:
+        '201': { description: Ảnh đang chờ duyệt }
+  /api/admin/place-changes:
+    get:
+      tags: [Admin]
+      summary: Danh sách đề nghị sửa quán
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách phân trang }
+  /api/admin/place-changes/{id}:
+    patch:
+      tags: [Admin]
+      summary: Duyệt hoặc từ chối thay đổi quán
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status, decisionNote]
+              properties:
+                status: { type: string, enum: [approved, rejected] }
+                decisionNote: { type: string, minLength: 5 }
+      responses:
+        '200': { description: Quyết định đã lưu }
+  /api/admin/fraud-flags:
+    get:
+      tags: [Admin]
+      summary: Danh sách check-in bị gắn cờ di chuyển bất thường
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách phân trang }
+  /api/admin/fraud-flags/{id}:
+    patch:
+      tags: [Admin]
+      summary: Xác nhận hoặc bỏ cờ gian lận
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [resolved, dismissed] }
+      responses:
+        '200': { description: Đã xử lý }
+  /api/admin/admins:
+    post:
+      tags: [Admin]
+      summary: Cấp quyền admin cho user đang hoạt động (chỉ super admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, permissions]
+              properties:
+                userId: { type: string }
+                permissions:
+                  type: array
+                  items: { type: string, enum: ['*', users, places, moderation, bookings, fraud, audit, analytics] }
+      responses:
+        '200': { description: Đã cấp quyền }
+  /api/admin/admins/{id}/permissions:
+    patch:
+      tags: [Admin]
+      summary: Đổi phân quyền admin (chỉ super admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permissions]
+              properties:
+                permissions:
+                  type: array
+                  items: { type: string }
+      responses:
+        '200': { description: Quyền đã cập nhật }
+    delete:
+      tags: [Admin]
+      summary: Thu hồi quyền admin (chỉ super admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Đã thu hồi }
+  /api/admin/places/{id}/owner:
+    patch:
+      tags: [Admin]
+      summary: Chuyển quyền quản lý quán
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/PlaceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ownerId, reason]
+              properties:
+                ownerId: { type: string, nullable: true }
+                reason: { type: string, minLength: 5 }
+      responses:
+        '200': { description: Đã chuyển quyền }

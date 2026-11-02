@@ -103,10 +103,62 @@ export interface paths {
         get: operations["getMe"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Xóa dữ liệu cá nhân và vô hiệu hóa tài khoản */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        password: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Đã xóa tài khoản */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Cập nhật tên và tùy chọn thông báo */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        notificationSettings?: {
+                            email?: boolean;
+                            inApp?: boolean;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Hồ sơ đã cập nhật */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/api/places": {
@@ -473,10 +525,35 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Địa điểm tôi được duyệt quản lý */
+        /** Địa điểm do tôi gửi hoặc quản lý */
         get: operations["myMerchantPlaces"];
         put?: never;
-        post?: never;
+        /** Chủ quán gửi quán mới cùng minh chứng để admin duyệt */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlaceInput"] & {
+                        contactPhone: string;
+                        evidenceUrls: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Quán đang chờ duyệt */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -615,7 +692,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Nhân viên xác nhận khách đến, hủy hoặc ghi nhận không đến */
+        /** Chủ quán duyệt booking, xác nhận khách đến hoặc hủy */
         patch: operations["merchantBookingDecision"];
         trace?: never;
     };
@@ -738,6 +815,703 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Xuất dữ liệu cá nhân dạng JSON */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Dữ liệu người dùng và lịch sử liên quan */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Đổi mật khẩu và thu hồi toàn bộ phiên */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        currentPassword: string;
+                        newPassword: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Đã đổi mật khẩu */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gửi mã đặt lại qua SMTP nếu tài khoản tồn tại */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Đã nhận yêu cầu */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description SMTP chưa được cấu hình */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Đặt lại mật khẩu bằng mã email */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        token: string;
+                        newPassword: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Đã đặt lại mật khẩu */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Danh sách thông báo cá nhân */
+        get: {
+            parameters: {
+                query?: {
+                    page?: components["parameters"]["Page"];
+                    limit?: components["parameters"]["Limit"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Thông báo phân trang */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Đánh dấu thông báo đã đọc */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Thông báo đã đọc */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Đánh dấu toàn bộ thông báo đã đọc */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Số thông báo cập nhật */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/change-requests/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lịch sử yêu cầu sửa quán */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Danh sách yêu cầu */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/places/{id}/change-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Đề nghị sửa tên, mô tả, địa chỉ hoặc tọa độ quán */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description MongoDB ObjectId của địa điểm */
+                    id: components["parameters"]["PlaceId"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        description?: string;
+                        address?: string;
+                        coordinates?: components["schemas"]["Coordinates"];
+                    };
+                };
+            };
+            responses: {
+                /** @description Đang chờ admin duyệt */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/places/{id}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tải ảnh quán lên để admin duyệt */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description MongoDB ObjectId của địa điểm */
+                    id: components["parameters"]["PlaceId"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        image?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Ảnh đang chờ duyệt */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/place-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Danh sách đề nghị sửa quán */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Danh sách phân trang */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/place-changes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Duyệt hoặc từ chối thay đổi quán */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "approved" | "rejected";
+                        decisionNote: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Quyết định đã lưu */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/admin/fraud-flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Danh sách check-in bị gắn cờ di chuyển bất thường */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Danh sách phân trang */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/fraud-flags/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Xác nhận hoặc bỏ cờ gian lận */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "resolved" | "dismissed";
+                    };
+                };
+            };
+            responses: {
+                /** @description Đã xử lý */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/admin/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cấp quyền admin cho user đang hoạt động (chỉ super admin) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        userId: string;
+                        permissions: ("*" | "users" | "places" | "moderation" | "bookings" | "fraud" | "audit" | "analytics")[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Đã cấp quyền */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/admins/{id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Thu hồi quyền admin (chỉ super admin) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Đã thu hồi */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Đổi phân quyền admin (chỉ super admin) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        permissions: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Quyền đã cập nhật */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/admin/places/{id}/owner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Chuyển quyền quản lý quán */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description MongoDB ObjectId của địa điểm */
+                    id: components["parameters"]["PlaceId"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        ownerId: string | null;
+                        reason: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Đã chuyển quyền */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -785,7 +1559,12 @@ export interface components {
             /** @enum {string} */
             role?: "student" | "merchant" | "admin";
             /** @enum {string} */
-            status?: "active" | "suspended";
+            status?: "active" | "suspended" | "deleted";
+            adminPermissions?: ("*" | "users" | "places" | "moderation" | "bookings" | "fraud" | "audit" | "analytics")[];
+            notificationSettings?: {
+                email?: boolean;
+                inApp?: boolean;
+            };
             reputation?: number;
             favorites?: string[];
         };
@@ -835,8 +1614,10 @@ export interface components {
                 note?: string | null;
             };
             images?: string[];
+            onboardingEvidenceUrls?: string[];
             /** @enum {string} */
             approval?: "pending" | "approved" | "rejected";
+            moderationNote?: string | null;
             submittedBy?: string;
             owner?: string | null;
             business?: {
@@ -856,6 +1637,8 @@ export interface components {
                 enabled?: boolean;
                 /** @enum {integer} */
                 slotMinutes?: 30 | 60 | 120;
+                /** @enum {string} */
+                approvalMode?: "auto" | "manual";
                 capacityPerSlot?: number | null;
             };
             ratingAverage?: number;
@@ -877,6 +1660,7 @@ export interface components {
             rating?: number;
             text?: string;
             hidden?: boolean;
+            moderationNote?: string | null;
             /** @description ID bằng chứng QR hoặc nhân viên xác nhận trong 14 ngày gần nhất khi viết đánh giá */
             verifiedVisit?: string | null;
             /** Format: date-time */
@@ -918,8 +1702,9 @@ export interface components {
             endsAt?: string;
             partySize?: number;
             /** @enum {string} */
-            status?: "confirmed" | "cancelled" | "completed" | "no_show";
+            status?: "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
             note?: string;
+            cancellationReason?: string | null;
             /** Format: date-time */
             arrivedAt?: string | null;
         };
@@ -932,6 +1717,7 @@ export interface components {
             detail?: string;
             /** @enum {string} */
             status?: "pending" | "resolved" | "dismissed";
+            resolutionNote?: string | null;
             resolvedBy?: string | null;
             /** Format: date-time */
             createdAt?: string;
@@ -1634,6 +2420,8 @@ export interface operations {
                     minDrinkPrice?: number | null;
                     /** @enum {string} */
                     approval?: "pending" | "approved" | "rejected";
+                    /** @description Lý do quyết định để lưu vào audit */
+                    decisionNote?: string;
                 };
             };
         };
@@ -1765,6 +2553,7 @@ export interface operations {
                 "application/json": {
                     /** @enum {string} */
                     status: "resolved" | "dismissed";
+                    reason?: string;
                 };
             };
         };
@@ -1809,6 +2598,7 @@ export interface operations {
             content: {
                 "application/json": {
                     hidden: boolean;
+                    reason?: string;
                 };
             };
         };
@@ -1897,6 +2687,7 @@ export interface operations {
                         pendingClaims?: number;
                         upcomingBookings?: number;
                         verifiedVisits?: number;
+                        pendingFraudFlags?: number;
                     };
                 };
             };
@@ -1977,13 +2768,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Cần quyền merchant */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
         };
     };
     updateMerchantPlace: {
@@ -2012,6 +2796,8 @@ export interface operations {
                     bookingEnabled?: boolean;
                     /** @enum {integer} */
                     slotMinutes?: 30 | 60 | 120;
+                    /** @enum {string} */
+                    approvalMode?: "auto" | "manual";
                     capacityPerSlot?: number | null;
                     wifi?: boolean | null;
                     outlets?: boolean | null;
@@ -2211,7 +2997,9 @@ export interface operations {
             content: {
                 "application/json": {
                     /** @enum {string} */
-                    action: "arrived" | "cancel" | "no_show";
+                    action: "approve" | "reject" | "arrived" | "cancel" | "no_show";
+                    /** @description Lý do từ chối hoặc hủy */
+                    reason?: string;
                 };
             };
         };

@@ -617,8 +617,22 @@
   cursor: not-allowed;
 }
 
+.ops-filter { display: flex; gap: 24px; align-items: end; flex-wrap: wrap; }
+.ops-filter .field { min-width: 220px; }
+.merchant-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.merchant-card { display: flex; flex-direction: column; gap: 14px; padding: 24px; border: 1px solid var(--rule); }
+.merchant-card h2, .merchant-card h3, .merchant-card p { margin: 0; }
+.merchant-card h3 { margin-top: 16px; }
+.merchant-card label { display: flex; align-items: center; gap: 8px; }
+.merchant-qr { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 18px; background: white; width: fit-content; }
+.merchant-hours { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
+.merchant-hour { display: grid; grid-template-columns: 1fr 130px 130px; gap: 12px; align-items: center; }
+.merchant-hour input[type=time] { min-height: 40px; border: 1px solid var(--rule); padding: 4px 8px; }
+
 /* ---------- Narrow screens ---------- */
 @media (max-width: 720px) {
+  .merchant-grid { grid-template-columns: minmax(0, 1fr); }
+  .merchant-hour { grid-template-columns: 1fr 90px 90px; gap: 4px; }
   :root {
     --content-left: 16px;
     --content-right: 16px;

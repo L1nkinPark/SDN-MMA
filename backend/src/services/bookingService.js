@@ -54,7 +54,7 @@ export async function reconcileBookingSlots() {
   const slots = await BookingSlot.find({ startsAt: { $gt: now } }).select('_id place startsAt').lean();
   for (const slot of slots) {
     const totals = await Booking.aggregate([
-      { $match: { place: slot.place, startsAt: slot.startsAt, status: { $in: ['confirmed', 'completed'] } } },
+      { $match: { place: slot.place, startsAt: slot.startsAt, status: { $in: ['pending', 'confirmed', 'completed'] } } },
       { $group: { _id: null, reserved: { $sum: '$partySize' } } }
     ]);
     await BookingSlot.updateOne({ _id: slot._id }, { $set: { reserved: totals[0]?.reserved || 0 } });

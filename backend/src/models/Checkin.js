@@ -9,10 +9,12 @@ const schema = new Schema({
   verificationLevel: { type: String, enum: ['gps_only', 'qr_verified', 'staff_verified'], default: 'gps_only' },
   verifiedAt: { type: Date, default: null },
   booking: { type: Schema.Types.ObjectId, ref: 'Booking', default: null },
+  flagged: { type: Boolean, default: false },
   expiresAt: { type: Date, required: true }
 }, { timestamps: true, versionKey: false });
 schema.index({ place: 1, expiresAt: 1 });
 schema.index({ user: 1, place: 1, expiresAt: 1 });
+schema.index({ user: 1, createdAt: -1 });
 schema.index({ expiresAt: 1 }, { expireAfterSeconds: 86400 });
 
 export const Checkin = model('Checkin', schema);
