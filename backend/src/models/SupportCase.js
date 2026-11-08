@@ -8,6 +8,8 @@ const schema = new Schema({
   reason: { type: String, required: true, trim: true },
   status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
   decisionNote: { type: String, default: null },
+  evidenceSource: { type: String, enum: ['receipt', 'qr_log', 'staff_confirmation', 'other', null], default: null },
+  evidenceSummary: { type: String, default: null },
   decidedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   decidedAt: { type: Date, default: null }
 }, { timestamps: true, versionKey: false });

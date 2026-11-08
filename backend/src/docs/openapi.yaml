@@ -196,6 +196,7 @@ components:
         rating: { type: integer, minimum: 1, maximum: 5 }
         text: { type: string }
         hidden: { type: boolean }
+        hiddenAt: { type: string, format: date-time, nullable: true }
         moderationNote: { type: string, nullable: true }
         verifiedVisit:
           nullable: true
@@ -259,6 +260,8 @@ components:
         reason: { type: string }
         status: { type: string, enum: [pending, accepted, rejected] }
         decisionNote: { type: string, nullable: true }
+        evidenceSource: { type: string, enum: [receipt, qr_log, staff_confirmation, other], nullable: true }
+        evidenceSummary: { type: string, nullable: true }
         decidedBy: { type: string, nullable: true }
         decidedAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
@@ -1604,7 +1607,7 @@ paths:
   /api/admin/review-appeals:
     get:
       tags: [Admin, Cases]
-      summary: Khiếu nại đánh giá, cần quyền moderation
+      summary: Khiếu nại đánh giá, kèm nội dung đánh giá, mốc bị ẩn và nhật ký; cần quyền moderation
       operationId: adminReviewAppeals
       security: [{ bearerAuth: [] }]
       responses:
@@ -1632,7 +1635,7 @@ paths:
   /api/admin/booking-disputes:
     get:
       tags: [Admin, Cases]
-      summary: Khiếu nại booking không đến, cần quyền bookings
+      summary: Khiếu nại booking không đến, kèm booking, địa điểm, chứng thực lượt ghé và nhật ký; cần quyền bookings
       operationId: adminBookingDisputes
       security: [{ bearerAuth: [] }]
       responses:
@@ -1655,5 +1658,7 @@ paths:
               properties:
                 status: { type: string, enum: [accepted, rejected] }
                 decisionNote: { type: string, minLength: 20, maxLength: 2000 }
+                evidenceSource: { type: string, enum: [receipt, qr_log, staff_confirmation, other], description: Bắt buộc khi chấp nhận khiếu nại booking }
+                evidenceSummary: { type: string, minLength: 20, maxLength: 2000, description: Bắt buộc khi chấp nhận khiếu nại booking }
       responses:
         '200': { description: Quyết định đã lưu và gửi thông báo }
