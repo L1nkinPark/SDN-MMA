@@ -198,6 +198,9 @@ export default function PlaceDetailScreen() {
   // The backend refuses check-ins, reviews and bookings from the place's owner.
   const isOwner = Boolean(place.owner && user?.id && place.owner === user.id);
   const bookable = Boolean(place.booking?.enabled && !place.business?.temporaryClosed) && !isOwner;
+  const bookingMessage = place.business?.temporaryClosed
+    ? 'Quán đang tạm đóng cửa nên chưa thể đặt chỗ.'
+    : 'Quán chưa nhận đặt chỗ qua StudySpot.';
 
   return (
     <Screen>
@@ -265,6 +268,27 @@ export default function PlaceDetailScreen() {
           {accuracyNote ? <Text style={type.secondary}>{accuracyNote}</Text> : null}
         </View>
 
+        {!isOwner ? (
+          bookable ? (
+            <Pressable accessibilityRole="link" onPress={() => openSignedIn('/places/[id]/booking')} style={styles.bookRow}>
+              <View style={styles.bookText}>
+                <Text style={styles.bookTitle}>Đặt chỗ trước</Text>
+                <Text style={type.secondary}>
+                  {place.booking?.approvalMode === 'manual' ? 'Quán xác nhận từng lượt đặt.' : 'Xác nhận ngay khi còn chỗ.'}
+                </Text>
+              </View>
+              <Icon name="chevron" size={18} color={colors.ink} />
+            </Pressable>
+          ) : (
+            <View style={styles.bookRow} accessibilityLabel={`Đặt chỗ trước. ${bookingMessage}`}>
+              <View style={styles.bookText}>
+                <Text style={styles.bookTitle}>Đặt chỗ trước</Text>
+                <Text style={type.secondary}>{bookingMessage}</Text>
+              </View>
+            </View>
+          )
+        ) : null}
+
         <View style={styles.reviews}>
           <View style={styles.reviewsHeader}>
             <Text style={type.rowTitle}>Đánh giá</Text>
@@ -282,17 +306,6 @@ export default function PlaceDetailScreen() {
           )}
         </View>
 
-        {bookable ? (
-          <Pressable accessibilityRole="link" onPress={() => openSignedIn('/places/[id]/booking')} style={styles.bookRow}>
-            <View style={styles.bookText}>
-              <Text style={styles.bookTitle}>Đặt chỗ trước</Text>
-              <Text style={type.secondary}>
-                {place.booking?.approvalMode === 'manual' ? 'Quán xác nhận từng lượt đặt.' : 'Xác nhận ngay khi còn chỗ.'}
-              </Text>
-            </View>
-            <Icon name="chevron" size={18} color={colors.ink} />
-          </Pressable>
-        ) : null}
         <Pressable accessibilityRole="link" onPress={() => openSignedIn('/places/[id]/report')} style={styles.report}>
           <Text style={styles.reportText}>Báo cáo địa điểm</Text>
         </Pressable>
@@ -304,7 +317,14 @@ export default function PlaceDetailScreen() {
             Bạn đang quản lý địa điểm này. Giờ mở cửa, mã QR và đặt chỗ được quản lý trên trang web StudySpot.
           </Text>
         ) : (
-          <Button label="Check-in" block onPress={() => openSignedIn('/places/[id]/checkin')} />
+          <>
+            {bookable ? (
+              <Button label="Đặt chỗ trước" variant="secondary" block onPress={() => openSignedIn('/places/[id]/booking')} />
+            ) : (
+              <Text style={type.secondary}>{bookingMessage}</Text>
+            )}
+            <Button label="Check-in" block onPress={() => openSignedIn('/places/[id]/checkin')} />
+          </>
         )}
       </ActionBar>
     </Screen>
