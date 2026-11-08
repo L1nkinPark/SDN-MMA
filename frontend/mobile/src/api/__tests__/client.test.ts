@@ -158,4 +158,18 @@ describe('api client', () => {
     await client.request('/api/places');
     expect(authHeader(calls[0].init)).toBeUndefined();
   });
+
+  it('ends the session when the account is suspended or deleted', async () => {
+    const { client, store, onAuthLost } = setup(() => json(403, { error: 'Account unavailable' }));
+    await expect(client.request('/api/favorites')).rejects.toMatchObject({ status: 403 });
+    expect(onAuthLost).toHaveBeenCalledTimes(1);
+    expect(await store.getRefreshToken()).toBeNull();
+  });
+
+  it('keeps tokens for other 403 answers', async () => {
+    const { client, store, onAuthLost } = setup(() => json(403, { error: 'Owner cannot book own place' }));
+    await expect(client.request('/api/bookings', { method: 'POST', body: {} })).rejects.toMatchObject({ status: 403 });
+    expect(onAuthLost).not.toHaveBeenCalled();
+    expect(await store.getRefreshToken()).toBe('old-refresh');
+  });
 });

@@ -147,7 +147,15 @@ export function createApiClient({ baseUrl, tokens, fetch: fetchImpl = fetch }: A
       response = await send(path, options, await tokens.getAccessToken());
     }
 
-    if (!response.ok) throw await toError(response);
+    if (!response.ok) {
+      const error = await toError(response);
+      // A suspended or deleted account gets 403 on every call: the session is over.
+      if (error.is(403, 'Account unavailable') && !NO_REFRESH_PATHS.has(path)) {
+        await tokens.clear();
+        onAuthLost?.();
+      }
+      throw error;
+    }
     return (await readBody(response)) as T;
   }
 
