@@ -50,6 +50,11 @@ export const PAGE_SIZE = 20;
 const enc = encodeURIComponent;
 
 export const authApi = {
+  register: (input: { name: string; email: string; password: string }) =>
+    api.request<AuthTokens>('/api/auth/register', {
+      method: 'POST',
+      body: { name: input.name.trim(), email: input.email.trim().toLowerCase(), password: input.password },
+    }),
   login: (input: Credentials) =>
     api.request<AuthTokens>('/api/auth/login', {
       method: 'POST',

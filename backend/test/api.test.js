@@ -57,12 +57,13 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   const root = await request(app).get('/').expect(200);
   assert.equal(root.body.service, 'StudySpot API');
   await request(app).get('/api').expect(200);
-  const register = async (name, email) => {
-    const result = await request(app).post('/api/auth/register').send({ name, email, password: 'Password123!' }).expect(201);
+  const register = async (name, email, extra = {}) => {
+    const result = await request(app).post('/api/auth/register').send({ name, email, password: 'Password123!', ...extra }).expect(201);
     return result.body;
   };
-  const alice = await register('Alice Student', 'alice@example.com');
+  const alice = await register('Alice Student', 'alice@example.com', { role: 'merchant' });
   const bob = await register('Bob Student', 'bob@example.com');
+  // Choosing the merchant onboarding path must never grant the merchant role directly.
   assert.equal(alice.user.role, 'student');
   const admin = await User.create({ name: 'Admin', email: 'admin@example.com', passwordHash: await bcrypt.hash('AdminPassword123!', 12), role: 'admin' });
   const adminLogin = await request(app).post('/api/auth/login').send({ email: admin.email, password: 'AdminPassword123!' }).expect(200);

@@ -86,6 +86,7 @@ export function LoginPage() {
           Đăng nhập
         </Button>
         <Link to="/forgot-password">Quên mật khẩu?</Link>
+        <p className="state__sentence">Chưa có tài khoản? <Link to="/register">Đăng ký sinh viên hoặc chủ quán</Link></p>
       </form>
     </div>
   );

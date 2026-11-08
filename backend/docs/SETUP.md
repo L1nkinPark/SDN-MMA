@@ -44,7 +44,15 @@ npm ci
 npm start
 ```
 
-Trong mobile `.env`, `EXPO_PUBLIC_API_URL=http://10.0.2.2:4000` cho Android emulator. Điện thoại thật cần IP LAN của máy chạy backend, ví dụ `http://192.168.x.x:4000`; thêm origin tương ứng vào `CLIENT_ORIGINS` nếu chạy Expo web. Camera QR cần quyền camera trên thiết bị. Chỉ thử QR tại quán đã được admin duyệt và có chủ quán.
+Trong mobile `.env`, `EXPO_PUBLIC_API_URL=http://10.0.2.2:4000` chỉ dành cho Android emulator. Để chạy trên điện thoại thật bằng Expo Go:
+
+1. Kết nối máy tính và điện thoại vào cùng Wi-Fi. Trên Windows, chạy `Get-NetIPAddress -AddressFamily IPv4 | Where-Object InterfaceAlias -Like '*Wi-Fi*'` để lấy địa chỉ IPv4 của máy tính.
+2. Đặt `EXPO_PUBLIC_API_URL=http://<IPv4-của-máy-tính>:4000` trong `frontend/mobile/.env`; không thêm `/api` hoặc dấu `/` cuối. Không đưa JWT secret, mật khẩu SMTP hoặc Cloudinary API secret vào `EXPO_PUBLIC_*`.
+3. Chạy MongoDB, rồi từ `backend/` chạy `npm run dev`. Mở `http://<IPv4-của-máy-tính>:4000/health` trên trình duyệt điện thoại; phải thấy trạng thái `ok`. Nếu không truy cập được, kiểm tra Windows Firewall cho Node.js/cổng 4000 và mạng Wi-Fi có chặn thiết bị liên lạc với nhau hay không.
+4. Cài Expo Go đúng SDK với `frontend/mobile/package.json` (hiện là SDK 58). Android tải từ `https://expo.dev/go`. Với iPhone vật lý, bản App Store có thể chưa hỗ trợ SDK 58; xem `https://docs.expo.dev/troubleshooting/expo-go-version-mismatch/`. Có thể cài bản SDK 58 qua trình cài `https://sign.expo.dev/` trên máy tính có kết nối USB với iPhone, hoặc dùng `npx eas-cli@latest go` và TestFlight nếu có Apple Developer Program. Sau khi cài, từ `frontend/mobile/` chạy `npm start`, rồi quét mã QR trong terminal: Android quét bằng Expo Go; iPhone quét bằng Camera. Trên iPhone, đăng nhập cùng tài khoản Expo trên CLI (`npx expo login`) và Expo Go.
+5. Nếu QR không mở được, thử `npx expo start --tunnel`. Tunnel chỉ giúp điện thoại kết nối Metro; API vẫn dùng IP Wi-Fi trong `.env` và điện thoại vẫn phải truy cập được địa chỉ đó. Sau khi sửa `.env`, tải lại ứng dụng trong Expo Go.
+
+`GOOGLE_MAPS_API_KEY` không cần điền khi dùng Expo Go; cần cấu hình khi tạo bản Android riêng. Camera QR và vị trí cần được cấp quyền trên điện thoại. Chỉ thử QR tại quán đã được admin duyệt và có chủ quán.
 
 Luồng vận hành: tài khoản sinh viên đăng nhập web quản lý để gửi hồ sơ quán/nhận quyền quán; admin duyệt hồ sơ và minh chứng; chủ quán cấu hình giờ mở, sức chứa và booking; sinh viên đặt chỗ trên mobile; chủ quán duyệt nếu chế độ thủ công; khách quét QR tại quầy hoặc nhân viên xác nhận booking. Admin xem cờ bất thường và nhật ký trong web.
 

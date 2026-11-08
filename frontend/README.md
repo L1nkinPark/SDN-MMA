@@ -5,6 +5,8 @@ Hai ứng dụng dùng chung backend trong `backend/`, theo `backend/src/docs/op
 - `mobile/`: ứng dụng cho sinh viên (Expo, React Native).
 - `admin/`: trang web cho quản trị viên **và** chủ quán (Vite, React). Sinh viên muốn đăng ký quán cũng đăng nhập ở đây.
 
+Web có trang `/register` cho sinh viên và người muốn quản lý quán. Cả hai đăng ký bằng cùng API và bắt đầu với vai trò sinh viên; chọn “Chủ quán” chỉ dẫn sang hồ sơ quán mới hoặc hồ sơ nhận quyền. Admin duyệt hồ sơ xong mới cấp vai trò chủ quán. Sinh viên dùng cùng email/mật khẩu để đăng nhập ứng dụng mobile.
+
 Cách cài và chạy: xem `backend/docs/SETUP.md`. Kiểm tra trước khi mở PR:
 
 ```bash
