@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { api } from '../api/client';
 import { authApi } from '../api/endpoints';
-import { isApiError, NOT_ADMIN_MESSAGE } from '../api/errors';
+import { ACCOUNT_UNAVAILABLE_MESSAGE, isApiError, NOT_ADMIN_MESSAGE, SESSION_EXPIRED_MESSAGE } from '../api/errors';
 import { queryKeys } from '../api/queryKeys';
 import type { AuthTokens, User } from '../api/types';
 import { NotAdminError, SessionContext, type Session, type SessionStatus } from './sessionContext';
@@ -35,7 +35,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    api.setAuthLostHandler(() => endSession('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.'));
+    api.setAuthLostHandler((reason) =>
+      endSession(reason === 'unavailable' ? ACCOUNT_UNAVAILABLE_MESSAGE : SESSION_EXPIRED_MESSAGE),
+    );
     return () => api.setAuthLostHandler(null);
   }, [endSession]);
 
@@ -64,7 +66,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           setStatus('signed-out');
           return;
         }
-        endSession(isApiError(error) && error.status === 401 ? 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.' : null);
+        // The client already ended the session with its own notice.
+        if (isApiError(error) && error.is(403, 'Account unavailable')) return;
+        endSession(isApiError(error) && error.status === 401 ? SESSION_EXPIRED_MESSAGE : null);
       });
     return () => {
       active = false;

@@ -13,6 +13,16 @@ describe('admin error mapping', () => {
     [500, 'boom', 'Máy chủ đang gặp sự cố. Thử lại sau.'],
     [429, 'Too many requests', 'Bạn thao tác quá nhanh. Đợi một lúc rồi thử lại.'],
     [null, null, 'Chưa kết nối được máy chủ. Kiểm tra mạng rồi thử lại.'],
+    [403, 'Account unavailable', 'Tài khoản đang bị khóa hoặc đã bị xóa. Liên hệ quản trị viên nếu có nhầm lẫn.'],
+    [403, 'Admin permission required: users', 'Tài khoản của bạn chưa được cấp quyền cho thao tác này.'],
+    [403, 'Merchant access required', 'Chỉ chủ quán đã được duyệt mới làm được thao tác này.'],
+    [409, 'Possible duplicate place: 6650aa', 'Đã có một địa điểm cùng tên trong bán kính 100 m. Kiểm tra lại trước khi gửi.'],
+    [
+      409,
+      'Cancel affected future bookings before changing availability',
+      'Còn booking sắp tới bị ảnh hưởng bởi thay đổi này. Hãy hủy hoặc xử lý các booking đó trước rồi lưu lại.',
+    ],
+    [409, 'Outside arrival window', 'Chỉ xác nhận khách đến trong khoảng 15 phút trước và sau giờ đặt.'],
   ])('%s %s', (status, message, expected) => {
     expect(vietnameseMessage(status, message)).toBe(expected);
   });
