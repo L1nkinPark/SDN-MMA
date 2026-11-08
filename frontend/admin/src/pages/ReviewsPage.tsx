@@ -7,6 +7,7 @@ import { useReviews, useUpdateReview } from '../api/hooks';
 import { populated, type Review } from '../api/types';
 import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, Stars, StateMessage, Tag, TextField } from '../components/ui';
 import { formatDateTime } from '../utils/format';
+import { reasonError } from '../utils/validation';
 
 type Filter = 'all' | 'visible' | 'hidden';
 
@@ -42,8 +43,15 @@ function ReviewRow({ review }: { review: Review }) {
           {hidden ? <Tag tone="error">Đã ẩn</Tag> : null}
         </span>
         {review.text ? <p className="row__body">{review.text}</p> : null}
-        {review.moderationNote ? <p className="row__body">Lý do: {review.moderationNote}</p> : null}
-        <TextField label="Lý do kiểm duyệt (ít nhất 5 ký tự)" value={reason} onChange={e => setReason(e.target.value)} />
+        {review.moderationNote ? <p className="row__body">Ghi chú kiểm duyệt: {review.moderationNote}</p> : null}
+        <TextField
+          label="Ghi chú gửi người viết (không bắt buộc)"
+          value={reason}
+          maxLength={1000}
+          onChange={(event) => setReason(event.target.value)}
+          error={reasonError(reason, false)}
+          disabled={update.isPending}
+        />
         <span className="row__meta">
           <span>
             {user?.name ?? 'Không rõ'}
@@ -57,9 +65,9 @@ function ReviewRow({ review }: { review: Review }) {
           variant={hidden ? 'secondary' : 'danger'}
           size="small"
           busy={update.isPending}
-          disabled={reason.trim().length < 5}
+          disabled={Boolean(reasonError(reason, false))}
           busyLabel={hidden ? 'Đang hiện lại' : 'Đang ẩn'}
-          onClick={() => update.mutate({ id: review._id as string, hidden: !hidden, reason: reason.trim() })}>
+          onClick={() => update.mutate({ id: review._id as string, hidden: !hidden, reason: reason.trim() || undefined })}>
           {hidden ? 'Hiện lại' : 'Ẩn đánh giá'}
         </Button>
       </div>

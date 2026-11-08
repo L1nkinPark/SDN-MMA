@@ -8,6 +8,7 @@ import { populated, type Report, type ReportStatus } from '../api/types';
 import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, StateMessage, Tag, TextField } from '../components/ui';
 import { formatDateTime } from '../utils/format';
 import { REPORT_REASON_LABELS, REPORT_STATUS_LABELS } from '../utils/labels';
+import { reasonError } from '../utils/validation';
 
 type Filter = ReportStatus | 'all';
 
@@ -49,7 +50,16 @@ function ReportRow({ report }: { report: Report }) {
         </span>
         {report.detail ? <p className="row__body">{report.detail}</p> : null}
         {report.resolutionNote ? <p className="row__body">Xử lý: {report.resolutionNote}</p> : null}
-        {status === 'pending' ? <TextField label="Lý do xử lý (ít nhất 5 ký tự)" value={reason} onChange={e => setReason(e.target.value)} /> : null}
+        {status === 'pending' ? (
+          <TextField
+            label="Ghi chú gửi người báo cáo (không bắt buộc)"
+            value={reason}
+            maxLength={1000}
+            onChange={(event) => setReason(event.target.value)}
+            error={reasonError(reason, false)}
+            disabled={update.isPending}
+          />
+        ) : null}
         <span className="row__meta">
           <span>
             Người báo: {user?.name ?? 'Không rõ'}
@@ -64,16 +74,16 @@ function ReportRow({ report }: { report: Report }) {
             <Button
               size="small"
               busy={update.isPending && update.variables?.status === 'resolved'}
-              disabled={update.isPending || reason.trim().length < 5}
-              onClick={() => update.mutate({ id: report._id as string, status: 'resolved', reason: reason.trim() })}>
+              disabled={update.isPending || Boolean(reasonError(reason, false))}
+              onClick={() => update.mutate({ id: report._id as string, status: 'resolved', reason: reason.trim() || undefined })}>
               Đã xử lý
             </Button>
             <Button
               variant="secondary"
               size="small"
               busy={update.isPending && update.variables?.status === 'dismissed'}
-              disabled={update.isPending || reason.trim().length < 5}
-              onClick={() => update.mutate({ id: report._id as string, status: 'dismissed', reason: reason.trim() })}>
+              disabled={update.isPending || Boolean(reasonError(reason, false))}
+              onClick={() => update.mutate({ id: report._id as string, status: 'dismissed', reason: reason.trim() || undefined })}>
               Bỏ qua
             </Button>
           </>

@@ -7,7 +7,11 @@ import { Layout } from './components/Layout';
 import { homePath } from './components/navigation';
 import { StateMessage } from './components/ui';
 import { AccountPage } from './pages/AccountPage';
+import { AdminBookingsPage } from './pages/AdminBookingsPage';
+import { AuditPage } from './pages/AuditPage';
+import { ClaimsPage } from './pages/ClaimsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { FraudPage } from './pages/FraudPage';
 import { LoginPage } from './pages/LoginPage';
 import { ClaimPlacePage } from './pages/merchant/ClaimPlacePage';
 import { MerchantHomePage } from './pages/merchant/MerchantHomePage';
@@ -16,11 +20,12 @@ import { MerchantPlacePage } from './pages/merchant/MerchantPlacePage';
 import { MyRequestsPage } from './pages/merchant/MyRequestsPage';
 import { NewPlacePage } from './pages/NewPlacePage';
 import { NotificationsPage } from './pages/NotificationsPage';
-import { OperationsPage } from './pages/OperationsPage';
 import { OverviewPage } from './pages/OverviewPage';
+import { PlaceChangesPage } from './pages/PlaceChangesPage';
 import { PlacesPage } from './pages/PlacesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ReviewsPage } from './pages/ReviewsPage';
+import { UsersPage } from './pages/UsersPage';
 import { hasPermission } from './utils/permissions';
 
 /** `/` shows Tổng quan to admins who may see it, otherwise sends each account to its own first section. */
@@ -89,12 +94,12 @@ const router = createBrowserRouter([
       { path: 'places/new', element: <AdminRoute permission="places"><NewPlacePage /></AdminRoute> },
       { path: 'reports', element: <AdminRoute permission="moderation"><ReportsPage /></AdminRoute> },
       { path: 'reviews', element: <AdminRoute permission="moderation"><ReviewsPage /></AdminRoute> },
-      { path: 'users', element: <AdminRoute permission="users"><OperationsPage kind="users" /></AdminRoute> },
-      { path: 'claims', element: <AdminRoute permission="places"><OperationsPage kind="claims" /></AdminRoute> },
-      { path: 'place-changes', element: <AdminRoute permission="places"><OperationsPage kind="place-changes" /></AdminRoute> },
-      { path: 'bookings', element: <AdminRoute permission="bookings"><OperationsPage kind="bookings" /></AdminRoute> },
-      { path: 'fraud', element: <AdminRoute permission="fraud"><OperationsPage kind="fraud" /></AdminRoute> },
-      { path: 'audit', element: <AdminRoute permission="audit"><OperationsPage kind="audit" /></AdminRoute> },
+      { path: 'users', element: <AdminRoute permission="users"><UsersPage /></AdminRoute> },
+      { path: 'claims', element: <AdminRoute permission="places"><ClaimsPage /></AdminRoute> },
+      { path: 'place-changes', element: <AdminRoute permission="places"><PlaceChangesPage /></AdminRoute> },
+      { path: 'bookings', element: <AdminRoute permission="bookings"><AdminBookingsPage /></AdminRoute> },
+      { path: 'fraud', element: <AdminRoute permission="fraud"><FraudPage /></AdminRoute> },
+      { path: 'audit', element: <AdminRoute permission="audit"><AuditPage /></AdminRoute> },
       { path: '*', element: <NotFound /> },
     ],
   },
