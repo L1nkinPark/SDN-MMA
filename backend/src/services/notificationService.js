@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { EmailOutbox, Notification, User } from '../models/index.js';
 import { HttpError } from '../utils/common.js';
+import { renderEmail } from './emailTemplate.js';
 
 export async function sendEmail(cfg, { to, subject, text }) {
   if (!cfg.smtp) throw new HttpError(503, 'Email delivery is not configured');
@@ -10,7 +11,8 @@ export async function sendEmail(cfg, { to, subject, text }) {
     connectionTimeout: 5000, socketTimeout: 5000,
     ...(smtp.user ? { auth: { user: smtp.user, pass: smtp.pass } } : {})
   });
-  await transport.sendMail({ from: smtp.from, to, subject, text });
+  const from = smtp.from.includes('<') ? smtp.from : { name: 'StudySpot', address: smtp.from };
+  await transport.sendMail({ from, to, subject, text, html: renderEmail({ subject, text }) });
 }
 
 export async function queueEmail(cfg, { to, subject, text, expiresAt }) {

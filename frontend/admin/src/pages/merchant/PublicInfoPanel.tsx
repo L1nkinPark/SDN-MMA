@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { errorMessage } from '../../api/errors';
 import { useSubmitChange, useSubmitImage } from '../../api/hooks';
 import type { Place, PlaceChangeFields } from '../../api/types';
+import { LocationPicker } from '../../components/LocationPicker';
 import { Button, FormAlert, TextArea, TextField } from '../../components/ui';
 import { addressError, descriptionError, latitudeError, longitudeError, parseDecimal, placeNameError } from '../../utils/validation';
 
@@ -78,8 +79,17 @@ export function PublicInfoPanel({ place }: { place: Place }) {
         <div className="form-grid">
           <TextField label="Tên quán" value={values.name} maxLength={120} onChange={(e) => set('name', e.target.value)} error={errors.name} disabled={change.isPending} />
           <TextField label="Địa chỉ" value={values.address} maxLength={300} onChange={(e) => set('address', e.target.value)} error={errors.address} disabled={change.isPending} />
-          <TextField label="Vĩ độ (latitude)" inputMode="decimal" value={values.latitude} onChange={(e) => set('latitude', e.target.value)} error={errors.latitude} disabled={change.isPending} />
-          <TextField label="Kinh độ (longitude)" inputMode="decimal" value={values.longitude} onChange={(e) => set('longitude', e.target.value)} error={errors.longitude} disabled={change.isPending} />
+          <LocationPicker
+            latitude={values.latitude}
+            longitude={values.longitude}
+            onChange={(latitude, longitude) => {
+              setValues((current) => ({ ...current, latitude, longitude }));
+              setErrors((current) => ({ ...current, latitude: null, longitude: null }));
+              if (change.isError || change.isSuccess) change.reset();
+            }}
+            error={errors.latitude || errors.longitude ? 'Hãy chọn vị trí hợp lệ trên bản đồ.' : null}
+            disabled={change.isPending}
+          />
           <div className="form-grid__wide">
             <TextArea label="Mô tả" value={values.description} maxLength={2000} onChange={(e) => set('description', e.target.value)} error={errors.description} disabled={change.isPending} />
           </div>

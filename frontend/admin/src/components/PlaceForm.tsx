@@ -2,8 +2,8 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 
 import type { Place, PlaceInput } from '../api/types';
 import { AMENITY_OPTIONS, EMPTY_ERRORS, initialValues, toPlaceInput, validate, type Field, type Values } from '../utils/placeForm';
-import { parseDecimal } from '../utils/validation';
 import { Button, ChoiceGroup, FormAlert, TextArea, TextField } from './ui';
+import { LocationPicker } from './LocationPicker';
 
 type PlaceFormProps = {
   place?: Place;
@@ -38,42 +38,22 @@ export function PlaceForm({ place, submitLabel, busy, error, onSubmit, onCancel,
     onSubmit(toPlaceInput(values));
   }
 
-  const lat = parseDecimal(values.latitude);
-  const lng = parseDecimal(values.longitude);
-  const mapUrl =
-    lat !== undefined && lng !== undefined ? `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}` : null;
-
   return (
     <form onSubmit={submit} noValidate>
       <div className="form-grid">
         <TextField label="Tên địa điểm" value={values.name} maxLength={120} onChange={(e) => set('name', e.target.value)} error={errors.name} disabled={busy} />
         <TextField label="Địa chỉ" value={values.address} maxLength={300} onChange={(e) => set('address', e.target.value)} error={errors.address} disabled={busy} />
-        <TextField
-          label="Vĩ độ (latitude)"
-          inputMode="decimal"
-          placeholder="10.8411"
-          value={values.latitude}
-          onChange={(e) => set('latitude', e.target.value)}
-          error={errors.latitude}
+        <LocationPicker
+          latitude={values.latitude}
+          longitude={values.longitude}
+          onChange={(latitude, longitude) => {
+            setValues((current) => ({ ...current, latitude, longitude }));
+            setErrors((current) => ({ ...current, latitude: null, longitude: null }));
+            onEdit?.();
+          }}
+          error={errors.latitude || errors.longitude ? 'Hãy chọn vị trí hợp lệ trên bản đồ.' : null}
           disabled={busy}
         />
-        <TextField
-          label="Kinh độ (longitude)"
-          inputMode="decimal"
-          placeholder="106.8098"
-          value={values.longitude}
-          onChange={(e) => set('longitude', e.target.value)}
-          error={errors.longitude}
-          hint={mapUrl ? undefined : 'Lấy toạ độ từ bản đồ, ví dụ nhấp chuột phải trên Google Maps.'}
-          disabled={busy}
-        />
-        {mapUrl ? (
-          <p className="field__hint form-grid__wide">
-            <a href={mapUrl} target="_blank" rel="noreferrer">
-              Kiểm tra vị trí trên OpenStreetMap
-            </a>
-          </p>
-        ) : null}
         <div className="form-grid__wide">
           <TextArea
             label="Mô tả (không bắt buộc)"
