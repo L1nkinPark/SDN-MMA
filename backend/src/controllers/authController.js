@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { User, RefreshToken, PasswordReset, EmailChange, Booking, Checkin, EmailOutbox, FraudFlag, MerchantClaim,
+import { User, RefreshToken, PasswordReset, EmailChange, Booking, BookingUserWindow, Checkin, EmailOutbox, FraudFlag, MerchantClaim,
   Notification, Place, PlaceChangeRequest, Report, ReputationEvent, Review, SupportCase, VisitProof } from '../models/index.js';
 import { HttpError, parse } from '../utils/common.js';
 import { accessToken, refreshToken, tokenHash } from '../services/tokenService.js';
@@ -169,7 +169,7 @@ export function authController(cfg) {
       const userId = req.user._id;
       const [reviews, checkins, reports, bookings, claims, visits, places, cases] = await Promise.all([
         Review.find({ user: userId }).lean(), Checkin.find({ user: userId }).lean(),
-        Report.find({ user: userId }).lean(), Booking.find({ user: userId }).lean(),
+        Report.find({ user: userId }).lean(), Booking.find({ user: userId, status: { $ne: 'reserving' } }).lean(),
         MerchantClaim.find({ applicant: userId }).lean(), VisitProof.find({ user: userId }).lean(),
         Place.find({ $or: [{ submittedBy: userId }, { owner: userId }] }).lean(),
         SupportCase.find({ user: userId }).lean()
@@ -194,6 +194,7 @@ export function authController(cfg) {
       ]);
       await Promise.all([
         Review.deleteMany({ user: userId }), Checkin.deleteMany({ user: userId }), Booking.deleteMany({ user: userId }),
+        BookingUserWindow.deleteMany({ user: userId }),
         Report.deleteMany({ user: userId }), VisitProof.deleteMany({ user: userId }),
         FraudFlag.deleteMany({ user: userId }), MerchantClaim.deleteMany({ applicant: userId }),
         PlaceChangeRequest.deleteMany({ merchant: userId }), Notification.deleteMany({ user: userId }),

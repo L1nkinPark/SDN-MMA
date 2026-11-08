@@ -273,6 +273,7 @@ export default function BookingScreen() {
           {place.address ? <Text style={type.secondary}>{place.address}</Text> : null}
           <Text style={type.secondary}>
             Đặt trước ít nhất 1 giờ, tối đa 14 ngày. Mỗi tài khoản giữ tối đa {MAX_UPCOMING_BOOKINGS} lượt sắp tới.
+            {' '}Không thể đặt hai quán có thời gian chồng nhau.
             {place.booking?.approvalMode === 'manual' ? ' Quán xác nhận từng lượt đặt.' : ''}
           </Text>
         </View>

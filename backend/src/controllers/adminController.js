@@ -63,7 +63,7 @@ export const adminController = {
     const user = await User.findById(id).select('name email role status reputation createdAt updatedAt').lean();
     if (!user) throw new HttpError(404, 'User not found');
     const [bookings, checkins, reviews, reports, visits, flags, audit, cases] = await Promise.all([
-      Booking.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
+      Booking.find({ user: id, status: { $ne: 'reserving' } }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
       Checkin.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
       Review.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
       Report.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
@@ -147,7 +147,7 @@ export const adminController = {
       status: z.enum(['pending', 'confirmed', 'cancelled', 'completed', 'no_show']).optional(),
       placeId: z.string().optional(), q: z.string().trim().max(100).optional(), date: z.iso.date().optional()
     }), req.query);
-    const query = { ...(status ? { status } : {}) };
+    const query = { status: status || { $ne: 'reserving' } };
     if (placeId) query.place = assertId(placeId);
     if (q) {
       const places = await Place.find({ name: { $regex: escapeRegex(q), $options: 'i' } }).select('_id').lean();
@@ -419,7 +419,7 @@ export const adminController = {
     ]);
     const [newUsers, newPlaces, newBookings, completedBookings, cancelledBookings, noShows,
       newCheckins, newReviews, newReports, newVerifiedVisits] = await Promise.all([
-      User.countDocuments({ createdAt }), Place.countDocuments({ createdAt }), Booking.countDocuments({ createdAt }),
+      User.countDocuments({ createdAt }), Place.countDocuments({ createdAt }), Booking.countDocuments({ createdAt, status: { $ne: 'reserving' } }),
       Booking.countDocuments({ createdAt, status: 'completed' }), Booking.countDocuments({ createdAt, status: 'cancelled' }),
       Booking.countDocuments({ createdAt, status: 'no_show' }), Checkin.countDocuments({ createdAt }),
       Review.countDocuments({ createdAt }), Report.countDocuments({ createdAt }), VisitProof.countDocuments({ createdAt })

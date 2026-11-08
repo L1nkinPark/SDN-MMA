@@ -9,7 +9,7 @@ import { io as connectSocket } from 'socket.io-client';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import { createApp } from '../src/app.js';
 import { createHttpServer } from '../src/http.js';
-import { Booking, BookingSlot, Checkin, MerchantClaim, Place, Report, User, VisitProof } from '../src/models/index.js';
+import { Booking, BookingSlot, BookingUserWindow, Checkin, MerchantClaim, Place, Report, User, VisitProof } from '../src/models/index.js';
 import { refreshExpiredStatuses } from '../src/services/statusService.js';
 import { openapiSpec } from '../src/docs/spec.js';
 import { seedHcmD1Places } from '../src/services/seedService.js';
@@ -33,6 +33,7 @@ before(async () => {
   await Report.init();
   await Booking.init();
   await BookingSlot.init();
+  await BookingUserWindow.init();
   await MerchantClaim.init();
   await VisitProof.init();
   app = createApp(cfg, io);
