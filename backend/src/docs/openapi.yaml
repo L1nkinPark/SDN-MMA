@@ -1051,6 +1051,7 @@ paths:
     patch:
       tags: [Merchants]
       summary: Cập nhật tiện ích, giờ mở cửa, sức chứa và cấu hình đặt chỗ
+      description: Khi bật đặt chỗ phải có capacityPerSlot hợp lệ. Nếu đã khai báo seatingCapacity, số chỗ nhận đặt mỗi khung không được vượt tổng số ghế.
       operationId: updateMerchantPlace
       security: [{ bearerAuth: [] }]
       parameters:
@@ -1087,6 +1088,7 @@ paths:
                 minDrinkPrice: { type: number, nullable: true }
       responses:
         '200': { description: Địa điểm đã cập nhật }
+        '400': { description: Sức chứa đặt chỗ không hợp lệ hoặc vượt tổng số ghế }
         '409': { description: Cần xử lý booking tương lai trước khi đóng cửa hoặc thay lịch }
         '404': { description: Không sở hữu địa điểm }
   /api/merchant/places/{id}/visit-code:

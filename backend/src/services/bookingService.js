@@ -15,6 +15,9 @@ export function ensureBookable(place, startsAt) {
   if (!place.booking?.enabled || place.business?.temporaryClosed) throw new HttpError(409, 'Booking unavailable');
   const capacity = place.booking.capacityPerSlot;
   if (!Number.isInteger(capacity) || capacity < 1) throw new HttpError(409, 'Booking capacity not configured');
+  if (place.business?.seatingCapacity != null && capacity > place.business.seatingCapacity) {
+    throw new HttpError(409, 'Booking capacity exceeds the place seating capacity');
+  }
   const duration = place.booking.slotMinutes || 60;
   const local = localVisitTime(startsAt);
   if (place.business?.closedDates?.includes(local.date)) throw new HttpError(409, 'Place is closed on this date');

@@ -353,6 +353,33 @@ test('booking deadline worker releases pending seats and records no-show', async
   assert.equal((await BookingSlot.findOne({ place: place._id, startsAt: start })).reserved, 0);
 });
 
+test('concurrent requests for the last seat accept only one booking and cancellation frees it', async () => {
+  const first = await register('Last Seat First', 'last-seat-first@example.com');
+  const second = await register('Last Seat Second', 'last-seat-second@example.com');
+  const owner = await register('Last Seat Owner', 'last-seat-owner@example.com');
+  const place = await Place.create({ name: 'Last Seat Cafe', address: '11 Campus Road',
+    location: { type: 'Point', coordinates: [105.86, 21.06] }, submittedBy: owner.user.id,
+    owner: owner.user.id, approval: 'approved', booking: { enabled: true, capacityPerSlot: 1 },
+    business: { openingHours: Array.from({ length: 7 }, (_, day) => ({ day, open: '08:00', close: '22:00' })) } });
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() + 4);
+  start.setUTCHours(3, 0, 0, 0);
+  const payload = { placeId: String(place._id), startsAt: start.toISOString(), partySize: 1 };
+  const attempts = await Promise.all([first, second].map(user => request(app).post('/api/bookings')
+    .set(auth(user.accessToken)).send(payload)));
+  assert.deepEqual(attempts.map(result => result.status).sort(), [201, 409]);
+  assert.equal((await BookingSlot.findOne({ place: place._id, startsAt: start })).reserved, 1);
+  assert.equal(await Booking.countDocuments({ place: place._id, startsAt: start,
+    status: { $in: ['pending', 'confirmed'] } }), 1);
+  const winner = attempts.findIndex(result => result.status === 201);
+  await request(app).post(`/api/bookings/${attempts[winner].body.booking._id}/cancel`)
+    .set(auth([first, second][winner].accessToken)).expect(200);
+  assert.equal((await BookingSlot.findOne({ place: place._id, startsAt: start })).reserved, 0);
+  await request(app).post('/api/bookings').set(auth([first, second][1 - winner].accessToken))
+    .send(payload).expect(201);
+  assert.equal((await BookingSlot.findOne({ place: place._id, startsAt: start })).reserved, 1);
+});
+
 test('merchant closing dates cannot invalidate existing bookings and block new bookings', async () => {
   const owner = await register('Calendar Owner', 'calendar-owner@example.com');
   const guest = await register('Calendar Guest', 'calendar-guest@example.com');
@@ -365,6 +392,10 @@ test('merchant closing dates cannot invalidate existing bookings and block new b
   start.setUTCDate(start.getUTCDate() + 2);
   start.setUTCHours(3, 0, 0, 0);
   const date = localVisitTime(start).date;
+  await request(app).patch(`/api/merchant/places/${place._id}`).set(auth(owner.accessToken))
+    .send({ seatingCapacity: 2 }).expect(400);
+  await request(app).patch(`/api/merchant/places/${place._id}`).set(auth(owner.accessToken))
+    .send({ seatingCapacity: 4 }).expect(200);
   const booked = await request(app).post('/api/bookings').set(auth(guest.accessToken))
     .send({ placeId: String(place._id), startsAt: start.toISOString(), partySize: 1 }).expect(201);
   const adminLogin = await request(app).post('/api/auth/login')
