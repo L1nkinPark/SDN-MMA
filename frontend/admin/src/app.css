@@ -619,20 +619,181 @@
 
 .ops-filter { display: flex; gap: 24px; align-items: end; flex-wrap: wrap; }
 .ops-filter .field { min-width: 220px; }
-.merchant-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.merchant-card { display: flex; flex-direction: column; gap: 14px; padding: 24px; border: 1px solid var(--rule); }
-.merchant-card h2, .merchant-card h3, .merchant-card p { margin: 0; }
-.merchant-card h3 { margin-top: 16px; }
-.merchant-card label { display: flex; align-items: center; gap: 8px; }
-.merchant-qr { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 18px; background: white; width: fit-content; }
-.merchant-hours { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
-.merchant-hour { display: grid; grid-template-columns: 1fr 130px 130px; gap: 12px; align-items: center; }
-.merchant-hour input[type=time] { min-height: 40px; border: 1px solid var(--rule); padding: 4px 8px; }
+
+/* ---------- Business areas: merchant tools, notifications, account ---------- */
+.section-title {
+  margin: 32px 0 0;
+  padding: 0 var(--content-right) 10px var(--content-left);
+  border-bottom: 1.5px solid var(--ink);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.count {
+  display: inline-block;
+  min-width: 22px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.row--unread .row__title {
+  color: var(--ink);
+}
+
+.notice {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.search-box {
+  max-width: 560px;
+}
+
+.chosen {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 720px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.chosen p {
+  margin: 2px 0 0;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 880px;
+}
+
+.settings__title {
+  margin: 20px 0 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.settings__title:first-child {
+  margin-top: 0;
+}
+
+.settings__actions {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1.5px solid var(--ink);
+}
+
+.hours {
+  display: flex;
+  flex-direction: column;
+}
+
+.hours__row {
+  display: grid;
+  grid-template-columns: 140px 120px 16px 120px auto;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--touch);
+  border-bottom: 1px solid var(--rule);
+}
+
+.hours__day {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--touch);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.hours__day input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ink);
+}
+
+.hours__time {
+  min-height: 36px;
+}
+
+.date-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.date-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.qr {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.qr__text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 360px;
+  max-width: 560px;
+}
+
+.qr__code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--on-ink);
+}
+
+.qr__expiry {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.qr__expiry--soon {
+  color: var(--error);
+}
 
 /* ---------- Narrow screens ---------- */
 @media (max-width: 720px) {
-  .merchant-grid { grid-template-columns: minmax(0, 1fr); }
-  .merchant-hour { grid-template-columns: 1fr 90px 90px; gap: 4px; }
+  .hours__row { grid-template-columns: 110px 96px 12px 96px; gap: 6px; }
+  .hours__row > .row__secondary { display: none; }
   :root {
     --content-left: 16px;
     --content-right: 16px;
