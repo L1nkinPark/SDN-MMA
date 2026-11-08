@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import { PAGE_SIZE, type UserFilter } from '../api/endpoints';
+import { adminApi, PAGE_SIZE, type UserFilter } from '../api/endpoints';
 import { errorMessage } from '../api/errors';
 import { useAdminRights, useAdminUsers, useUpdateUserStatus } from '../api/hooks';
 import type { AdminPermission, AdminUser, UserRole, UserStatus } from '../api/types';
@@ -55,16 +56,19 @@ function UserRow({ item, superAdmin, selfId }: { item: AdminUser; superAdmin: bo
   const [reason, setReason] = useState('');
   const [reasonFieldError, setReasonFieldError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const history = useQuery({ queryKey: ['admin', 'user-history', item._id],
+    queryFn: () => adminApi.userHistory(item._id), enabled: historyOpen });
   const [permissions, setPermissions] = useState<AdminPermission[]>(item.adminPermissions?.length ? item.adminPermissions : ['analytics']);
   const isSelf = item._id === selfId;
   const isAdmin = item.role === 'admin';
   const deleted = item.status === 'deleted';
 
   function toggleStatus() {
-    const error = reasonError(reason, false);
+    const error = reasonError(reason, true);
     setReasonFieldError(error);
     if (error) return;
-    status.mutate({ id: item._id, status: item.status === 'suspended' ? 'active' : 'suspended', reason: reason.trim() || undefined });
+    status.mutate({ id: item._id, status: item.status === 'suspended' ? 'active' : 'suspended', reason: reason.trim() });
   }
 
   function saveRights() {
@@ -94,9 +98,26 @@ function UserRow({ item, superAdmin, selfId }: { item: AdminUser; superAdmin: bo
           <span>{item.reputation ?? 0} điểm đóng góp</span>
           <span>Tạo lúc {formatDateTime(item.createdAt)}</span>
         </span>
+        {historyOpen ? (
+          <div className="row__editor">
+            {history.isPending ? <LoadingRows rows={1} /> : history.isError ? (
+              <FormAlert message={errorMessage(history.error)} />
+            ) : (
+              <>
+                <p className="field__hint">30 mục gần nhất mỗi loại. Booking: {history.data.bookings.length}; check-in: {history.data.checkins.length}; đánh giá: {history.data.reviews.length}; báo cáo: {history.data.reports.length}; lượt ghé xác minh: {history.data.visits.length}; cờ gian lận: {history.data.flags.length}.</p>
+                <ul className="rows">
+                  {history.data.bookings.slice(0, 5).map((booking) => <li key={booking._id}>Booking {booking.status} · {formatDateTime(booking.startsAt)}</li>)}
+                  {history.data.checkins.slice(0, 5).map((checkin) => <li key={checkin._id}>Check-in {checkin.flagged ? 'cần rà soát' : 'hợp lệ'} · {formatDateTime(checkin.createdAt)}</li>)}
+                  {history.data.reviews.slice(0, 5).map((review) => <li key={review._id}>Đánh giá {review.hidden ? 'đã ẩn' : 'đang hiện'} · {formatDateTime(review.createdAt)}</li>)}
+                  {history.data.flags.slice(0, 5).map((flag) => <li key={flag._id}>Cờ gian lận {flag.status} · {formatDateTime(flag.createdAt)}</li>)}
+                </ul>
+              </>
+            )}
+          </div>
+        ) : null}
         {!isAdmin && !isSelf && !deleted ? (
           <TextField
-            label={item.status === 'suspended' ? 'Ghi chú khi mở khóa (không bắt buộc)' : 'Lý do khóa (không bắt buộc, lưu vào nhật ký)'}
+            label={item.status === 'suspended' ? 'Lý do mở khóa (bắt buộc)' : 'Lý do khóa (bắt buộc)'}
             value={reason}
             maxLength={500}
             onChange={(event) => {
@@ -124,6 +145,9 @@ function UserRow({ item, superAdmin, selfId }: { item: AdminUser; superAdmin: bo
         <FormAlert message={status.isError ? errorMessage(status.error) : rights.isError ? errorMessage(rights.error) : null} />
       </div>
       <div className="row__actions">
+        <Button size="small" variant="secondary" onClick={() => setHistoryOpen(!historyOpen)}>
+          {historyOpen ? 'Ẩn lịch sử' : 'Xem lịch sử'}
+        </Button>
         {!isAdmin && !isSelf && !deleted ? (
           <Button
             size="small"

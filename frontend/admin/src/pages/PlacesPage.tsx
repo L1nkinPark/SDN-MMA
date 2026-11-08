@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 
 import { PAGE_SIZE } from '../api/endpoints';
 import { errorMessage } from '../api/errors';
-import { useAdminUsers, usePlaces, useTransferOwner, useUpdatePlace, useUploadImage } from '../api/hooks';
+import { useAdminUsers, usePlaces, useRemoveImage, useTransferOwner, useUpdatePlace, useUploadImage } from '../api/hooks';
 import type { Approval, Place } from '../api/types';
 import { useSession } from '../auth/sessionContext';
 import { PlaceForm } from '../components/PlaceForm';
@@ -42,9 +42,11 @@ function readFilter(value: string | null): Filter {
 
 function ImageUploader({ place }: { place: Place }) {
   const upload = useUploadImage();
+  const remove = useRemoveImage();
   const [file, setFile] = useState<File | null>(null);
+  const [reason, setReason] = useState('');
   const [inputKey, setInputKey] = useState(0);
-  const images = upload.data?.place?.images ?? place.images ?? [];
+  const images = remove.data?.place?.images ?? upload.data?.place?.images ?? place.images ?? [];
 
   return (
     <div className="form-grid__wide">
@@ -52,14 +54,23 @@ function ImageUploader({ place }: { place: Place }) {
       {images.length ? (
         <div className="images">
           {images.map((url) => (
-            <a key={url} href={url} target="_blank" rel="noreferrer">
-              <img src={url} alt={`Ảnh của ${place.name ?? 'địa điểm'}`} loading="lazy" />
-            </a>
+            <div key={url}>
+              <a href={url} target="_blank" rel="noreferrer">
+                <img src={url} alt={`Ảnh của ${place.name ?? 'địa điểm'}`} loading="lazy" />
+              </a>
+              <Button variant="danger-text" size="small" disabled={remove.isPending || Boolean(reasonError(reason, true))}
+                busy={remove.isPending && remove.variables?.imageUrl === url}
+                onClick={() => { if (place._id) remove.mutate({ id: place._id, imageUrl: url, reason: reason.trim() },
+                  { onSuccess: () => { upload.reset(); setReason(''); } }); }}>Gỡ ảnh</Button>
+            </div>
           ))}
         </div>
       ) : (
         <p className="field__hint">Chưa có ảnh.</p>
       )}
+      <TextField label="Lý do thêm hoặc gỡ ảnh (bắt buộc)" value={reason} maxLength={500}
+        onChange={(event) => setReason(event.target.value)} error={reasonError(reason, true)}
+        disabled={upload.isPending || remove.isPending} />
       <div className="form-actions">
         <label className={`btn btn--secondary btn--small file-pick${upload.isPending ? ' file-pick--disabled' : ''}`}>
           <input
@@ -79,17 +90,19 @@ function ImageUploader({ place }: { place: Place }) {
         <Button
           variant="secondary"
           size="small"
-          disabled={!file}
+          disabled={!file || Boolean(reasonError(reason, true))}
           busy={upload.isPending}
           busyLabel="Đang tải ảnh"
           onClick={() => {
             if (!file || !place._id) return;
             upload.mutate(
-              { id: place._id, file },
+              { id: place._id, file, reason: reason.trim() },
               {
                 onSuccess: () => {
                   setFile(null);
                   setInputKey((key) => key + 1);
+                  remove.reset();
+                  setReason('');
                 },
               },
             );
@@ -98,6 +111,7 @@ function ImageUploader({ place }: { place: Place }) {
         </Button>
         {upload.isSuccess ? <span className="field__hint">Đã tải ảnh lên.</span> : null}
         <FormAlert message={upload.isError ? errorMessage(upload.error) : null} />
+        <FormAlert message={remove.isError ? errorMessage(remove.error) : null} />
       </div>
       <p className="field__hint">JPEG, PNG hoặc WebP, tối đa 5 MB. Cần cấu hình Cloudinary trên máy chủ.</p>
     </div>
@@ -275,10 +289,10 @@ function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; 
   const evidenceCount = place.onboardingEvidenceUrls?.length ?? 0;
 
   function setApproval(approval: Approval) {
-    const error = reasonError(decisionNote, false);
+    const error = reasonError(decisionNote, true);
     setNoteError(error);
     if (error) return;
-    update.mutate({ id, changes: { approval, ...(decisionNote.trim() ? { decisionNote: decisionNote.trim() } : {}) } });
+    update.mutate({ id, changes: { approval, decisionNote: decisionNote.trim() } });
   }
 
   return (
@@ -308,7 +322,7 @@ function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; 
         {evidenceCount ? <span className="row__secondary">Hồ sơ chủ quán kèm {evidenceCount} link minh chứng (bấm Sửa để xem).</span> : null}
         {place.moderationNote ? <p className="row__body">Ghi chú quyết định: {place.moderationNote}</p> : null}
         <TextField
-          label="Ghi chú gửi người đề xuất khi duyệt hoặc từ chối (không bắt buộc)"
+          label="Lý do duyệt hoặc từ chối gửi người đề xuất (bắt buộc)"
           value={decisionNote}
           maxLength={1000}
           onChange={(event) => {

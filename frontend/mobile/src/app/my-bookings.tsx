@@ -49,7 +49,11 @@ function BookingRow({ booking, now, cancelling, onCancel }: {
         <Text style={styles.detail}>Lý do hủy: {booking.cancellationReason}</Text>
       ) : null}
       {booking.status === 'pending' ? (
-        <Text style={type.secondary}>Quán chưa xác nhận. Yêu cầu tự hủy nếu chưa được xác nhận trước giờ đến 1 giờ.</Text>
+        <Text style={type.secondary}>Quán chưa xác nhận. Hạn duyệt: {vnDateTime(booking.holdUntil)}. Quá hạn, chỗ được trả lại.</Text>
+      ) : null}
+      {booking.status === 'no_show' && booking._id ? (
+        <Button label="Khiếu nại nếu đã đến quán" size="medium" variant="secondary"
+          onPress={() => router.push({ pathname: '/cases/new', params: { kind: 'booking_dispute', targetId: booking._id as string } })} />
       ) : null}
       {cancellable ? (
         <Pressable

@@ -5,6 +5,7 @@ import { HttpError, assertId, coordinates, distanceMeters, parse } from '../util
 import { awardReputation } from '../services/reputationService.js';
 import { recalculateStatus } from '../services/statusService.js';
 import { notifyAdmins } from '../services/notificationService.js';
+import { linkReviewToVisit } from '../services/visitReviewService.js';
 
 const checkinBody = z.object({
   crowd: z.enum(['low', 'medium', 'high']), noise: z.enum(['quiet', 'moderate', 'loud']), coordinates,
@@ -44,17 +45,22 @@ export function checkinController(cfg, io) {
       const elapsedHours = previous ? Math.max((Date.now() - previous.createdAt.getTime()) / 3600000, 0.001) : 0;
       const flagged = travelMeters > 5000 && travelMeters / 1000 / elapsedHours > 150;
       const checkin = await Checkin.create({ user: req.user._id, place: placeId, crowd: body.crowd, noise: body.noise,
-        verificationLevel, verifiedAt: verificationLevel === 'qr_verified' ? new Date() : null,
+        verificationLevel, accuracyMeters: body.accuracyMeters ?? null,
+        verifiedAt: verificationLevel === 'qr_verified' ? new Date() : null,
         flagged,
         expiresAt: new Date(Date.now() + cfg.checkinMinutes * 60000) });
       if (flagged) {
         const flag = await FraudFlag.create({ user: req.user._id, place: placeId, checkin: checkin._id,
-          reason: 'impossible_travel', detail: `${Math.round(travelMeters / 1000)} km in ${Math.max(1, Math.round(elapsedHours * 60))} minutes` });
+          reason: 'impossible_travel', detail: `${Math.round(travelMeters / 1000)} km in ${Math.max(1, Math.round(elapsedHours * 60))} minutes`,
+          evidence: { distanceMeters: Math.round(travelMeters), elapsedMinutes: Math.max(1, Math.round(elapsedHours * 60)),
+            gpsAccuracyMeters: body.accuracyMeters ?? null, previousCheckin: previous?._id || null,
+            previousAt: previous?.createdAt || null, currentAt: checkin.createdAt, verificationLevel } });
         await notifyAdmins(cfg, { kind: 'fraud_flag', title: 'Check-in cần kiểm tra',
           body: `Phát hiện di chuyển bất thường tại ${place.name}.`, resourceType: 'FraudFlag', resourceId: flag._id }).catch(console.error);
       }
       if (verificationLevel === 'qr_verified' && !flagged) {
-        await VisitProof.create({ user: req.user._id, place: placeId, method: 'qr', verifiedAt: checkin.verifiedAt });
+        const proof = await VisitProof.create({ user: req.user._id, place: placeId, method: 'qr', verifiedAt: checkin.verifiedAt });
+        await linkReviewToVisit(proof);
       }
       if (!flagged) await awardReputation(req.user._id, placeId, 'checkin', new Date().toISOString().slice(0, 10), 1);
       const liveStatus = await recalculateStatus(placeId, cfg, io);

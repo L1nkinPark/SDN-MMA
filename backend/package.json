@@ -10,6 +10,7 @@
     "seed:hcm": "node scripts/seed-hcm.js",
     "smoke:cloudinary": "node scripts/smoke-cloudinary.js",
     "seed:erd-demo": "node scripts/seed-erd-demo.js",
+    "migrate:verified-ratings": "node scripts/recalculate-ratings.js",
     "test": "node --test",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**/*.js"
   },

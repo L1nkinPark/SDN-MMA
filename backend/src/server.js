@@ -2,15 +2,15 @@ import mongoose from 'mongoose';
 import { config } from './config.js';
 import { refreshExpiredStatuses } from './services/statusService.js';
 import { createHttpServer } from './http.js';
-import { Booking, BookingSlot, EmailOutbox, FraudFlag, MerchantClaim, Notification, PasswordReset, PlaceChangeRequest, VisitProof } from './models/index.js';
+import { Booking, BookingSlot, EmailChange, EmailOutbox, FraudFlag, MerchantClaim, Notification, PasswordReset, PlaceChangeRequest, SupportCase, VisitProof } from './models/index.js';
 import { reconcileBookingSlots } from './services/bookingService.js';
 import { processBookingDeadlines } from './services/bookingJobs.js';
 import { processEmailOutbox } from './services/notificationService.js';
 
 const cfg = config();
 await mongoose.connect(cfg.mongoUri);
-await Promise.all([Booking.init(), BookingSlot.init(), EmailOutbox.init(), FraudFlag.init(), MerchantClaim.init(),
-  Notification.init(), PasswordReset.init(), PlaceChangeRequest.init(), VisitProof.init()]);
+await Promise.all([Booking.init(), BookingSlot.init(), EmailChange.init(), EmailOutbox.init(), FraudFlag.init(), MerchantClaim.init(),
+  Notification.init(), PasswordReset.init(), PlaceChangeRequest.init(), SupportCase.init(), VisitProof.init()]);
 await reconcileBookingSlots();
 const { server, io } = createHttpServer(cfg);
 

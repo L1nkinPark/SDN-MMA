@@ -109,7 +109,7 @@ function ReviewForm({ placeId, placeName, existing, onHidden }: FormProps) {
             error={errors.text}
             editable={!busy}
           />
-          {!errors.text ? <Text style={styles.hint}>Từ 3 đến 1.000 ký tự.</Text> : null}
+          {!errors.text ? <Text style={styles.hint}>Từ 3 đến 1.000 ký tự. Chỉ đánh giá có lượt ghé được xác minh mới tính vào điểm trung bình.</Text> : null}
         </View>
       </FormScroll>
       <ActionBar>
@@ -157,7 +157,9 @@ export default function WriteReviewScreen() {
         <MessageState
           heading="Không thể sửa đánh giá này"
           sentence="Đánh giá của bạn đã bị ẩn bởi quản trị viên."
-          action={{ label: 'Về địa điểm', onPress: () => backToPlace(placeId) }}
+          action={mine.review?._id ? { label: 'Gửi khiếu nại', onPress: () => router.push({ pathname: '/cases/new',
+            params: { kind: 'review_appeal', targetId: mine.review?._id ?? '' } }) } :
+            { label: 'Về địa điểm', onPress: () => backToPlace(placeId) }}
         />
       </Screen>
     );
@@ -197,6 +199,14 @@ export default function WriteReviewScreen() {
         />
       </Screen>
     );
+  }
+
+  if (mine.review?.hidden) {
+    return <Screen><Header title="Đánh giá của tôi" back />
+      <MessageState heading="Đánh giá đã bị ẩn" sentence={mine.review.moderationNote || 'Bạn có thể gửi khiếu nại trong 14 ngày.'}
+        action={{ label: 'Gửi khiếu nại', onPress: () => router.push({ pathname: '/cases/new',
+          params: { kind: 'review_appeal', targetId: mine.review?._id ?? '' } }) }} />
+    </Screen>;
   }
 
   return (

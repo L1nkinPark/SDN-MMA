@@ -36,17 +36,20 @@ function FlagRow({ flag }: { flag: FraudFlag }) {
           {place?.address ? `, ${place.address}` : ''}
         </span>
         <p className="row__body">{fraudDetailText(flag.detail)}</p>
+        {flag.evidence ? <p className="row__body">Bằng chứng: {flag.evidence.distanceMeters == null ? 'không rõ quãng đường' : `${(flag.evidence.distanceMeters / 1000).toFixed(1)} km`}
+          {' '}trong {flag.evidence.elapsedMinutes ?? '?'} phút; sai số GPS {flag.evidence.gpsAccuracyMeters ?? 'không rõ'} m;
+          {' '}lần trước {formatDateTime(flag.evidence.previousAt ?? undefined)}; xác minh {flag.evidence.verificationLevel || 'không rõ'}.</p> : null}
         <span className="row__meta">{formatDateTime(flag.createdAt)}</span>
         {pending ? (
           <DecisionForm
-            label="Ghi chú cho nhật ký (không bắt buộc)"
-            required={false}
+            label="Kết luận rà soát và căn cứ (bắt buộc)"
+            required
             approveLabel="Xác nhận gian lận"
             rejectLabel="Bỏ cờ"
             busy={decide.isPending ? (decide.variables?.status === 'resolved' ? 'approve' : 'reject') : null}
             error={decide.isError ? errorMessage(decide.error) : null}
             onDecide={(decision, note) =>
-              decide.mutate({ id: flag._id, status: decision === 'approve' ? 'resolved' : 'dismissed', reason: note || undefined })
+              decide.mutate({ id: flag._id, status: decision === 'approve' ? 'resolved' : 'dismissed', reason: note })
             }
           />
         ) : null}

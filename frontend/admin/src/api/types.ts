@@ -95,6 +95,26 @@ export type AdminUser = {
   adminPermissions?: AdminPermission[];
   createdAt?: string;
 };
+export type UserHistory = {
+  user: AdminUser;
+  bookings: (Booking & { createdAt?: string })[];
+  checkins: { _id: string; createdAt?: string; crowd?: string; noise?: string; flagged?: boolean; place?: unknown }[];
+  reviews: (Review & { createdAt?: string })[];
+  reports: (Report & { createdAt?: string })[];
+  visits: { _id: string; createdAt?: string; method?: string; place?: unknown }[];
+  flags: FraudFlag[];
+  audit: AuditEvent[];
+};
+export type SupportCase = {
+  _id: string;
+  user: unknown;
+  kind: 'review_appeal' | 'booking_dispute';
+  targetId: string;
+  reason: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  decisionNote?: string | null;
+  createdAt?: string;
+};
 export type AuditEvent = {
   _id: string;
   actor: unknown;
@@ -112,6 +132,8 @@ export type FraudFlag = {
   checkin: string;
   reason: 'impossible_travel';
   detail: string;
+  evidence?: { distanceMeters?: number | null; elapsedMinutes?: number | null; gpsAccuracyMeters?: number | null;
+    previousAt?: string | null; currentAt?: string | null; verificationLevel?: string | null };
   status: FraudStatus;
   createdAt: string;
 };

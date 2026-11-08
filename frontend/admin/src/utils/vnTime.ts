@@ -40,11 +40,11 @@ export function latestClosedDate(now: Date = new Date()): string {
 }
 
 /** What a merchant may do with a booking right now, mirroring the time checks in `merchantDecision`. */
-export function bookingActionsAt(status: string | undefined, startsAt: string | undefined, now: number = Date.now()): BookingAction[] {
+export function bookingActionsAt(status: string | undefined, startsAt: string | undefined, now: number = Date.now(), holdUntil?: string | null): BookingAction[] {
   const start = startsAt ? Date.parse(startsAt) : NaN;
   if (Number.isNaN(start)) return [];
   const window = 15 * 60000;
-  if (status === 'pending') return now < start ? ['approve', 'reject'] : [];
+  if (status === 'pending') return now < start && now < (holdUntil ? Date.parse(holdUntil) : start - 3600000) ? ['approve', 'reject'] : [];
   if (status !== 'confirmed') return [];
   const actions: BookingAction[] = [];
   if (now >= start - window && now <= start + window) actions.push('arrived');

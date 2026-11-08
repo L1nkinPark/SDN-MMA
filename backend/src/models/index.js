@@ -11,6 +11,8 @@ export { BookingSlot } from './BookingSlot.js';
 export { VisitProof } from './VisitProof.js';
 export { AuditEvent } from './AuditEvent.js';
 export { PasswordReset } from './PasswordReset.js';
+export { EmailChange } from './EmailChange.js';
+export { SupportCase } from './SupportCase.js';
 export { Notification } from './Notification.js';
 export { EmailOutbox } from './EmailOutbox.js';
 export { PlaceChangeRequest } from './PlaceChangeRequest.js';

@@ -78,11 +78,17 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   assert.equal(created.body.place.approval, 'pending');
   await request(app).get(`/api/places/${placeId}`).expect(404);
   await request(app).get('/api/admin/analytics').set(aliceAuth).expect(403);
-  await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth).send({ approval: 'approved' }).expect(200);
+  await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
+    .send({ approval: 'approved', decisionNote: 'Place details verified' }).expect(200);
   await request(app).get(`/api/places/${placeId}`).expect(200);
   const forgedImage = await request(app).post(`/api/admin/places/${placeId}/images`)
-    .set(adminAuth).attach('image', Buffer.from('<script>alert(1)</script>'), { filename: 'fake.png', contentType: 'image/png' }).expect(400);
+    .set(adminAuth).field('reason', 'Evidence image approved')
+    .attach('image', Buffer.from('<script>alert(1)</script>'), { filename: 'fake.png', contentType: 'image/png' }).expect(400);
   assert.match(forgedImage.body.error, /File content does not match/);
+  assert.equal((await Place.findById(placeId)).images.length, 0);
+  await Place.updateOne({ _id: placeId }, { $push: { images: 'https://example.com/inappropriate.jpg' } });
+  await request(app).delete(`/api/admin/places/${placeId}/images`).set(adminAuth)
+    .send({ imageUrl: 'https://example.com/inappropriate.jpg', reason: 'Image violates place photo rules' }).expect(200);
   assert.equal((await Place.findById(placeId)).images.length, 0);
 
   const nearby = await request(app).get('/api/places').query({ lat: 21, lng: 105.8, radius: 1000, wifi: true }).expect(200);
@@ -102,6 +108,10 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   assert.ok(events.some(e => e.room === `place:${placeId}` && e.payload.liveStatus.sampleCount === 2));
 
   await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(200);
+  assert.equal((await Place.findById(placeId)).ratingCount, 0);
+  await VisitProof.create({ user: alice.user.id, place: placeId, method: 'qr' });
+  await VisitProof.create({ user: bob.user.id, place: placeId, method: 'qr' });
+  await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(200);
   await request(app).put(`/api/places/${placeId}/reviews/me`).set(bobAuth).send({ rating: 3, text: 'Somewhat noisy today' }).expect(200);
   const reviewed = await request(app).get(`/api/places/${placeId}`).expect(200);
   assert.equal(reviewed.body.place.ratingAverage, 4);
@@ -115,10 +125,14 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   const aliceReview = (await request(app).get(`/api/places/${placeId}/reviews`).expect(200)).body.items.find(r => r.user._id === alice.user.id);
   const reviewQueue = await request(app).get('/api/admin/reviews').set(adminAuth).query({ hidden: false }).expect(200);
   assert.equal(reviewQueue.body.total, 2);
-  await request(app).patch(`/api/admin/reviews/${aliceReview._id}`).set(adminAuth).send({ hidden: true }).expect(200);
+  await request(app).patch(`/api/admin/reviews/${aliceReview._id}`).set(adminAuth)
+    .send({ hidden: true, reason: 'Moderation review required' }).expect(200);
+  const hiddenMine = await request(app).get(`/api/places/${placeId}/reviews/me`).set(aliceAuth).expect(200);
+  assert.equal(hiddenMine.body.review.hidden, true);
   await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Trying to unhide this' }).expect(403);
   assert.equal((await Place.findById(placeId)).ratingAverage, 3);
-  await request(app).patch(`/api/admin/reviews/${aliceReview._id}`).set(adminAuth).send({ hidden: false }).expect(200);
+  await request(app).patch(`/api/admin/reviews/${aliceReview._id}`).set(adminAuth)
+    .send({ hidden: false, reason: 'Appeal evidence accepted' }).expect(200);
   await request(app).put(`/api/favorites/${placeId}`).set(aliceAuth).expect(200);
   const favorites = await request(app).get('/api/favorites').set(aliceAuth).expect(200);
   assert.equal(favorites.body.items.length, 1);
@@ -126,13 +140,15 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
 
   const report = await request(app).post('/api/reports').set(aliceAuth).send({ placeId, reason: 'incorrect_info', detail: 'The listed Wi-Fi is unavailable today' }).expect(201);
   await request(app).post('/api/reports').set(aliceAuth).send({ placeId, reason: 'other', detail: 'Another pending report' }).expect(409);
-  await request(app).patch(`/api/admin/reports/${report.body.report._id}`).set(adminAuth).send({ status: 'resolved' }).expect(200);
+  await request(app).patch(`/api/admin/reports/${report.body.report._id}`).set(adminAuth)
+    .send({ status: 'resolved', reason: 'Information updated by admin' }).expect(200);
   const concurrent = await Promise.all([
     request(app).post('/api/reports').set(bobAuth).send({ placeId, reason: 'other', detail: 'First concurrent report' }),
     request(app).post('/api/reports').set(bobAuth).send({ placeId, reason: 'closed', detail: 'Second concurrent report' })
   ]);
   assert.deepEqual(concurrent.map(result => result.status).sort(), [201, 409]);
-  await request(app).patch(`/api/admin/reports/${concurrent.find(result => result.status === 201).body.report._id}`).set(adminAuth).send({ status: 'dismissed' }).expect(200);
+  await request(app).patch(`/api/admin/reports/${concurrent.find(result => result.status === 201).body.report._id}`).set(adminAuth)
+    .send({ status: 'dismissed', reason: 'Report was not substantiated' }).expect(200);
   const analytics = await request(app).get('/api/admin/analytics').set(adminAuth).expect(200);
   assert.equal(analytics.body.approvedPlaces, 1);
   assert.equal(analytics.body.pendingReports, 0);
@@ -219,7 +235,7 @@ test('merchant claim, managed booking, verified visit, review badge and admin us
   }).expect(201);
   const placeId = created.body.place._id;
   await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
-    .send({ approval: 'approved' }).expect(200);
+    .send({ approval: 'approved', decisionNote: 'Storefront verified in person' }).expect(200);
   const claim = await request(app).post('/api/merchant/claims').set(ownerAuth).send({
     placeId, businessName: 'Study Cafe Company', contactPhone: '0901234567',
     evidenceUrls: ['https://example.com/proof.jpg']
@@ -306,12 +322,12 @@ test('merchant claim, managed booking, verified visit, review badge and admin us
   assert.ok(staffReview.body.review.verifiedVisit);
 
   await request(app).patch(`/api/admin/users/${visitor.user.id}`).set(adminAuth)
-    .send({ status: 'suspended' }).expect(200);
+    .send({ status: 'suspended', reason: 'Repeated suspicious activity' }).expect(200);
   await request(app).get('/api/auth/me').set(visitorAuth).expect(403);
   await request(app).post('/api/auth/login').send({ email: 'visitor@example.com', password: 'Password123!' }).expect(403);
   await request(app).post('/api/auth/refresh').send({ refreshToken: visitor.refreshToken }).expect(401);
   await request(app).patch(`/api/admin/users/${visitor.user.id}`).set(adminAuth)
-    .send({ status: 'active' }).expect(200);
+    .send({ status: 'active', reason: 'Investigation cleared the account' }).expect(200);
   const users = await request(app).get('/api/admin/users').set(adminAuth).query({ q: 'visitor@example.com' }).expect(200);
   assert.equal(users.body.total, 1);
   const audit = await request(app).get('/api/admin/audit').set(adminAuth).expect(200);

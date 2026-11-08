@@ -4,6 +4,7 @@ import { PAGE_SIZE } from '../api/endpoints';
 import { errorMessage } from '../api/errors';
 import { useAdminBookings, useAdminCancelBooking } from '../api/hooks';
 import { populated, type Booking, type BookingStatus } from '../api/types';
+import { CasesPanel } from '../components/CasesPanel';
 import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, StateMessage, Tag, TextField } from '../components/ui';
 import { BOOKING_STATUS_LABELS } from '../utils/labels';
 import { reasonError } from '../utils/validation';
@@ -81,7 +82,9 @@ function BookingRow({ booking, now }: { booking: Booking; now: number }) {
 export function AdminBookingsPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(1);
-  const bookings = useAdminBookings(filter, page);
+  const [q, setQ] = useState('');
+  const [date, setDate] = useState('');
+  const bookings = useAdminBookings(filter, page, q.trim() || undefined, date || undefined);
   const items = bookings.data?.items ?? [];
   const [now, setNow] = useState(() => Date.now());
 
@@ -103,6 +106,11 @@ export function AdminBookingsPage() {
           setPage(1);
         }}
       />
+      <div className="section ops-filter">
+        <TextField label="Tìm theo tên quán" value={q} onChange={(event) => { setQ(event.target.value); setPage(1); }} />
+        <label className="field">Ngày đến (giờ Việt Nam)<input type="date" value={date}
+          onChange={(event) => { setDate(event.target.value); setPage(1); }} /></label>
+      </div>
       <p className="section field__hint">Hủy một booking sẽ trả chỗ cho quán, gửi lý do cho khách và ghi vào nhật ký.</p>
       {bookings.isPending ? (
         <LoadingRows />
@@ -123,6 +131,7 @@ export function AdminBookingsPage() {
         </ul>
       )}
       <Pagination page={page} limit={bookings.data?.limit ?? PAGE_SIZE} total={bookings.data?.total ?? 0} onChange={setPage} />
+      <CasesPanel kind="booking_dispute" />
     </>
   );
 }

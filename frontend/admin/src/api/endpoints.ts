@@ -24,6 +24,7 @@ import type {
   MerchantPlaceUpdate,
   NotificationPage,
   Page,
+  Place,
   PlaceChangeFields,
   PlaceChangeRequest,
   PlaceInput,
@@ -33,10 +34,12 @@ import type {
   ReportPage,
   ReportResponse,
   ReportStatus,
+  SupportCase,
   ReviewPage,
   ReviewResponse,
   UploadImageResponse,
   UserRole,
+  UserHistory,
   UserStatus,
   VisitCode,
 } from './types';
@@ -108,6 +111,12 @@ export const merchantApi = {
     form.append('image', file);
     return api.request<{ change: PlaceChangeRequest }>(`/api/merchant/places/${enc(id)}/images`, { method: 'POST', body: form });
   },
+  uploadInitialImage: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('image', file);
+    return api.request<{ place: Place; imageUrl: string }>(`/api/merchant/places/${enc(id)}/images`,
+      { method: 'POST', body: form });
+  },
   listChanges: (page: number) =>
     api.request<Page<PlaceChangeRequest>>('/api/merchant/change-requests/me', { query: { page, limit: PAGE_SIZE } }),
 };
@@ -115,17 +124,20 @@ export const merchantApi = {
 export type UserFilter = { page: number; q?: string; role?: UserRole; status?: UserStatus };
 
 export const adminApi = {
-  analytics: () => api.request<Analytics>('/api/admin/analytics'),
+  analytics: (from?: string, to?: string) => api.request<Analytics>('/api/admin/analytics', { query: { from, to } }),
 
   listPlaces: (page: number, approval?: Approval) =>
     api.request<PlacePage>('/api/admin/places', { query: { page, limit: PAGE_SIZE, approval } }),
   updatePlace: (id: string, changes: PlaceUpdate) =>
     api.request<PlaceResponse>(`/api/admin/places/${enc(id)}`, { method: 'PATCH', body: changes }),
-  uploadImage: (id: string, file: File) => {
+  uploadImage: (id: string, file: File, reason: string) => {
     const form = new FormData();
     form.append('image', file);
+    form.append('reason', reason);
     return api.request<UploadImageResponse>(`/api/admin/places/${enc(id)}/images`, { method: 'POST', body: form });
   },
+  removeImage: (id: string, imageUrl: string, reason: string) =>
+    api.request<PlaceResponse>(`/api/admin/places/${enc(id)}/images`, { method: 'DELETE', body: { imageUrl, reason } }),
   transferOwner: (id: string, ownerId: string | null, reason: string) =>
     api.request<PlaceResponse>(`/api/admin/places/${enc(id)}/owner`, { method: 'PATCH', body: { ownerId, reason } }),
   /** Places created by an admin are approved immediately. */
@@ -149,6 +161,7 @@ export const adminApi = {
 
   listUsers: ({ page, q, role, status }: UserFilter) =>
     api.request<Page<AdminUser>>('/api/admin/users', { query: { page, limit: PAGE_SIZE, q, role, status } }),
+  userHistory: (id: string) => api.request<UserHistory>(`/api/admin/users/${enc(id)}/history`),
   updateUserStatus: (id: string, status: 'active' | 'suspended', reason?: string) =>
     api.request<{ user: AdminUser }>(`/api/admin/users/${enc(id)}`, {
       method: 'PATCH',
@@ -176,10 +189,16 @@ export const adminApi = {
       body: { status, decisionNote },
     }),
 
-  listBookings: (page: number, status?: BookingStatus) =>
-    api.request<Page<Booking>>('/api/admin/bookings', { query: { page, limit: PAGE_SIZE, status } }),
+  listBookings: (page: number, status?: BookingStatus, q?: string, date?: string) =>
+    api.request<Page<Booking>>('/api/admin/bookings', { query: { page, limit: PAGE_SIZE, status, q, date } }),
   cancelBooking: (id: string, reason: string) =>
     api.request<BookingResponse>(`/api/admin/bookings/${enc(id)}/cancel`, { method: 'POST', body: { reason } }),
+  listCases: (kind: SupportCase['kind'], page: number, status?: SupportCase['status']) =>
+    api.request<Page<SupportCase>>(kind === 'review_appeal' ? '/api/admin/review-appeals' : '/api/admin/booking-disputes',
+      { query: { page, limit: PAGE_SIZE, status } }),
+  decideCase: (kind: SupportCase['kind'], id: string, status: 'accepted' | 'rejected', decisionNote: string) =>
+    api.request<{ case: SupportCase }>(`${kind === 'review_appeal' ? '/api/admin/review-appeals' : '/api/admin/booking-disputes'}/${enc(id)}`,
+      { method: 'PATCH', body: { status, decisionNote } }),
 
   listFraudFlags: (page: number, status?: FraudStatus) =>
     api.request<Page<FraudFlag>>('/api/admin/fraud-flags', { query: { page, limit: PAGE_SIZE, status } }),

@@ -94,6 +94,14 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   'claim.approved': 'Duyệt hồ sơ chủ quán',
   'claim.rejected': 'Từ chối hồ sơ chủ quán',
   'booking.cancel': 'Hủy booking',
+  'booking.approve': 'Duyệt booking',
+  'booking.reject': 'Từ chối booking',
+  'booking.arrived': 'Xác nhận khách đã đến',
+  'booking.no_show': 'Ghi nhận không đến',
+  'review_appeal.accepted': 'Chấp nhận khiếu nại đánh giá',
+  'review_appeal.rejected': 'Từ chối khiếu nại đánh giá',
+  'booking_dispute.accepted': 'Chấp nhận khiếu nại booking',
+  'booking_dispute.rejected': 'Từ chối khiếu nại booking',
   'fraud.resolved': 'Xác nhận gian lận',
   'fraud.dismissed': 'Bỏ cờ gian lận',
   'place_change.approved': 'Duyệt thay đổi quán',
@@ -103,6 +111,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   'place.rejected': 'Từ chối địa điểm',
   'place.pending': 'Đưa địa điểm về chờ duyệt',
   'place.update': 'Sửa địa điểm',
+  'place.image_add': 'Duyệt ảnh địa điểm',
+  'place.image_remove': 'Gỡ ảnh địa điểm',
   'report.resolved': 'Xử lý báo cáo',
   'report.dismissed': 'Bỏ qua báo cáo',
   'review.hide': 'Ẩn đánh giá',
@@ -122,6 +132,7 @@ const TARGET_LABELS: Record<string, string> = {
   PlaceChangeRequest: 'Đề nghị thay đổi',
   Report: 'Báo cáo',
   Review: 'Đánh giá',
+  SupportCase: 'Khiếu nại',
 };
 
 export function targetLabel(targetType: string): string {

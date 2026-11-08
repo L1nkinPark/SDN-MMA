@@ -18,8 +18,8 @@ import type {
   ReportStatus,
 } from './types';
 
-export function useAnalytics() {
-  return useQuery({ queryKey: queryKeys.analytics, queryFn: adminApi.analytics });
+export function useAnalytics(from?: string, to?: string) {
+  return useQuery({ queryKey: [...queryKeys.analytics, from, to], queryFn: () => adminApi.analytics(from, to) });
 }
 
 export function usePlaces(approval: Approval | 'all', page: number) {
@@ -64,7 +64,16 @@ export function useUpdatePlace() {
 export function useUploadImage() {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) => adminApi.uploadImage(id, file),
+    mutationFn: ({ id, file, reason }: { id: string; file: File; reason: string }) => adminApi.uploadImage(id, file, reason),
+    onSuccess: () => invalidate(queryKeys.places),
+  });
+}
+
+export function useRemoveImage() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, imageUrl, reason }: { id: string; imageUrl: string; reason: string }) =>
+      adminApi.removeImage(id, imageUrl, reason),
     onSuccess: () => invalidate(queryKeys.places),
   });
 }
@@ -300,10 +309,10 @@ export function useDecidePlaceChange() {
   });
 }
 
-export function useAdminBookings(status: BookingStatus | 'all', page: number) {
+export function useAdminBookings(status: BookingStatus | 'all', page: number, q?: string, date?: string) {
   return useQuery({
-    queryKey: queryKeys.bookingsPage(status, page),
-    queryFn: () => adminApi.listBookings(page, status === 'all' ? undefined : status),
+    queryKey: [...queryKeys.bookingsPage(status, page), q, date],
+    queryFn: () => adminApi.listBookings(page, status === 'all' ? undefined : status, q, date),
     placeholderData: keepPreviousData,
   });
 }

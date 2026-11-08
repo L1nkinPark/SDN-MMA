@@ -21,7 +21,7 @@ const FILTERS: { value: Filter; label: string }[] = [
 ];
 
 /** Actions that may carry a reason, which the guest sees in their notification. */
-const WITH_REASON: BookingAction[] = ['reject', 'cancel'];
+const WITH_REASON: BookingAction[] = ['reject', 'cancel', 'no_show'];
 
 function BookingRow({ booking, placeId, now }: { booking: Booking; placeId: string; now: number }) {
   const decide = useBookingDecision(placeId);
@@ -29,17 +29,17 @@ function BookingRow({ booking, placeId, now }: { booking: Booking; placeId: stri
   const [reasonFieldError, setReasonFieldError] = useState<string | null>(null);
   const guest = populated(booking.user);
   const status = booking.status ?? 'pending';
-  const actions = bookingActionsAt(status, booking.startsAt, now);
+  const actions = bookingActionsAt(status, booking.startsAt, now, booking.holdUntil);
   const canGiveReason = actions.some((action) => WITH_REASON.includes(action));
 
   function run(action: BookingAction) {
     if (!booking._id) return;
     let text: string | undefined;
     if (WITH_REASON.includes(action)) {
-      const error = reasonError(reason, false);
+      const error = reasonError(reason, true);
       setReasonFieldError(error);
       if (error) return;
-      text = reason.trim() || undefined;
+      text = reason.trim();
     }
     decide.mutate({ id: booking._id, action, reason: text });
   }
@@ -60,9 +60,10 @@ function BookingRow({ booking, placeId, now }: { booking: Booking; placeId: stri
         {booking.note ? <p className="row__body">Ghi chú của khách: {booking.note}</p> : null}
         {booking.cancellationReason ? <p className="row__body">Lý do hủy: {booking.cancellationReason}</p> : null}
         {booking.arrivedAt ? <span className="row__meta">Khách đến lúc {vnDateTime(booking.arrivedAt)}</span> : null}
+        {status === 'pending' && booking.holdUntil ? <span className="row__meta">Hạn duyệt: {vnDateTime(booking.holdUntil)}</span> : null}
         {canGiveReason ? (
           <TextField
-            label="Lý do gửi khách nếu từ chối hoặc hủy (không bắt buộc)"
+            label="Lý do từ chối, hủy hoặc ghi nhận không đến (bắt buộc)"
             value={reason}
             maxLength={500}
             onChange={(event) => {
@@ -122,7 +123,7 @@ export function BookingsPanel({ placeId, manual }: { placeId: string; manual: bo
           }}
         />
         <p className="field__hint">
-          Yêu cầu chờ duyệt tự hủy khi còn dưới 1 giờ. Lượt đã xác nhận tự thành Không đến sau giờ đặt 15 phút nếu chưa bấm Khách đã đến.
+          Yêu cầu chờ duyệt giữ chỗ tối đa 10 phút rồi tự hủy. Lượt đã xác nhận tự thành Không đến sau giờ đặt 15 phút nếu chưa bấm Khách đã đến.
         </p>
       </div>
       {bookings.isPending ? (
