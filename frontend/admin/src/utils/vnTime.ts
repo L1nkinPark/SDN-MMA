@@ -1,3 +1,5 @@
+import type { BookingAction } from '../api/types';
+
 /**
  * Bookings, opening hours and closed dates are Vietnam time (Asia/Ho_Chi_Minh, UTC+7, no daylight
  * saving), whatever time zone the browser uses. The backend checks them in that zone.
@@ -38,13 +40,13 @@ export function latestClosedDate(now: Date = new Date()): string {
 }
 
 /** What a merchant may do with a booking right now, mirroring the time checks in `merchantDecision`. */
-export function bookingActionsAt(status: string | undefined, startsAt: string | undefined, now: number = Date.now()) {
+export function bookingActionsAt(status: string | undefined, startsAt: string | undefined, now: number = Date.now()): BookingAction[] {
   const start = startsAt ? Date.parse(startsAt) : NaN;
   if (Number.isNaN(start)) return [];
   const window = 15 * 60000;
-  if (status === 'pending') return now < start ? (['approve', 'reject'] as const) : [];
+  if (status === 'pending') return now < start ? ['approve', 'reject'] : [];
   if (status !== 'confirmed') return [];
-  const actions: ('arrived' | 'cancel' | 'no_show')[] = [];
+  const actions: BookingAction[] = [];
   if (now >= start - window && now <= start + window) actions.push('arrived');
   if (now < start) actions.push('cancel');
   if (now >= start + window) actions.push('no_show');
