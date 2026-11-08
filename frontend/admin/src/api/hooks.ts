@@ -1,11 +1,14 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { adminApi, authApi, merchantApi, notificationsApi, publicApi } from './endpoints';
+import { adminApi, authApi, merchantApi, notificationsApi, publicApi, type UserFilter } from './endpoints';
 import { queryKeys } from './queryKeys';
 import type {
+  AdminPermission,
   Approval,
   BookingAction,
   BookingStatus,
+  ClaimStatus,
+  FraudStatus,
   MerchantClaimInput,
   MerchantPlaceInput,
   MerchantPlaceUpdate,
@@ -226,5 +229,123 @@ export function useSubmitImage() {
   return useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) => merchantApi.submitImage(id, file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.merchantChanges }),
+  });
+}
+
+/* ---------- Admin operations ---------- */
+
+export function useAdminUsers(filter: UserFilter, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.usersPage(filter),
+    queryFn: () => adminApi.listUsers(filter),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+export function useUpdateUserStatus() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: 'active' | 'suspended'; reason?: string }) =>
+      adminApi.updateUserStatus(id, status, reason),
+    onSuccess: () => invalidate(queryKeys.users),
+  });
+}
+
+/** Grant, edit or revoke admin rights (super admin only). */
+export function useAdminRights() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (input: { kind: 'promote' | 'permissions'; id: string; permissions: AdminPermission[] } | { kind: 'demote'; id: string }) =>
+      input.kind === 'promote'
+        ? adminApi.promoteAdmin(input.id, input.permissions)
+        : input.kind === 'permissions'
+          ? adminApi.updateAdminPermissions(input.id, input.permissions)
+          : adminApi.demoteAdmin(input.id),
+    onSuccess: () => invalidate(queryKeys.users),
+  });
+}
+
+export function useAdminClaims(status: ClaimStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.claimsPage(status, page),
+    queryFn: () => adminApi.listClaims(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useDecideClaim() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, note }: { id: string; status: 'approved' | 'rejected'; note: string }) =>
+      adminApi.decideClaim(id, status, note),
+    onSuccess: () => invalidate(queryKeys.claims, queryKeys.places),
+  });
+}
+
+export function useAdminPlaceChanges(status: ClaimStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.placeChangesPage(status, page),
+    queryFn: () => adminApi.listPlaceChanges(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useDecidePlaceChange() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, note }: { id: string; status: 'approved' | 'rejected'; note: string }) =>
+      adminApi.decidePlaceChange(id, status, note),
+    onSuccess: () => invalidate(queryKeys.placeChanges, queryKeys.places),
+  });
+}
+
+export function useAdminBookings(status: BookingStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.bookingsPage(status, page),
+    queryFn: () => adminApi.listBookings(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAdminCancelBooking() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => adminApi.cancelBooking(id, reason),
+    onSuccess: () => invalidate(queryKeys.bookings),
+  });
+}
+
+export function useFraudFlags(status: FraudStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.fraudPage(status, page),
+    queryFn: () => adminApi.listFraudFlags(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useDecideFraudFlag() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: 'resolved' | 'dismissed'; reason?: string }) =>
+      adminApi.decideFraudFlag(id, status, reason),
+    onSuccess: () => invalidate(queryKeys.fraud),
+  });
+}
+
+export function useAudit(page: number) {
+  return useQuery({
+    queryKey: queryKeys.auditPage(page),
+    queryFn: () => adminApi.listAudit(page),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useTransferOwner() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, ownerId, reason }: { id: string; ownerId: string | null; reason: string }) =>
+      adminApi.transferOwner(id, ownerId, reason),
+    onSuccess: () => invalidate(queryKeys.places, queryKeys.users),
   });
 }

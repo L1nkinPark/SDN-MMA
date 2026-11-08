@@ -22,4 +22,17 @@ export const queryKeys = {
   merchantBookings: (placeId: string) => ['merchant', 'bookings', placeId] as const,
   merchantBookingsPage: (placeId: string, status: string, page: number) =>
     ['merchant', 'bookings', placeId, status, page] as const,
+
+  users: ['admin', 'users'] as const,
+  usersPage: (filter: object) => ['admin', 'users', filter] as const,
+  claims: ['admin', 'claims'] as const,
+  claimsPage: (status: string, page: number) => ['admin', 'claims', status, page] as const,
+  placeChanges: ['admin', 'place-changes'] as const,
+  placeChangesPage: (status: string, page: number) => ['admin', 'place-changes', status, page] as const,
+  bookings: ['admin', 'bookings'] as const,
+  bookingsPage: (status: string, page: number) => ['admin', 'bookings', status, page] as const,
+  fraud: ['admin', 'fraud'] as const,
+  fraudPage: (status: string, page: number) => ['admin', 'fraud', status, page] as const,
+  audit: ['admin', 'audit'] as const,
+  auditPage: (page: number) => ['admin', 'audit', page] as const,
 };

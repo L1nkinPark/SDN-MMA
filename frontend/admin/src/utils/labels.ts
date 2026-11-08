@@ -84,7 +84,7 @@ export const PERMISSION_LABELS: Record<AdminPermission, string> = {
 
 export const DAY_LABELS = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'] as const;
 
-/** Audit `action` values written by adminController. Unknown actions fall back to the raw key. */
+/** Audit `action` values written by adminController. Unknown actions keep their key in brackets. */
 const AUDIT_ACTION_LABELS: Record<string, string> = {
   'admin.promote': 'Cấp quyền quản trị',
   'admin.permissions': 'Đổi quyền quản trị',
@@ -110,7 +110,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
 };
 
 export function auditActionLabel(action: string): string {
-  return AUDIT_ACTION_LABELS[action] ?? action;
+  return AUDIT_ACTION_LABELS[action] ?? `Thao tác khác (${action})`;
 }
 
 const TARGET_LABELS: Record<string, string> = {
@@ -126,4 +126,14 @@ const TARGET_LABELS: Record<string, string> = {
 
 export function targetLabel(targetType: string): string {
   return TARGET_LABELS[targetType] ?? targetType;
+}
+
+/**
+ * `FraudFlag.detail` is written by the backend in English, e.g. "12 km in 3 minutes".
+ * Shown in Vietnamese; anything unexpected falls back to a general sentence.
+ */
+export function fraudDetailText(detail: string | null | undefined): string {
+  const match = /^(\d+) km in (\d+) minutes?$/.exec((detail ?? '').trim());
+  if (match) return `Di chuyển ${match[1]} km trong ${match[2]} phút giữa hai lần check-in.`;
+  return 'Hai lần check-in liên tiếp cách nhau quá xa so với thời gian giữa chúng.';
 }

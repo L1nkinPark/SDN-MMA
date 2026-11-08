@@ -53,6 +53,14 @@ describe('merchant booking actions', () => {
 describe('audit labels', () => {
   it('translates known actions and keeps unknown ones', () => {
     expect(auditActionLabel('claim.approved')).toBe('Duyệt hồ sơ chủ quán');
-    expect(auditActionLabel('something.new')).toBe('something.new');
+    expect(auditActionLabel('something.new')).toBe('Thao tác khác (something.new)');
+  });
+});
+
+describe('fraud detail', () => {
+  it('turns the backend detail into Vietnamese', async () => {
+    const { fraudDetailText } = await import('../labels');
+    expect(fraudDetailText('12 km in 3 minutes')).toBe('Di chuyển 12 km trong 3 phút giữa hai lần check-in.');
+    expect(fraudDetailText('???')).toContain('quá xa');
   });
 });
