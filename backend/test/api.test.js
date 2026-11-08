@@ -234,6 +234,18 @@ test('merchant claim, managed booking, verified visit, review badge and admin us
   const visitorAuth = auth(visitor.accessToken);
   const secondAuth = auth(another.accessToken);
 
+  await request(app).post('/api/merchant/claims').set(ownerAuth).send({
+    placeId: new mongoose.Types.ObjectId().toString(), businessName: 'Study Cafe Company',
+    contactPhone: '0901234567', evidenceUrls: ['https://example.com/proof.jpg']
+  }).expect(403);
+  const account = await request(app).post('/api/merchant/account-application').set(ownerAuth).send({
+    businessName: 'Study Cafe Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/proof.jpg']
+  }).expect(201);
+  await request(app).patch(`/api/admin/merchant-claims/${account.body.application._id}`).set(adminAuth)
+    .send({ status: 'approved', decisionNote: 'Business documents checked' }).expect(200);
+  assert.equal((await User.findById(applicant.user.id)).role, 'merchant');
+
   const created = await request(app).post('/api/places').set(ownerAuth).send({
     name: 'Study Cafe', address: '99 Campus Road', coordinates: [105.81, 21.01]
   }).expect(201);

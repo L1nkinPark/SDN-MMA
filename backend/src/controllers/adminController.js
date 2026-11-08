@@ -48,7 +48,7 @@ export const adminController = {
   listUsers: async (req, res) => {
     const { page, limit, role, status, q } = parse(pageQuery.extend({
       role: z.enum(['student', 'merchant', 'admin']).optional(),
-      status: z.enum(['active', 'suspended', 'deleted']).optional(), q: z.string().trim().max(100).optional()
+      status: z.enum(['active', 'pending_merchant', 'suspended', 'deleted']).optional(), q: z.string().trim().max(100).optional()
     }), req.query);
     const query = { ...(role ? { role } : {}), ...(status ? { status } : {}),
       ...(q ? { email: { $regex: escapeRegex(q), $options: 'i' } } : {}) };
@@ -79,7 +79,7 @@ export const adminController = {
     const { status, reason } = parse(z.object({ status: z.enum(['active', 'suspended']),
       reason: z.string().trim().min(5).max(500) }), req.body);
     if (String(req.user._id) === id) throw new HttpError(403, 'Cannot change own status');
-    const user = await User.findOneAndUpdate({ _id: id, role: { $ne: 'admin' }, status: { $ne: status } },
+    const user = await User.findOneAndUpdate({ _id: id, role: { $ne: 'admin' }, status: { $nin: [status, 'pending_merchant'] } },
       { $set: { status }, ...(status === 'suspended' ? { $inc: { tokenVersion: 1 } } : {}) }, { new: true });
     if (!user) throw new HttpError(409, 'User not found or status already set');
     if (status === 'suspended') await RefreshToken.updateMany({ user: id, revokedAt: null }, { $set: { revokedAt: new Date() } });
@@ -107,7 +107,15 @@ export const adminController = {
       decisionNote: z.string().trim().min(5).max(1000) }), req.body);
     const claim = await MerchantClaim.findOne({ _id: id, status: 'pending' });
     if (!claim) throw new HttpError(409, 'Pending claim not found');
-    if (status === 'approved') {
+    if (status === 'approved' && claim.kind === 'account') {
+      const applicant = await User.findOne({ _id: claim.applicant, role: 'student',
+        status: { $in: ['active', 'pending_merchant'] } });
+      if (!applicant) throw new HttpError(409, 'Applicant is unavailable or already a merchant');
+    }
+    if (status === 'approved' && claim.kind !== 'account') {
+      if (!(await User.exists({ _id: claim.applicant, role: 'merchant', status: 'active' }))) {
+        throw new HttpError(409, 'Merchant account must be approved first');
+      }
       const place = await Place.findOneAndUpdate({ _id: claim.place, owner: null, approval: 'approved' },
         { $set: { owner: claim.applicant, 'business.phone': claim.contactPhone } }, { new: true });
       if (!place) throw new HttpError(409, 'Place already owned or unavailable');
@@ -115,18 +123,22 @@ export const adminController = {
     const decided = await MerchantClaim.findOneAndUpdate({ _id: id, status: 'pending' },
       { $set: { status, decisionNote, decidedBy: req.user._id, decidedAt: new Date() } }, { new: true });
     if (!decided) {
-      if (status === 'approved') await Place.updateOne({ _id: claim.place, owner: claim.applicant }, { $set: { owner: null } });
+      if (status === 'approved' && claim.kind !== 'account') await Place.updateOne({ _id: claim.place, owner: claim.applicant }, { $set: { owner: null } });
       throw new HttpError(409, 'Claim already decided');
     }
-    if (status === 'approved') {
-      await User.updateOne({ _id: claim.applicant, role: 'student' }, { $set: { role: 'merchant' } });
+    if (claim.kind === 'account') {
+      await User.updateOne({ _id: claim.applicant, role: 'student',
+        status: { $in: ['active', 'pending_merchant'] } },
+      { $set: status === 'approved' ? { role: 'merchant', status: 'active' } : { status: 'active' } });
+    }
+    if (status === 'approved' && claim.kind !== 'account') {
       await MerchantClaim.updateMany({ place: claim.place, _id: { $ne: id }, status: 'pending' },
         { $set: { status: 'rejected', decisionNote: 'Another claim was approved', decidedBy: req.user._id, decidedAt: new Date() } });
     }
     await AuditEvent.create({ actor: req.user._id, action: `claim.${status}`,
       targetType: 'MerchantClaim', targetId: decided._id, detail: decisionNote });
     await notifyUser(req.app.locals.cfg, decided.applicant, { kind: `merchant_claim_${status}`,
-      title: status === 'approved' ? 'Đã duyệt quyền chủ quán' : 'Hồ sơ chủ quán chưa được duyệt',
+      title: status === 'approved' ? (claim.kind === 'account' ? 'Tài khoản chủ quán đã được duyệt' : 'Đã duyệt quyền quản lý quán') : 'Hồ sơ chủ quán chưa được duyệt',
       body: decisionNote, resourceType: 'MerchantClaim', resourceId: decided._id }).catch(console.error);
     res.json({ claim: decided });
   },
@@ -255,12 +267,11 @@ export const adminController = {
     const id = assertId(req.params.id);
     const { ownerId, reason } = parse(z.object({ ownerId: z.string().nullable(),
       reason: z.string().trim().min(5).max(500) }), req.body);
-    const owner = ownerId ? await User.findOne({ _id: assertId(ownerId), status: 'active' }) : null;
-    if (ownerId && !owner) throw new HttpError(404, 'New owner not found');
+    const owner = ownerId ? await User.findOne({ _id: assertId(ownerId), status: 'active', role: 'merchant' }) : null;
+    if (ownerId && !owner) throw new HttpError(409, 'New owner must have an approved merchant account');
     const place = await Place.findOneAndUpdate({ _id: id, approval: 'approved' },
       { $set: { owner: owner?._id || null } }, { new: true });
     if (!place) throw new HttpError(404, 'Place not found');
-    if (owner?.role === 'student') await User.updateOne({ _id: owner._id }, { $set: { role: 'merchant' } });
     await PlaceChangeRequest.updateMany({ place: id, status: 'pending' },
       { $set: { status: 'rejected', decisionNote: 'Ownership changed', decidedBy: req.user._id, decidedAt: new Date() } });
     await AuditEvent.create({ actor: req.user._id, action: 'place.owner_transfer', targetType: 'Place',
@@ -302,17 +313,14 @@ export const adminController = {
     if (body.approval === 'approved') {
       const applicantPlace = await Place.findById(id).select('ownerApplicant');
       if (applicantPlace?.ownerApplicant) {
-        const applicant = await User.findOne({ _id: applicantPlace.ownerApplicant, status: 'active' }).select('_id');
-        if (!applicant) throw new HttpError(409, 'Owner applicant is unavailable');
+        const applicant = await User.findOne({ _id: applicantPlace.ownerApplicant, status: 'active', role: 'merchant' }).select('_id');
+        if (!applicant) throw new HttpError(409, 'Owner applicant must have an approved merchant account');
         changes.owner = applicant._id;
         changes.ownerApplicant = null;
       }
     }
     const place = await Place.findByIdAndUpdate(id, { $set: changes }, { new: true, runValidators: true });
     if (!place) throw new HttpError(404, 'Place not found');
-    if (body.approval === 'approved' && place.owner) {
-      await User.updateOne({ _id: place.owner, role: 'student', status: 'active' }, { $set: { role: 'merchant' } });
-    }
     await AuditEvent.create({ actor: req.user._id, action: body.approval ? `place.${body.approval}` : 'place.update',
       targetType: 'Place', targetId: place._id, detail: body.decisionNote || null });
     if (body.approval && body.approval !== 'pending') await notifyUser(req.app.locals.cfg, place.submittedBy,

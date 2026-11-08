@@ -84,7 +84,7 @@ components:
         name: { type: string }
         email: { type: string, format: email }
         role: { type: string, enum: [student, merchant, admin] }
-        status: { type: string, enum: [active, suspended, deleted] }
+        status: { type: string, enum: [active, pending_merchant, suspended, deleted] }
         adminPermissions:
           type: array
           items: { type: string, enum: ['*', users, places, moderation, bookings, fraud, audit, analytics] }
@@ -222,7 +222,8 @@ components:
       properties:
         _id: { type: string }
         applicant: { type: string }
-        place: { type: string }
+        place: { type: string, nullable: true }
+        kind: { type: string, enum: [account, place] }
         businessName: { type: string }
         contactPhone: { type: string }
         evidenceUrls: { type: array, items: { type: string, format: uri } }
@@ -314,7 +315,7 @@ paths:
   /api/auth/register:
     post:
       tags: [Auth]
-      summary: Tạo tài khoản sinh viên; quyền chủ quán cần admin duyệt hồ sơ quán
+      summary: Đăng ký sinh viên hoặc nộp hồ sơ tài khoản chủ quán chờ admin duyệt
       operationId: register
       requestBody:
         required: true
@@ -327,12 +328,23 @@ paths:
                   required: [name]
                   properties:
                     name: { type: string, minLength: 2, maxLength: 80, example: Alice Student }
+                    intent: { type: string, enum: [student, merchant], default: student }
+                    businessName: { type: string, minLength: 2, description: 'Bắt buộc khi intent là merchant' }
+                    contactPhone: { type: string, minLength: 8, description: 'Bắt buộc khi intent là merchant' }
+                    evidenceUrls: { type: array, minItems: 1, maxItems: 5, items: { type: string, format: uri }, description: 'Bắt buộc khi intent là merchant' }
       responses:
         '201':
-          description: Đã tạo tài khoản
+          description: 'Sinh viên nhận JWT; người đăng ký chủ quán nhận trạng thái pending và chỉ đăng nhập được sau khi admin duyệt tài khoản'
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AuthTokens' }
+              schema:
+                oneOf:
+                  - { $ref: '#/components/schemas/AuthTokens' }
+                  - type: object
+                    required: [applicationStatus, email]
+                    properties:
+                      applicationStatus: { type: string, enum: [pending] }
+                      email: { type: string, format: email }
         '400': { description: Dữ liệu không hợp lệ }
         '409': { description: Email đã tồn tại }
   /api/auth/login:
@@ -950,10 +962,38 @@ paths:
                       newReports: { type: integer }
                       newVerifiedVisits: { type: integer }
         '403': { description: Cần quyền admin }
+  /api/merchant/account-application/me:
+    get:
+      tags: [Merchants]
+      summary: Xem hồ sơ tài khoản chủ quán mới nhất của mình
+      operationId: myMerchantAccountApplication
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: 'Hồ sơ tài khoản hoặc null nếu chưa nộp' }
+  /api/merchant/account-application:
+    post:
+      tags: [Merchants]
+      summary: Tài khoản sinh viên nộp hoặc nộp lại hồ sơ xin quyền chủ quán
+      operationId: applyForMerchantAccount
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [businessName, contactPhone, evidenceUrls]
+              properties:
+                businessName: { type: string, minLength: 2 }
+                contactPhone: { type: string, minLength: 8 }
+                evidenceUrls: { type: array, minItems: 1, maxItems: 5, items: { type: string, format: uri } }
+      responses:
+        '201': { description: Hồ sơ tài khoản đang chờ admin duyệt }
+        '409': { description: Đã có hồ sơ chờ duyệt hoặc đã có quyền chủ quán }
   /api/merchant/claims:
     post:
       tags: [Merchants]
-      summary: Gửi hồ sơ nhận quyền quản lý địa điểm đã duyệt
+      summary: Tài khoản chủ quán đã duyệt gửi hồ sơ nhận quyền quản lý địa điểm
       operationId: submitMerchantClaim
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -989,7 +1029,7 @@ paths:
         '200': { description: Danh sách địa điểm }
     post:
       tags: [Merchants]
-      summary: Chủ quán gửi quán mới cùng minh chứng để admin duyệt
+      summary: Tài khoản chủ quán đã duyệt gửi quán mới cùng minh chứng để admin duyệt quán
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -1184,7 +1224,7 @@ paths:
   /api/admin/merchant-claims:
     get:
       tags: [Admin]
-      summary: Danh sách hồ sơ chủ quán
+      summary: Danh sách hồ sơ duyệt tài khoản chủ quán và nhận quyền quán
       operationId: adminListMerchantClaims
       security: [{ bearerAuth: [] }]
       responses:
@@ -1192,7 +1232,7 @@ paths:
   /api/admin/merchant-claims/{id}:
     patch:
       tags: [Admin]
-      summary: Duyệt hoặc từ chối quyền chủ quán
+      summary: Duyệt hoặc từ chối hồ sơ tài khoản chủ quán hoặc nhận quyền quán
       operationId: adminDecideMerchantClaim
       security: [{ bearerAuth: [] }]
       parameters:
@@ -1208,7 +1248,7 @@ paths:
                 status: { type: string, enum: [approved, rejected] }
                 decisionNote: { type: string, minLength: 5 }
       responses:
-        '200': { description: 'Hồ sơ đã xử lý, quyền merchant được cấp khi duyệt' }
+        '200': { description: 'Hồ sơ đã xử lý; duyệt tài khoản cấp quyền merchant, duyệt hồ sơ quán cấp quyền quản lý quán' }
   /api/admin/bookings:
     get:
       tags: [Admin]

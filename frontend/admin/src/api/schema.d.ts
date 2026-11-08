@@ -30,7 +30,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Đăng ký tài khoản sinh viên */
+        /** Đăng ký sinh viên hoặc nộp hồ sơ tài khoản chủ quán chờ admin duyệt */
         post: operations["register"];
         delete?: never;
         options?: never;
@@ -229,7 +229,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Danh sách đánh giá đang hiển thị */
+        /** Danh sách đánh giá có lượt ghé đã xác minh và đang hiển thị */
         get: operations["listReviews"];
         put?: never;
         post?: never;
@@ -248,7 +248,7 @@ export interface paths {
         };
         /** Đánh giá của mình, bao gồm đánh giá đã bị ẩn để gửi khiếu nại */
         get: operations["getMyReview"];
-        /** Tạo hoặc cập nhật đánh giá của mình */
+        /** Tạo hoặc cập nhật đánh giá sau khi xác minh lượt ghé quán trong 14 ngày gần đây */
         put: operations["upsertMyReview"];
         post?: never;
         /** Xóa đánh giá của mình */
@@ -486,6 +486,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/merchant/account-application/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Xem hồ sơ tài khoản chủ quán mới nhất của mình */
+        get: operations["myMerchantAccountApplication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/merchant/account-application": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tài khoản sinh viên nộp hoặc nộp lại hồ sơ xin quyền chủ quán */
+        post: operations["applyForMerchantAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/merchant/claims": {
         parameters: {
             query?: never;
@@ -495,7 +529,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Gửi hồ sơ nhận quyền quản lý địa điểm đã duyệt */
+        /** Tài khoản chủ quán đã duyệt gửi hồ sơ nhận quyền quản lý địa điểm */
         post: operations["submitMerchantClaim"];
         delete?: never;
         options?: never;
@@ -530,7 +564,7 @@ export interface paths {
         /** Địa điểm do tôi gửi hoặc quản lý */
         get: operations["myMerchantPlaces"];
         put?: never;
-        /** Chủ quán gửi quán mới cùng minh chứng để admin duyệt */
+        /** Tài khoản chủ quán đã duyệt gửi quán mới cùng minh chứng để admin duyệt quán */
         post: {
             parameters: {
                 query?: never;
@@ -756,7 +790,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Danh sách hồ sơ chủ quán */
+        /** Danh sách hồ sơ duyệt tài khoản chủ quán và nhận quyền quán */
         get: operations["adminListMerchantClaims"];
         put?: never;
         post?: never;
@@ -779,7 +813,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Duyệt hoặc từ chối quyền chủ quán */
+        /** Duyệt hoặc từ chối hồ sơ tài khoản chủ quán hoặc nhận quyền quán */
         patch: operations["adminDecideMerchantClaim"];
         trace?: never;
     };
@@ -1715,7 +1749,7 @@ export interface components {
             /** @enum {string} */
             role?: "student" | "merchant" | "admin";
             /** @enum {string} */
-            status?: "active" | "suspended" | "deleted";
+            status?: "active" | "pending_merchant" | "suspended" | "deleted";
             adminPermissions?: ("*" | "users" | "places" | "moderation" | "bookings" | "fraud" | "audit" | "analytics")[];
             notificationSettings?: {
                 email?: boolean;
@@ -1844,7 +1878,9 @@ export interface components {
         MerchantClaim: {
             _id?: string;
             applicant?: string;
-            place?: string;
+            place?: string | null;
+            /** @enum {string} */
+            kind?: "account" | "place";
             businessName?: string;
             contactPhone?: string;
             evidenceUrls?: string[];
@@ -1986,17 +2022,33 @@ export interface operations {
                 "application/json": components["schemas"]["Credentials"] & {
                     /** @example Alice Student */
                     name: string;
+                    /**
+                     * @default student
+                     * @enum {string}
+                     */
+                    intent?: "student" | "merchant";
+                    /** @description Bắt buộc khi intent là merchant */
+                    businessName?: string;
+                    /** @description Bắt buộc khi intent là merchant */
+                    contactPhone?: string;
+                    /** @description Bắt buộc khi intent là merchant */
+                    evidenceUrls?: string[];
                 };
             };
         };
         responses: {
-            /** @description Đã tạo tài khoản */
+            /** @description Sinh viên nhận JWT; người đăng ký chủ quán nhận trạng thái pending và chỉ đăng nhập được sau khi admin duyệt tài khoản */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTokens"];
+                    "application/json": components["schemas"]["AuthTokens"] | {
+                        /** @enum {string} */
+                        applicationStatus: "pending";
+                        /** Format: email */
+                        email: string;
+                    };
                 };
             };
             /** @description Dữ liệu không hợp lệ */
@@ -2384,7 +2436,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Đánh giá đã bị admin ẩn */
+            /** @description Chưa có lượt ghé được xác minh, là chủ quán hoặc đánh giá đã bị admin ẩn */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2982,6 +3034,57 @@ export interface operations {
             };
         };
     };
+    myMerchantAccountApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Hồ sơ tài khoản hoặc null nếu chưa nộp */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    applyForMerchantAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    businessName: string;
+                    contactPhone: string;
+                    evidenceUrls: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Hồ sơ tài khoản đang chờ admin duyệt */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Đã có hồ sơ chờ duyệt hoặc đã có quyền chủ quán */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     submitMerchantClaim: {
         parameters: {
             query?: never;
@@ -3415,7 +3518,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Hồ sơ đã xử lý, quyền merchant được cấp khi duyệt */
+            /** @description Hồ sơ đã xử lý; duyệt tài khoản cấp quyền merchant, duyệt hồ sơ quán cấp quyền quản lý quán */
             200: {
                 headers: {
                     [name: string]: unknown;

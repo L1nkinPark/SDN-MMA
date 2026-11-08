@@ -79,6 +79,18 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   const adminAuth = auth(adminLogin.body.accessToken);
   const ownerAuth = auth(owner.accessToken);
   const guestAuth = auth(guest.accessToken);
+  await request(app).post('/api/merchant/places').set(ownerAuth).send({
+    name: 'Blocked Cafe', address: '22 Campus Road', coordinates: [105.82, 21.02],
+    contactPhone: '0901234567', evidenceUrls: ['https://example.com/storefront.jpg']
+  }).expect(403);
+  const account = await request(app).post('/api/merchant/account-application').set(ownerAuth).send({
+    businessName: 'Cafe Owner Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/business-proof.jpg']
+  }).expect(201);
+  assert.equal((await User.findById(owner.user.id)).role, 'student');
+  await request(app).patch(`/api/admin/merchant-claims/${account.body.application._id}`).set(adminAuth)
+    .send({ status: 'approved', decisionNote: 'Business documents checked' }).expect(200);
+  assert.equal((await User.findById(owner.user.id)).role, 'merchant');
   const created = await request(app).post('/api/merchant/places').set(ownerAuth).send({
     name: 'New Study Cafe', address: '22 Campus Road', coordinates: [105.82, 21.02],
     contactPhone: '0901234567', evidenceUrls: ['https://example.com/storefront.jpg']
@@ -87,13 +99,13 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   assert.equal(created.body.place.approval, 'pending');
   assert.equal(created.body.place.owner, null);
   assert.equal(created.body.place.ownerApplicant, owner.user.id);
-  assert.equal((await User.findById(owner.user.id)).role, 'student');
+  assert.equal((await User.findById(owner.user.id)).role, 'merchant');
   const waiting = await request(app).get('/api/merchant/places').set(ownerAuth).expect(200);
   assert.ok(waiting.body.items.some(item => item._id === placeId && item.approval === 'pending'));
   await request(app).patch(`/api/merchant/places/${placeId}`).set(ownerAuth)
-    .send({ bookingEnabled: true }).expect(403);
+    .send({ bookingEnabled: true }).expect(404);
   await request(app).post(`/api/merchant/places/${placeId}/change-requests`).set(ownerAuth)
-    .send({ name: 'Unapproved change' }).expect(403);
+    .send({ name: 'Unapproved change' }).expect(404);
   await request(app).post(`/api/merchant/places/${placeId}/images`).set(ownerAuth).expect(400);
   await request(app).get(`/api/places/${placeId}`).expect(404);
   await request(app).post('/api/merchant/places').set(ownerAuth).send({
@@ -110,7 +122,7 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   }).expect(201);
   await request(app).patch(`/api/admin/places/${rejected.body.place._id}`).set(adminAuth)
     .send({ approval: 'rejected', decisionNote: 'Ownership evidence not sufficient' }).expect(200);
-  assert.equal((await User.findById(owner.user.id)).role, 'student');
+  assert.equal((await User.findById(owner.user.id)).role, 'merchant');
   assert.equal((await Place.findById(rejected.body.place._id)).owner, null);
   await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
     .send({ approval: 'approved', decisionNote: 'Storefront evidence checked' }).expect(200);
@@ -200,6 +212,55 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   await request(app).get('/api/admin/audit').set(adminAuth).expect(200);
 });
 
+test('merchant signup submits an account application before merchant access', async () => {
+  await request(app).post('/api/auth/register').send({ name: 'Pending Owner', email: 'pending-owner@example.com',
+    password: 'Password123!', intent: 'merchant' }).expect(400);
+  const signedUp = await request(app).post('/api/auth/register').send({
+    name: 'Pending Owner', email: 'pending-owner@example.com', password: 'Password123!', intent: 'merchant',
+    businessName: 'Pending Cafe Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/company-document.jpg']
+  }).expect(201);
+  assert.equal(signedUp.body.applicationStatus, 'pending');
+  assert.equal(signedUp.body.accessToken, undefined);
+  const pendingUser = await User.findOne({ email: 'pending-owner@example.com' });
+  assert.equal(pendingUser.status, 'pending_merchant');
+  assert.equal(pendingUser.role, 'student');
+  const pending = await MerchantClaim.findOne({ applicant: pendingUser._id, kind: 'account', status: 'pending' });
+  await request(app).post('/api/auth/login').send({ email: pendingUser.email, password: 'Password123!' }).expect(403);
+  await request(app).post('/api/merchant/places').set(auth('invalid-token')).send({
+    name: 'Pending Cafe', address: '13 Campus Road', coordinates: [105.85, 21.05],
+    contactPhone: '0901234567', evidenceUrls: ['https://example.com/storefront.jpg']
+  }).expect(401);
+  const adminLogin = await request(app).post('/api/auth/login')
+    .send({ email: 'root@example.com', password: 'AdminPassword123!' }).expect(200);
+  const adminAuth = auth(adminLogin.body.accessToken);
+  await request(app).patch(`/api/admin/users/${pendingUser._id}`).set(adminAuth)
+    .send({ status: 'active', reason: 'Attempt to bypass merchant review' }).expect(409);
+  const existingPlace = await Place.findOne({ name: 'New Study Cafe Plus' });
+  await request(app).patch(`/api/admin/places/${existingPlace._id}/owner`).set(adminAuth)
+    .send({ ownerId: String(pendingUser._id), reason: 'Attempt before account approval' }).expect(409);
+  await request(app).patch(`/api/admin/merchant-claims/${pending._id}`).set(adminAuth)
+    .send({ status: 'rejected', decisionNote: 'Document is not readable' }).expect(200);
+  assert.equal((await User.findById(pendingUser._id)).status, 'active');
+  assert.equal((await User.findById(pendingUser._id)).role, 'student');
+  const ownerLogin = await request(app).post('/api/auth/login')
+    .send({ email: pendingUser.email, password: 'Password123!' }).expect(200);
+  const ownerAuth = auth(ownerLogin.body.accessToken);
+  const rejected = await request(app).get('/api/merchant/account-application/me').set(ownerAuth).expect(200);
+  assert.equal(rejected.body.application.status, 'rejected');
+  const resubmitted = await request(app).post('/api/merchant/account-application').set(ownerAuth).send({
+    businessName: 'Pending Cafe Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/clear-document.jpg']
+  }).expect(201);
+  await request(app).patch(`/api/admin/merchant-claims/${resubmitted.body.application._id}`).set(adminAuth)
+    .send({ status: 'approved', decisionNote: 'Business document verified' }).expect(200);
+  assert.equal((await User.findById(pendingUser._id)).role, 'merchant');
+  await request(app).post('/api/merchant/account-application').set(ownerAuth).send({
+    businessName: 'Pending Cafe Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/clear-document.jpg']
+  }).expect(409);
+});
+
 test('one merchant manages multiple places and reviews require proof for each place', async () => {
   const owner = await register('Multi Shop Owner', 'multi-shop-owner@example.com');
   const visitor = await register('Multi Shop Visitor', 'multi-shop-visitor@example.com');
@@ -208,6 +269,12 @@ test('one merchant manages multiple places and reviews require proof for each pl
   const ownerAuth = auth(owner.accessToken);
   const visitorAuth = auth(visitor.accessToken);
   const adminAuth = auth(adminLogin.body.accessToken);
+  const account = await request(app).post('/api/merchant/account-application').set(ownerAuth).send({
+    businessName: 'Multi Shop Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/business-proof.jpg']
+  }).expect(201);
+  await request(app).patch(`/api/admin/merchant-claims/${account.body.application._id}`).set(adminAuth)
+    .send({ status: 'approved', decisionNote: 'Business documents checked' }).expect(200);
   const placeIds = [];
   for (const [name, coordinates] of [
     ['East Study Cafe', [105.83, 21.03]],

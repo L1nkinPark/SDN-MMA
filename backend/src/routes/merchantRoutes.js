@@ -9,10 +9,12 @@ export function merchantRouter(cfg) {
   const router = Router();
   const controller = merchantController(cfg);
   router.use(requireAuth(cfg));
-  router.post('/claims', asyncRoute(controller.submitClaim));
+  router.get('/account-application/me', asyncRoute(controller.myAccountApplication));
+  router.post('/account-application', asyncRoute(controller.applyForAccount));
+  router.post('/claims', requireMerchant, asyncRoute(controller.submitClaim));
   router.get('/claims/me', asyncRoute(controller.myClaims));
   router.get('/places', asyncRoute(controller.myPlaces));
-  router.post('/places', asyncRoute(controller.createPlace));
+  router.post('/places', requireMerchant, asyncRoute(controller.createPlace));
   router.get('/change-requests/me', asyncRoute(controller.myChangeRequests));
   router.patch('/places/:id', requireMerchant, asyncRoute(controller.updatePlace));
   router.post('/places/:id/change-requests', requireMerchant, asyncRoute(controller.submitChange));

@@ -25,7 +25,13 @@ export const MERCHANT_LINKS: NavLinkSpec[] = [
   { to: '/merchant/requests', label: 'Đề nghị đã gửi', end: true },
 ];
 
+const STUDENT_LINKS: NavLinkSpec[] = [
+  { to: '/merchant', label: 'Hồ sơ chủ quán', end: true },
+  { to: '/merchant/apply', label: 'Nộp hồ sơ', end: true },
+];
+
 export function linksFor(user: User | null): NavLinkSpec[] {
+  if (user?.role === 'student') return STUDENT_LINKS;
   if (user?.role !== 'admin') return MERCHANT_LINKS;
   return ADMIN_LINKS.filter((link) => !link.permission || hasPermission(user, link.permission));
 }

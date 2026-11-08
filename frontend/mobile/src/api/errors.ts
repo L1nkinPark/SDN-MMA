@@ -25,6 +25,7 @@ const exactMessages: Record<number, Record<string, string>> = {
   },
   401: { 'Invalid email or password': WRONG_CREDENTIALS_MESSAGE },
   403: {
+    'Merchant account pending approval': 'Hồ sơ tài khoản chủ quán đang chờ admin duyệt. Bạn sẽ đăng nhập được sau khi được chấp thuận.',
     'Check-in requires location within 250 meters': 'Chỉ check-in được khi ở trong bán kính 250 m.',
     'This review was hidden by moderation': 'Đánh giá của bạn đã bị ẩn bởi quản trị viên.',
     'Verified visit required to review': 'Bạn cần quét mã QR tại quầy hoặc được quán xác nhận đã đến trong 14 ngày gần đây trước khi đánh giá.',

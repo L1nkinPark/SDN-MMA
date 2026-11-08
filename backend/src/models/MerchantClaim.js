@@ -3,7 +3,9 @@ import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 const schema = new Schema({
   applicant: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  place: { type: Schema.Types.ObjectId, ref: 'Place', required: true },
+  place: { type: Schema.Types.ObjectId, ref: 'Place', default: null,
+    required: function () { return this.kind !== 'account'; } },
+  kind: { type: String, enum: ['account', 'place'], default: 'place' },
   businessName: { type: String, required: true, trim: true },
   contactPhone: { type: String, required: true, trim: true },
   evidenceUrls: [{ type: String, required: true }],

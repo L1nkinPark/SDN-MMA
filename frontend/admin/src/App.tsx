@@ -15,6 +15,7 @@ import { FraudPage } from './pages/FraudPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ClaimPlacePage } from './pages/merchant/ClaimPlacePage';
+import { MerchantApplyPage } from './pages/merchant/MerchantApplyPage';
 import { MerchantHomePage } from './pages/merchant/MerchantHomePage';
 import { MerchantNewPlacePage } from './pages/merchant/MerchantNewPlacePage';
 import { MerchantPlacePage } from './pages/merchant/MerchantPlacePage';
@@ -64,6 +65,11 @@ function MerchantRoute({ children }: { children: ReactNode }) {
   return user?.role === 'admin' ? <Navigate to="/" replace /> : children;
 }
 
+function ApprovedMerchantRoute({ children }: { children: ReactNode }) {
+  const { user } = useSession();
+  return user?.role === 'merchant' ? children : <Navigate to="/merchant" replace />;
+}
+
 function NotFound() {
   return (
     <>
@@ -87,10 +93,11 @@ const router = createBrowserRouter([
       { path: 'account', element: <AccountPage /> },
 
       { path: 'merchant', element: <MerchantRoute><MerchantHomePage /></MerchantRoute> },
-      { path: 'merchant/new', element: <MerchantRoute><MerchantNewPlacePage /></MerchantRoute> },
-      { path: 'merchant/claim', element: <MerchantRoute><ClaimPlacePage /></MerchantRoute> },
-      { path: 'merchant/requests', element: <MerchantRoute><MyRequestsPage /></MerchantRoute> },
-      { path: 'merchant/places/:id', element: <MerchantRoute><MerchantPlacePage /></MerchantRoute> },
+      { path: 'merchant/apply', element: <MerchantRoute><MerchantApplyPage /></MerchantRoute> },
+      { path: 'merchant/new', element: <ApprovedMerchantRoute><MerchantNewPlacePage /></ApprovedMerchantRoute> },
+      { path: 'merchant/claim', element: <ApprovedMerchantRoute><ClaimPlacePage /></ApprovedMerchantRoute> },
+      { path: 'merchant/requests', element: <ApprovedMerchantRoute><MyRequestsPage /></ApprovedMerchantRoute> },
+      { path: 'merchant/places/:id', element: <ApprovedMerchantRoute><MerchantPlacePage /></ApprovedMerchantRoute> },
 
       { path: 'places', element: <AdminRoute permission="places"><PlacesPage /></AdminRoute> },
       { path: 'places/new', element: <AdminRoute permission="places"><NewPlacePage /></AdminRoute> },

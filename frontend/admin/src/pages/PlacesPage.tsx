@@ -135,9 +135,9 @@ function OwnerSection({ place, onDone }: { place: AdminPlace; onDone: () => void
   const [chosen, setChosen] = useState<OwnerChoice | null>(null);
   const [reason, setReason] = useState('');
   const [reasonFieldError, setReasonFieldError] = useState<string | null>(null);
-  const users = useAdminUsers({ page: 1, q: term || undefined, status: 'active' }, canSearch && term.length >= 3);
+  const users = useAdminUsers({ page: 1, q: term || undefined, status: 'active', role: 'merchant' }, canSearch && term.length >= 3);
   const evidence = place.onboardingEvidenceUrls ?? [];
-  const candidates = (users.data?.items ?? []).filter((item) => item.role !== 'admin');
+  const candidates = users.data?.items ?? [];
 
   useEffect(() => {
     const timer = setTimeout(() => setTerm(query.trim()), 350);
@@ -156,7 +156,7 @@ function OwnerSection({ place, onDone }: { place: AdminPlace; onDone: () => void
       <span className="field__label">Chủ quán và minh chứng</span>
       <p className="row__secondary">{place.owner ? 'Địa điểm đang có chủ quán quản lý.'
         : place.ownerApplicant ? 'Người đăng ký đang chờ duyệt và chưa có quyền quản lý quán.' : 'Địa điểm chưa có chủ quán.'}</p>
-      {applicant(place) ? <p className="row__body">Người đăng ký: {applicant(place)?.name} ({applicant(place)?.email}). Duyệt hồ sơ sẽ cấp quyền chủ quán cho tài khoản này.</p> : null}
+      {applicant(place) ? <p className="row__body">Người đăng ký: {applicant(place)?.name} ({applicant(place)?.email}). Tài khoản chủ quán phải được duyệt trước khi duyệt quán.</p> : null}
       {evidence.length ? (
         <ul className="link-list">
           {evidence.map((url) => (
@@ -176,7 +176,7 @@ function OwnerSection({ place, onDone }: { place: AdminPlace; onDone: () => void
             label="Chuyển quyền quản lý: tìm tài khoản theo email"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            hint="Gõ ít nhất 3 ký tự. Sinh viên được chọn sẽ thành chủ quán; các đề nghị sửa đang chờ bị từ chối."
+            hint="Gõ ít nhất 3 ký tự. Chỉ tài khoản chủ quán đã được duyệt mới nhận quyền quản lý; các đề nghị sửa đang chờ bị từ chối."
             disabled={transfer.isPending}
           />
           {term.length >= 3 && candidates.length ? (

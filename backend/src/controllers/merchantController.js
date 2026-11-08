@@ -12,6 +12,7 @@ const claimBody = z.object({
   contactPhone: z.string().trim().min(8).max(20),
   evidenceUrls: z.array(z.url().startsWith('https://')).min(1).max(5)
 });
+const accountApplicationBody = claimBody.omit({ placeId: true });
 const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const businessBody = z.object({
   phone: z.string().trim().min(8).max(20).nullable().optional(),
@@ -38,6 +39,24 @@ const changeBody = z.object({
 
 export function merchantController(cfg) {
   return {
+    myAccountApplication: async (req, res) => {
+      const application = await MerchantClaim.findOne({ applicant: req.user._id, kind: 'account' })
+        .sort({ createdAt: -1 }).lean();
+      res.set('Cache-Control', 'no-store').json({ application });
+    },
+    applyForAccount: async (req, res) => {
+      if (req.user.role !== 'student') throw new HttpError(409, 'Account is already a merchant');
+      const body = parse(accountApplicationBody, req.body);
+      if (await MerchantClaim.exists({ applicant: req.user._id, kind: 'account', status: 'pending' })) {
+        throw new HttpError(409, 'Merchant account application already pending');
+      }
+      const application = await MerchantClaim.create({ ...body, applicant: req.user._id,
+        kind: 'account', place: null });
+      await notifyAdmins(cfg, { kind: 'merchant_account', title: 'Tài khoản chủ quán chờ duyệt',
+        body: `${req.user.name} gửi hồ sơ tài khoản chủ quán.`, resourceType: 'MerchantClaim',
+        resourceId: application._id }).catch(console.error);
+      res.status(201).json({ application });
+    },
     createPlace: async (req, res) => {
       const body = parse(newPlaceBody, req.body);
       if (await Place.countDocuments({ approval: 'pending', $or: [
@@ -64,7 +83,7 @@ export function merchantController(cfg) {
         throw new HttpError(409, 'Pending claim already exists');
       }
       const claim = await MerchantClaim.create({
-        applicant: req.user._id, place: placeId, businessName: body.businessName,
+        applicant: req.user._id, place: placeId, kind: 'place', businessName: body.businessName,
         contactPhone: body.contactPhone, evidenceUrls: body.evidenceUrls
       });
       await notifyAdmins(cfg, { kind: 'merchant_claim', title: 'Hồ sơ chủ quán mới',
@@ -74,7 +93,7 @@ export function merchantController(cfg) {
     },
     myClaims: async (req, res) => {
       const { page, limit } = parse(pageQuery, req.query);
-      const query = { applicant: req.user._id };
+      const query = { applicant: req.user._id, place: { $ne: null } };
       const [items, total] = await Promise.all([
         MerchantClaim.find(query).populate('place', 'name address approval').sort({ createdAt: -1 })
           .skip((page - 1) * limit).limit(limit).lean(), MerchantClaim.countDocuments(query)

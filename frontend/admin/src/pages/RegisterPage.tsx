@@ -6,7 +6,7 @@ import { authApi } from '../api/endpoints';
 import { errorMessage, isApiError } from '../api/errors';
 import { useSession } from '../auth/sessionContext';
 import { Button, ChoiceGroup, FormAlert, TextField } from '../components/ui';
-import { emailError, nameError, passwordError } from '../utils/validation';
+import { emailError, evidenceError, nameError, parseLinks, passwordError, phoneError } from '../utils/validation';
 
 type Intent = 'student' | 'merchant';
 type Field = 'name' | 'email' | 'password' | 'confirmation';
@@ -19,13 +19,21 @@ export function RegisterPage() {
   const [intent, setIntent] = useState<Intent>(params.get('intent') === 'merchant' ? 'merchant' : 'student');
   const [values, setValues] = useState<Record<Field, string>>({ name: '', email: '', password: '', confirmation: '' });
   const [errors, setErrors] = useState<Errors>(NO_ERRORS);
+  const [businessName, setBusinessName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [evidence, setEvidence] = useState('');
+  const [merchantErrors, setMerchantErrors] = useState<{ businessName: string | null; contactPhone: string | null; evidence: string | null }>({
+    businessName: null, contactPhone: null, evidence: null,
+  });
   const [registered, setRegistered] = useState(false);
 
   const register = useMutation({
-    mutationFn: () => authApi.register(values),
+    mutationFn: () => authApi.register({ ...values, intent,
+      ...(intent === 'merchant' ? { businessName: businessName.trim(), contactPhone: contactPhone.trim(),
+        evidenceUrls: parseLinks(evidence) } : {}) }),
     onSuccess: async (result) => {
       setRegistered(true);
-      await signIn(result);
+      if ('accessToken' in result) await signIn(result);
     },
   });
 
@@ -38,10 +46,9 @@ export function RegisterPage() {
           <p className="state__sentence">Bạn đã có tài khoản sinh viên. Hãy dùng email và mật khẩu vừa tạo để đăng nhập ứng dụng StudySpot trên điện thoại, tìm chỗ học và đặt chỗ.</p>
         ) : (
           <>
-            <p className="state__sentence">Tài khoản của bạn đã được tạo. Để quản lý quán, hãy gửi một trong hai hồ sơ bên dưới. Admin sẽ kiểm tra minh chứng trước khi cấp quyền chủ quán.</p>
+            <p className="state__sentence">Hồ sơ tài khoản chủ quán đã được gửi. Bạn chưa thể đăng nhập. Hãy chờ admin kiểm tra minh chứng và duyệt tài khoản; sau đó đăng nhập để đăng ký quán hoặc nhận quyền một quán đã có.</p>
             <div className="login__form">
-              <Link className="btn btn--primary btn--large" to="/merchant/new">Đăng ký quán mới</Link>
-              <Link className="btn btn--secondary btn--large" to="/merchant/claim">Nhận quyền quán đã có</Link>
+              <Link className="btn btn--primary btn--large" to="/login">Về trang đăng nhập</Link>
             </div>
           </>
         )}
@@ -69,7 +76,10 @@ export function RegisterPage() {
       confirmation: values.confirmation !== values.password ? 'Mật khẩu nhập lại chưa khớp.' : null,
     };
     setErrors(found);
-    if (Object.values(found).some(Boolean)) return;
+    const merchantFound = { businessName: businessName.trim().length < 2 ? 'Nhập tên cơ sở kinh doanh (ít nhất 2 ký tự).' : null,
+      contactPhone: phoneError(contactPhone), evidence: evidenceError(evidence) };
+    setMerchantErrors(merchantFound);
+    if (Object.values(found).some(Boolean) || (intent === 'merchant' && Object.values(merchantFound).some(Boolean))) return;
     register.mutate();
   }
 
@@ -88,7 +98,7 @@ export function RegisterPage() {
         />
         <p className="state__sentence" role="status">
           {intent === 'merchant'
-            ? 'Sau khi tạo tài khoản, bạn gửi hồ sơ quán và minh chứng. Chỉ khi admin duyệt, bạn mới có quyền chủ quán.'
+            ? 'Điền hồ sơ tài khoản và minh chứng ngay bên dưới. Admin phải duyệt tài khoản trước khi bạn có thể quản lý quán.'
             : 'Dùng tài khoản này trên ứng dụng điện thoại để tìm địa điểm, check-in, đặt chỗ và đánh giá.'}
         </p>
         <TextField label="Họ và tên" autoComplete="name" value={values.name} maxLength={80}
@@ -99,6 +109,19 @@ export function RegisterPage() {
           onChange={(event) => change('password', event.target.value)} error={errors.password} disabled={register.isPending} />
         <TextField label="Nhập lại mật khẩu" type="password" autoComplete="new-password" value={values.confirmation} maxLength={128}
           onChange={(event) => change('confirmation', event.target.value)} error={errors.confirmation} disabled={register.isPending} />
+        {intent === 'merchant' ? (
+          <>
+            <TextField label="Tên cơ sở kinh doanh" value={businessName} maxLength={120}
+              onChange={(event) => { setBusinessName(event.target.value); setMerchantErrors((current) => ({ ...current, businessName: null })); }}
+              error={merchantErrors.businessName} disabled={register.isPending} />
+            <TextField label="Số điện thoại liên hệ" value={contactPhone} maxLength={20}
+              onChange={(event) => { setContactPhone(event.target.value); setMerchantErrors((current) => ({ ...current, contactPhone: null })); }}
+              error={merchantErrors.contactPhone} disabled={register.isPending} />
+            <TextField label="Link minh chứng (HTTPS, mỗi dòng một link)" value={evidence}
+              onChange={(event) => { setEvidence(event.target.value); setMerchantErrors((current) => ({ ...current, evidence: null })); }}
+              error={merchantErrors.evidence} disabled={register.isPending} />
+          </>
+        ) : null}
         <FormAlert message={formError} />
         <Button type="submit" size="large" busy={register.isPending} busyLabel="Đang tạo tài khoản">Đăng ký</Button>
         <p className="state__sentence">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>

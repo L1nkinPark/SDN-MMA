@@ -47,8 +47,8 @@ export function LoginPage() {
       <div className="login__brand">StudySpot</div>
       <h1 className="login__title">Quản lý StudySpot</h1>
       <p className="state__sentence">
-        Quản trị viên duyệt và kiểm duyệt nội dung. Chủ quán, hoặc sinh viên muốn đăng ký quán, đăng nhập bằng tài khoản StudySpot để gửi hồ sơ,
-        tạo mã QR tại quầy và quản lý đặt chỗ.
+        Quản trị viên duyệt hồ sơ tài khoản chủ quán và kiểm duyệt nội dung. Người đăng ký chủ quán chỉ đăng nhập được sau khi tài khoản được duyệt.
+        Chủ quán đã được duyệt có thể gửi hồ sơ quán, tạo mã QR tại quầy và quản lý đặt chỗ.
       </p>
       <form className="login__form" onSubmit={submit} noValidate>
         <TextField
