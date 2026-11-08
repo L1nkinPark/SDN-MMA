@@ -7,6 +7,7 @@ const schema = new Schema({
   rating: { type: Number, required: true, min: 1, max: 5 },
   text: { type: String, required: true, trim: true },
   hidden: { type: Boolean, default: false },
+  hiddenAt: { type: Date, default: null },
   moderationNote: { type: String, default: null },
   verifiedVisit: { type: Schema.Types.ObjectId, ref: 'VisitProof', default: null }
 }, { timestamps: true, versionKey: false });

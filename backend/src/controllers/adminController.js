@@ -367,7 +367,7 @@ export const adminController = {
     const { hidden, reason } = parse(z.object({ hidden: z.boolean(),
       reason: z.string().trim().min(5).max(1000) }), req.body);
     const review = await Review.findOneAndUpdate({ _id: id, hidden: { $ne: hidden } },
-      { $set: { hidden, moderationNote: reason } }, { new: true });
+      { $set: { hidden, hiddenAt: hidden ? new Date() : null, moderationNote: reason } }, { new: true });
     if (!review) throw new HttpError(409, 'Review not found or visibility already set');
     await updateRating(review.place);
     await AuditEvent.create({ actor: req.user._id, action: hidden ? 'review.hide' : 'review.restore',
