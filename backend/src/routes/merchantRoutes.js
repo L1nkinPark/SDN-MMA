@@ -16,7 +16,7 @@ export function merchantRouter(cfg) {
   router.get('/change-requests/me', asyncRoute(controller.myChangeRequests));
   router.patch('/places/:id', requireMerchant, asyncRoute(controller.updatePlace));
   router.post('/places/:id/change-requests', requireMerchant, asyncRoute(controller.submitChange));
-  router.post('/places/:id/images', requireMerchant, imageUpload, asyncRoute(controller.submitImage));
+  router.post('/places/:id/images', imageUpload, asyncRoute(controller.submitImage));
   router.post('/places/:id/visit-code', requireMerchant, asyncRoute(controller.visitCode));
   router.get('/places/:id/bookings', requireMerchant, asyncRoute(bookingController.placeBookings));
   return router;
