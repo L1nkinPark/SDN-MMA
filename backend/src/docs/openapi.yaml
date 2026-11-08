@@ -314,7 +314,7 @@ paths:
   /api/auth/register:
     post:
       tags: [Auth]
-      summary: Đăng ký tài khoản sinh viên
+      summary: Tạo tài khoản sinh viên; quyền chủ quán cần admin duyệt hồ sơ quán
       operationId: register
       requestBody:
         required: true

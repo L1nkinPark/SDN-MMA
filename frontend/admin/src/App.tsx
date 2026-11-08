@@ -13,6 +13,7 @@ import { ClaimsPage } from './pages/ClaimsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { FraudPage } from './pages/FraudPage';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { ClaimPlacePage } from './pages/merchant/ClaimPlacePage';
 import { MerchantHomePage } from './pages/merchant/MerchantHomePage';
 import { MerchantNewPlacePage } from './pages/merchant/MerchantNewPlacePage';
@@ -76,6 +77,7 @@ function NotFound() {
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  { path: '/register', element: <RegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   {
     element: <Layout />,

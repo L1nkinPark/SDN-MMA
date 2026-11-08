@@ -10,6 +10,12 @@ export function emailError(email: string): string | null {
   return EMAIL.test(email.trim()) ? null : 'Email chưa đúng định dạng.';
 }
 
+export function nameError(name: string): string | null {
+  if (length(name) < 2) return 'Họ tên cần ít nhất 2 ký tự.';
+  if (length(name) > 80) return 'Họ tên tối đa 80 ký tự.';
+  return null;
+}
+
 export function passwordError(password: string): string | null {
   if (password.length < 8) return 'Mật khẩu cần ít nhất 8 ký tự.';
   if (password.length > 128) return 'Mật khẩu tối đa 128 ký tự.';
