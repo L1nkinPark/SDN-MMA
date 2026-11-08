@@ -73,11 +73,15 @@ export function validateSettings(values: SettingsValues): SettingsErrors {
   const errors: SettingsErrors = {};
   const phone = values.phone.trim();
   if (phone && (phone.length < 8 || phone.length > 20)) errors.phone = 'Số điện thoại cần 8 đến 20 ký tự.';
-  if (parseCount(values.seatingCapacity) === undefined) errors.seatingCapacity = 'Số ghế là số nguyên từ 1 đến 10.000.';
+  const seating = parseCount(values.seatingCapacity);
+  if (seating === undefined) errors.seatingCapacity = 'Số ghế là số nguyên từ 1 đến 10.000.';
   if (parsePrice(values.price) === undefined) errors.price = 'Giá cần là số đồng, ví dụ 25.000.';
   const capacity = parseCount(values.capacityPerSlot);
   if (capacity === undefined) errors.capacityPerSlot = 'Số chỗ là số nguyên từ 1 đến 10.000.';
   else if (values.bookingEnabled && capacity === null) errors.capacityPerSlot = 'Cần số chỗ mỗi khung giờ để nhận đặt chỗ.';
+  else if (values.bookingEnabled && seating != null && capacity != null && capacity > seating) {
+    errors.capacityPerSlot = 'Số chỗ mỗi khung giờ không được vượt quá tổng số ghế của quán.';
+  }
   const open = values.hours.filter((item) => item.open);
   if (open.some((item) => !CLOCK.test(item.from) || !CLOCK.test(item.to))) {
     errors.hours = 'Giờ cần theo dạng HH:mm, ví dụ 08:00.';

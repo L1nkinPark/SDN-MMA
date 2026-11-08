@@ -172,6 +172,19 @@ export function merchantController(cfg) {
           throw new HttpError(400, 'Closed dates must be unique and within the next year');
         }
       }
+      if (body.seatingCapacity !== undefined || body.capacityPerSlot !== undefined || body.bookingEnabled === true) {
+        const current = await Place.findOne({ _id: id, owner: req.user._id, approval: 'approved' });
+        if (!current) throw new HttpError(404, 'Owned place not found');
+        const enabled = body.bookingEnabled ?? current.booking?.enabled;
+        const capacity = body.capacityPerSlot !== undefined ? body.capacityPerSlot : current.booking?.capacityPerSlot;
+        const seating = body.seatingCapacity !== undefined ? body.seatingCapacity : current.business?.seatingCapacity;
+        if (enabled && (!Number.isInteger(capacity) || capacity < 1)) {
+          throw new HttpError(400, 'Booking capacity must be configured before enabling bookings');
+        }
+        if (enabled && seating != null && capacity > seating) {
+          throw new HttpError(400, 'Booking capacity cannot exceed the place seating capacity');
+        }
+      }
       const changes = {};
       for (const key of ['phone', 'openingHours', 'closedDates', 'temporaryClosed', 'seatingCapacity']) {
         if (body[key] !== undefined) changes[`business.${key}`] = body[key];

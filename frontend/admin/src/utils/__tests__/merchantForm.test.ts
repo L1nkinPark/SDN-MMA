@@ -61,6 +61,12 @@ describe('merchant settings form', () => {
     expect(errors.capacityPerSlot).toBe('Cần số chỗ mỗi khung giờ để nhận đặt chỗ.');
   });
 
+  it('refuses booking capacity above the physical seating capacity', () => {
+    const values = settingsFromPlace(place, TODAY);
+    values.seatingCapacity = '3';
+    expect(validateSettings(values).capacityPerSlot).toContain('không được vượt quá');
+  });
+
   it('keeps only upcoming unique dates', () => {
     expect(upcomingDates(['2026-11-09', '2026-11-07', '2026-11-09'], TODAY)).toEqual(['2026-11-09']);
   });
