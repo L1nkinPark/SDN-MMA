@@ -24,7 +24,7 @@ export function Layout() {
   }
 
   const count = unread.data ?? 0;
-  const area = user?.role === 'admin' ? 'Quản trị' : 'Chủ quán';
+  const area = user?.role === 'admin' ? 'Quản trị' : user?.role === 'merchant' ? 'Chủ quán' : 'Hồ sơ chủ quán';
 
   return (
     <div className="shell">

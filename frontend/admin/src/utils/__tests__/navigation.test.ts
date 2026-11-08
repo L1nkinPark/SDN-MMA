@@ -6,6 +6,7 @@ import { notificationLink } from '../notificationLink';
 describe('role navigation', () => {
   it('sends students and merchants to the merchant area', () => {
     expect(homePath({ role: 'student' })).toBe('/merchant');
+    expect(linksFor({ role: 'student' }).map((link) => link.to)).toEqual(['/merchant', '/merchant/apply']);
     expect(homePath({ role: 'merchant' })).toBe('/merchant');
     expect(linksFor({ role: 'merchant' }).map((link) => link.to)).toContain('/merchant/claim');
   });

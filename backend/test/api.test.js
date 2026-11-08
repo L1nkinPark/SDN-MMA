@@ -81,6 +81,8 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   await request(app).get('/api/admin/analytics').set(aliceAuth).expect(403);
   await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
     .send({ approval: 'approved', decisionNote: 'Place details verified' }).expect(200);
+  assert.equal((await User.findById(alice.user.id)).role, 'student');
+  assert.equal((await Place.findById(placeId)).owner, null);
   await request(app).get(`/api/places/${placeId}`).expect(200);
   const forgedImage = await request(app).post(`/api/admin/places/${placeId}/images`)
     .set(adminAuth).field('reason', 'Evidence image approved')
@@ -108,8 +110,9 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   assert.equal(second.body.liveStatus.noise, 'moderate');
   assert.ok(events.some(e => e.room === `place:${placeId}` && e.payload.liveStatus.sampleCount === 2));
 
-  await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(200);
+  await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(403);
   assert.equal((await Place.findById(placeId)).ratingCount, 0);
+  assert.equal((await request(app).get(`/api/places/${placeId}/reviews`).expect(200)).body.total, 0);
   await VisitProof.create({ user: alice.user.id, place: placeId, method: 'qr' });
   await VisitProof.create({ user: bob.user.id, place: placeId, method: 'qr' });
   await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(200);
@@ -230,6 +233,18 @@ test('merchant claim, managed booking, verified visit, review badge and admin us
   const ownerAuth = auth(applicant.accessToken);
   const visitorAuth = auth(visitor.accessToken);
   const secondAuth = auth(another.accessToken);
+
+  await request(app).post('/api/merchant/claims').set(ownerAuth).send({
+    placeId: new mongoose.Types.ObjectId().toString(), businessName: 'Study Cafe Company',
+    contactPhone: '0901234567', evidenceUrls: ['https://example.com/proof.jpg']
+  }).expect(403);
+  const account = await request(app).post('/api/merchant/account-application').set(ownerAuth).send({
+    businessName: 'Study Cafe Company', contactPhone: '0901234567',
+    evidenceUrls: ['https://example.com/proof.jpg']
+  }).expect(201);
+  await request(app).patch(`/api/admin/merchant-claims/${account.body.application._id}`).set(adminAuth)
+    .send({ status: 'approved', decisionNote: 'Business documents checked' }).expect(200);
+  assert.equal((await User.findById(applicant.user.id)).role, 'merchant');
 
   const created = await request(app).post('/api/places').set(ownerAuth).send({
     name: 'Study Cafe', address: '99 Campus Road', coordinates: [105.81, 21.01]

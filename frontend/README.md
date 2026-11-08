@@ -5,7 +5,7 @@ Hai ứng dụng dùng chung backend trong `backend/`, theo `backend/src/docs/op
 - `mobile/`: ứng dụng cho sinh viên (Expo, React Native).
 - `admin/`: trang web cho quản trị viên **và** chủ quán (Vite, React). Sinh viên muốn đăng ký quán cũng đăng nhập ở đây.
 
-Web có trang `/register` cho sinh viên và người muốn quản lý quán. Cả hai đăng ký bằng cùng API và bắt đầu với vai trò sinh viên; chọn “Chủ quán” chỉ dẫn sang hồ sơ quán mới hoặc hồ sơ nhận quyền. Admin duyệt hồ sơ xong mới cấp vai trò chủ quán. Sinh viên dùng cùng email/mật khẩu để đăng nhập ứng dụng mobile.
+Web có trang `/register` cho sinh viên và người muốn quản lý quán. Người chọn “Chủ quán” phải nộp tên cơ sở kinh doanh, số điện thoại và link minh chứng ngay khi đăng ký. Tài khoản được tạo ở trạng thái `pending_merchant`, không cấp JWT và không đăng nhập được cho đến khi admin duyệt hồ sơ tài khoản ở `/claims`. Admin từ chối thì tài khoản trở thành sinh viên để người dùng đăng nhập, xem lý do và nộp lại hồ sơ tại `/merchant/apply`. Sau khi được duyệt, chủ quán mới gửi hồ sơ quán mới hoặc nhận quyền quán có sẵn; mỗi quán được duyệt riêng. Sinh viên có tài khoản từ trước cũng có thể nộp hồ sơ tại `/merchant/apply`.
 
 Cách cài và chạy: xem `backend/docs/SETUP.md`. Kiểm tra trước khi mở PR:
 

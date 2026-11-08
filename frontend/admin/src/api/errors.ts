@@ -30,6 +30,7 @@ const exactMessages: Record<number, Record<string, string>> = {
   },
   401: { 'Invalid email or password': WRONG_CREDENTIALS_MESSAGE },
   403: {
+    'Merchant account pending approval': 'Hồ sơ tài khoản chủ quán đang chờ admin duyệt. Bạn sẽ đăng nhập được sau khi hồ sơ được chấp thuận.',
     'Admin access required': NOT_ADMIN_MESSAGE,
     'Account unavailable': ACCOUNT_UNAVAILABLE_MESSAGE,
     'Merchant access required': 'Chỉ chủ quán đã được duyệt mới làm được thao tác này.',
@@ -52,6 +53,11 @@ const exactMessages: Record<number, Record<string, string>> = {
     'Unread notification not found': 'Thông báo này đã được đọc.',
   },
   409: {
+    'Merchant account application already pending': 'Hồ sơ tài khoản chủ quán đang chờ duyệt.',
+    'Account is already a merchant': 'Tài khoản này đã có quyền chủ quán.',
+    'New owner must have an approved merchant account': 'Chỉ tài khoản chủ quán đã được duyệt mới nhận quyền quán.',
+    'Owner applicant must have an approved merchant account': 'Cần duyệt tài khoản chủ quán trước khi duyệt quán.',
+    'Merchant account must be approved first': 'Cần duyệt tài khoản chủ quán trước khi duyệt hồ sơ nhận quyền quán.',
     'Resource already exists': 'Dữ liệu này đã tồn tại.',
     'Maximum 3 pending place submissions': 'Bạn đang có 3 hồ sơ quán chờ duyệt. Đợi admin xử lý rồi gửi thêm.',
     'Place already has an owner': 'Quán này đã có chủ quản lý.',

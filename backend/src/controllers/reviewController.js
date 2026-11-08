@@ -17,7 +17,7 @@ export const reviewController = {
     const place = await Place.findOne({ _id: placeId, approval: 'approved' }).select('_id');
     if (!place) throw new HttpError(404, 'Place not found');
     const { page, limit } = parse(pageQuery, req.query);
-    const query = { place: placeId, hidden: false };
+    const query = { place: placeId, hidden: false, verifiedVisit: { $type: 'objectId' } };
     const [items, total] = await Promise.all([
       Review.find(query).populate('user', 'name reputation').populate('verifiedVisit', 'method')
         .sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -35,8 +35,9 @@ export const reviewController = {
     if (previous?.hidden) throw new HttpError(403, 'This review was hidden by moderation');
     const proof = await VisitProof.findOne({ user: req.user._id, place: placeId,
       verifiedAt: { $gte: new Date(Date.now() - 14 * 86400000) } }).sort({ verifiedAt: -1 });
+    if (!proof) throw new HttpError(403, 'Verified visit required to review');
     const review = await Review.findOneAndUpdate({ user: req.user._id, place: placeId },
-      { $set: { ...body, verifiedVisit: proof?._id || null }, $setOnInsert: { hidden: false } },
+      { $set: { ...body, verifiedVisit: proof._id }, $setOnInsert: { hidden: false } },
       { upsert: true, new: true });
     if (!previous) await awardReputation(req.user._id, placeId, 'review', 'lifetime', 2);
     await updateRating(placeId);

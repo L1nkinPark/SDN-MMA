@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 
-import { PAGE_SIZE } from '../../api/endpoints';
+import { merchantApi, PAGE_SIZE } from '../../api/endpoints';
 import { errorMessage } from '../../api/errors';
 import { useMerchantClaims, useMerchantPlaces } from '../../api/hooks';
 import { populated, type MerchantClaim, type Place } from '../../api/types';
@@ -73,8 +74,28 @@ export function MerchantHomePage() {
   const places = useMerchantPlaces();
   const [claimPage, setClaimPage] = useState(1);
   const claims = useMerchantClaims(claimPage);
+  const accountApplication = useQuery({ queryKey: ['merchant', 'account-application'], queryFn: merchantApi.accountApplication,
+    enabled: user?.role === 'student' });
   const items = places.data?.items ?? [];
   const claimItems = claims.data?.items ?? [];
+
+  if (user?.role === 'student') {
+    const application = accountApplication.data?.application;
+    return <>
+      <PageHeader title="Tài khoản chủ quán" />
+      {accountApplication.isPending ? <LoadingRows rows={1} /> : accountApplication.isError ?
+        <StateMessage tone="error" heading="Chưa tải được hồ sơ tài khoản" sentence={errorMessage(accountApplication.error)}
+          action={{ label: 'Thử lại', onClick: () => void accountApplication.refetch() }} /> :
+        <StateMessage heading={application?.status === 'pending' ? 'Hồ sơ tài khoản đang chờ admin duyệt' :
+          application?.status === 'rejected' ? 'Hồ sơ tài khoản chưa được duyệt' : 'Đăng ký tài khoản chủ quán'}
+          sentence={application?.status === 'pending' ? 'Sau khi tài khoản được duyệt, bạn mới có thể đăng ký hoặc quản lý quán.' :
+            application?.status === 'rejected' ? (application.decisionNote ?? 'Hãy bổ sung minh chứng và gửi lại hồ sơ.') :
+              'Gửi hồ sơ tài khoản và minh chứng để admin xét duyệt.'}
+          action={application?.status === 'pending' ? { label: 'Kiểm tra kết quả', onClick: () => window.location.reload() } :
+            { label: application?.status === 'rejected' ? 'Gửi lại hồ sơ' : 'Nộp hồ sơ tài khoản',
+              onClick: () => navigate('/merchant/apply') }} />}
+    </>;
+  }
 
   return (
     <>
@@ -91,12 +112,6 @@ export function MerchantHomePage() {
           </div>
         }
       />
-      {user?.role === 'student' ? (
-        <p className="section state__sentence">
-          Tài khoản của bạn sẽ thành tài khoản chủ quán khi quản trị viên duyệt hồ sơ quán hoặc hồ sơ nhận quyền.
-        </p>
-      ) : null}
-
       {places.isPending ? (
         <LoadingRows rows={2} />
       ) : places.isError ? (

@@ -50,10 +50,13 @@ export const PAGE_SIZE = 20;
 const enc = encodeURIComponent;
 
 export const authApi = {
-  register: (input: { name: string; email: string; password: string }) =>
-    api.request<AuthTokens>('/api/auth/register', {
+  register: (input: { name: string; email: string; password: string; intent: 'student' | 'merchant';
+    businessName?: string; contactPhone?: string; evidenceUrls?: string[] }) =>
+    api.request<AuthTokens | { applicationStatus: 'pending'; email: string }>('/api/auth/register', {
       method: 'POST',
-      body: { name: input.name.trim(), email: input.email.trim().toLowerCase(), password: input.password },
+      body: { name: input.name.trim(), email: input.email.trim().toLowerCase(), password: input.password,
+        intent: input.intent, ...(input.intent === 'merchant' ? { businessName: input.businessName,
+          contactPhone: input.contactPhone, evidenceUrls: input.evidenceUrls } : {}) },
     }),
   login: (input: Credentials) =>
     api.request<AuthTokens>('/api/auth/login', {
@@ -89,6 +92,11 @@ export const publicApi = {
 };
 
 export const merchantApi = {
+  accountApplication: () => api.request<{ application: { _id: string; kind: 'account'; businessName: string;
+    contactPhone: string; status: 'pending' | 'approved' | 'rejected'; decisionNote?: string | null } | null }>(
+    '/api/merchant/account-application/me'),
+  applyForAccount: (input: { businessName: string; contactPhone: string; evidenceUrls: string[] }) =>
+    api.request<{ application: unknown }>('/api/merchant/account-application', { method: 'POST', body: input }),
   listPlaces: () => api.request<MerchantPlaceList>('/api/merchant/places'),
   createPlace: (input: MerchantPlaceInput) =>
     api.request<CreatePlaceResponse>('/api/merchant/places', { method: 'POST', body: input }),

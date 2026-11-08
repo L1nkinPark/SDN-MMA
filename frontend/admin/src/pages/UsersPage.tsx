@@ -115,7 +115,7 @@ function UserRow({ item, superAdmin, selfId }: { item: AdminUser; superAdmin: bo
             )}
           </div>
         ) : null}
-        {!isAdmin && !isSelf && !deleted ? (
+        {!isAdmin && !isSelf && !deleted && item.status !== 'pending_merchant' ? (
           <TextField
             label={item.status === 'suspended' ? 'Lý do mở khóa (bắt buộc)' : 'Lý do khóa (bắt buộc)'}
             value={reason}
@@ -148,7 +148,7 @@ function UserRow({ item, superAdmin, selfId }: { item: AdminUser; superAdmin: bo
         <Button size="small" variant="secondary" onClick={() => setHistoryOpen(!historyOpen)}>
           {historyOpen ? 'Ẩn lịch sử' : 'Xem lịch sử'}
         </Button>
-        {!isAdmin && !isSelf && !deleted ? (
+        {!isAdmin && !isSelf && !deleted && item.status !== 'pending_merchant' ? (
           <Button
             size="small"
             variant={item.status === 'suspended' ? 'secondary' : 'danger'}

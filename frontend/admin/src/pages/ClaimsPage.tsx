@@ -22,6 +22,7 @@ function ClaimRow({ claim }: { claim: MerchantClaim }) {
   const decide = useDecideClaim();
   const applicant = populated(claim.applicant);
   const place = populated(claim.place);
+  const isAccount = claim.kind === 'account';
   const status = claim.status ?? 'pending';
   const createdAt = (claim as { createdAt?: string }).createdAt;
 
@@ -29,10 +30,10 @@ function ClaimRow({ claim }: { claim: MerchantClaim }) {
     <li className="row">
       <div className="row__main">
         <span className="row__title">
-          {place?.name ?? 'Địa điểm'}
+          {isAccount ? 'Tài khoản chủ quán' : place?.name ?? 'Địa điểm'}
           <Tag tone={status === 'pending' ? 'ink' : status === 'rejected' ? 'error' : 'muted'}>{CLAIM_STATUS_LABELS[status]}</Tag>
         </span>
-        <span className="row__secondary">{place?.address}</span>
+        <span className="row__secondary">{isAccount ? 'Duyệt tài khoản trước khi người này được đăng ký hoặc nhận quyền quán' : place?.address}</span>
         <p className="row__body">
           {claim.businessName} · {claim.contactPhone}
           {'\n'}Người gửi: {applicant?.name ?? 'Không rõ'}
@@ -53,7 +54,7 @@ function ClaimRow({ claim }: { claim: MerchantClaim }) {
           <DecisionForm
             label="Ghi chú gửi người nộp hồ sơ (bắt buộc, ít nhất 5 ký tự)"
             required
-            approveLabel="Duyệt quyền chủ quán"
+            approveLabel={isAccount ? 'Duyệt tài khoản chủ quán' : 'Duyệt quyền quản lý quán'}
             rejectLabel="Từ chối"
             busy={decide.isPending ? (decide.variables?.status === 'approved' ? 'approve' : 'reject') : null}
             error={decide.isError ? errorMessage(decide.error) : null}
@@ -67,7 +68,7 @@ function ClaimRow({ claim }: { claim: MerchantClaim }) {
   );
 }
 
-/** `GET /api/admin/merchant-claims`. Approving makes the applicant the owner and a merchant; other pending claims for the place are rejected. */
+/** Account applications grant merchant role; place claims assign an already approved merchant to a place. */
 export function ClaimsPage() {
   const [filter, setFilter] = useState<Filter>('pending');
   const [page, setPage] = useState(1);
@@ -87,8 +88,8 @@ export function ClaimsPage() {
         }}
       />
       <p className="section field__hint">
-        Kiểm tra minh chứng trước khi duyệt. Khi duyệt, người gửi trở thành chủ quán và các hồ sơ khác đang chờ cho cùng quán bị từ chối.
-        Quán mới do chủ quán tự đăng ký nằm ở mục Địa điểm.
+        Duyệt hồ sơ tài khoản trước để cấp quyền chủ quán. Hồ sơ nhận quyền một quán đã có được xét riêng tại đây;
+        quán mới do chủ quán đăng ký được duyệt tại mục Địa điểm.
       </p>
       {claims.isPending ? (
         <LoadingRows />

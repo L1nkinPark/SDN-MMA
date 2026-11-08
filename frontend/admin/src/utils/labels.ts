@@ -67,6 +67,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
 
 export const USER_STATUS_LABELS: Record<UserStatus, string> = {
   active: 'Đang hoạt động',
+  pending_merchant: 'Chờ duyệt tài khoản chủ quán',
   suspended: 'Đã khóa',
   deleted: 'Đã xóa',
 };

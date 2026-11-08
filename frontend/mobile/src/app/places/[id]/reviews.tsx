@@ -23,7 +23,7 @@ function ReviewItem({ review }: { review: Review }) {
         <RatingStars value={review.rating ?? 0} />
       </View>
       {review.text ? <Text style={styles.text}>{review.text}</Text> : null}
-      <Text style={styles.verified}>{verifiedVisitLabel(review) || 'Chưa xác minh lượt ghé · không tính vào điểm trung bình'}</Text>
+      <Text style={styles.verified}>{verifiedVisitLabel(review) || 'Lượt ghé đã xác minh'}</Text>
       <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
     </View>
   );
@@ -73,7 +73,7 @@ export default function ReviewsScreen() {
     body = (
       <MessageState
         heading="Chưa có đánh giá nào"
-        sentence="Bạn có thể là người đầu tiên đánh giá địa điểm này."
+        sentence="Sau khi quét mã QR tại quầy hoặc được quán xác nhận đã đến, bạn có thể là người đầu tiên đánh giá địa điểm này."
         action={isOwner ? undefined : { label: 'Viết đánh giá', variant: 'primary', onPress: writeReview }}
       />
     );

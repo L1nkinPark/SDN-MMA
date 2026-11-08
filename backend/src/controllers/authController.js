@@ -7,7 +7,7 @@ import { User, RefreshToken, PasswordReset, EmailChange, Booking, Checkin, Email
 import { HttpError, parse } from '../utils/common.js';
 import { accessToken, refreshToken, tokenHash } from '../services/tokenService.js';
 import { publicUser } from '../views/userView.js';
-import { queueEmail } from '../services/notificationService.js';
+import { notifyAdmins, queueEmail } from '../services/notificationService.js';
 import { releaseSlot } from '../services/bookingService.js';
 import { updateRating } from '../services/ratingService.js';
 import { recalculateStatus } from '../services/statusService.js';
@@ -23,15 +23,38 @@ export function authController(cfg) {
 
   return {
     register: async (req, res) => {
-      const body = parse(credentials.extend({ name: z.string().trim().min(2).max(80) }), req.body);
-      const user = await User.create({ name: body.name, email: body.email, passwordHash: await bcrypt.hash(body.password, 12) });
+      const body = parse(credentials.extend({ name: z.string().trim().min(2).max(80),
+        intent: z.enum(['student', 'merchant']).default('student'),
+        businessName: z.string().trim().min(2).max(120).optional(),
+        contactPhone: z.string().trim().min(8).max(20).optional(),
+        evidenceUrls: z.array(z.url().startsWith('https://')).min(1).max(5).optional()
+      }), req.body);
+      if (body.intent === 'merchant' && (!body.businessName || !body.contactPhone || !body.evidenceUrls)) {
+        throw new HttpError(400, 'Merchant application details required');
+      }
+      const user = await User.create({ name: body.name, email: body.email, passwordHash: await bcrypt.hash(body.password, 12),
+        status: body.intent === 'merchant' ? 'pending_merchant' : 'active' });
+      if (body.intent === 'merchant') {
+        try {
+          const application = await MerchantClaim.create({ applicant: user._id, kind: 'account', place: null,
+            businessName: body.businessName, contactPhone: body.contactPhone, evidenceUrls: body.evidenceUrls });
+          await notifyAdmins(cfg, { kind: 'merchant_account', title: 'Tài khoản chủ quán chờ duyệt',
+            body: `${user.name} gửi hồ sơ tài khoản chủ quán.`, resourceType: 'MerchantClaim',
+            resourceId: application._id }).catch(console.error);
+        } catch (error) {
+          await User.deleteOne({ _id: user._id });
+          throw error;
+        }
+      }
       res.status(201);
+      if (body.intent === 'merchant') return res.json({ applicationStatus: 'pending', email: user.email });
       await issue(user, res);
     },
     login: async (req, res) => {
       const body = parse(credentials, req.body);
       const user = await User.findOne({ email: body.email }).select('+passwordHash');
       if (!user || !(await bcrypt.compare(body.password, user.passwordHash))) throw new HttpError(401, 'Invalid email or password');
+      if (user.status === 'pending_merchant') throw new HttpError(403, 'Merchant account pending approval');
       if (user.status !== 'active') throw new HttpError(403, 'Account unavailable');
       await issue(user, res);
     },
