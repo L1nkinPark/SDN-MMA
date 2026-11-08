@@ -113,6 +113,16 @@ export type SupportCase = {
   reason: string;
   status: 'pending' | 'accepted' | 'rejected';
   decisionNote?: string | null;
+  evidenceSource?: 'receipt' | 'qr_log' | 'staff_confirmation' | 'other' | null;
+  evidenceSummary?: string | null;
+  target?: {
+    status?: string; startsAt?: string; noShowAt?: string; decidedAt?: string;
+    cancellationReason?: string; partySize?: number; place?: unknown;
+    rating?: number; text?: string; hiddenAt?: string; moderationNote?: string;
+    verifiedVisit?: unknown;
+  } | null;
+  targetEvents?: { action: string; detail?: string; createdAt?: string }[];
+  visitProof?: { method: string; verifiedAt?: string } | null;
   createdAt?: string;
 };
 export type AuditEvent = {

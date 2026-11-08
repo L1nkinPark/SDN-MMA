@@ -209,9 +209,10 @@ export const adminApi = {
   listCases: (kind: SupportCase['kind'], page: number, status?: SupportCase['status']) =>
     api.request<Page<SupportCase>>(kind === 'review_appeal' ? '/api/admin/review-appeals' : '/api/admin/booking-disputes',
       { query: { page, limit: PAGE_SIZE, status } }),
-  decideCase: (kind: SupportCase['kind'], id: string, status: 'accepted' | 'rejected', decisionNote: string) =>
+  decideCase: (kind: SupportCase['kind'], id: string, status: 'accepted' | 'rejected', decisionNote: string,
+    evidenceSource?: SupportCase['evidenceSource'], evidenceSummary?: string) =>
     api.request<{ case: SupportCase }>(`${kind === 'review_appeal' ? '/api/admin/review-appeals' : '/api/admin/booking-disputes'}/${enc(id)}`,
-      { method: 'PATCH', body: { status, decisionNote } }),
+      { method: 'PATCH', body: { status, decisionNote, evidenceSource, evidenceSummary } }),
 
   listFraudFlags: (page: number, status?: FraudStatus) =>
     api.request<Page<FraudFlag>>('/api/admin/fraud-flags', { query: { page, limit: PAGE_SIZE, status } }),

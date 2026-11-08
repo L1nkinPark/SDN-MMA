@@ -530,12 +530,19 @@ test('review appeal and no-show dispute require ownership and admin decision', a
   const user = await register('Case Guest', 'case-guest@example.com');
   const userAuth = auth(user.accessToken);
   const place = await Place.findOne({ name: 'New Study Cafe Plus' });
+  const proof = await VisitProof.create({ user: user.user.id, place: place._id,
+    method: 'qr', verifiedAt: new Date() });
   const review = await Review.create({ user: user.user.id, place: place._id, rating: 4,
-    text: 'Quiet study space', hidden: true, moderationNote: 'Needs review' });
+    text: 'Quiet study space', hidden: true, hiddenAt: new Date(),
+    moderationNote: 'Needs review', verifiedVisit: proof._id });
   const startsAt = new Date(Date.now() - 2 * 3600000);
   const booking = await Booking.create({ user: user.user.id, place: place._id, startsAt,
     endsAt: new Date(startsAt.getTime() + 3600000), partySize: 1, status: 'no_show', noShowAt: new Date() });
   const reason = 'I was at the place and have a receipt to prove it.';
+  await Review.updateOne({ _id: review._id }, { $set: { hiddenAt: new Date(Date.now() - 15 * 86400000) } });
+  await request(app).post('/api/cases').set(userAuth)
+    .send({ kind: 'review_appeal', targetId: String(review._id), reason }).expect(409);
+  await Review.updateOne({ _id: review._id }, { $set: { hiddenAt: new Date() } });
   await request(app).post('/api/cases').set(userAuth)
     .send({ kind: 'review_appeal', targetId: String(booking._id), reason }).expect(409);
   const appeal = await request(app).post('/api/cases').set(userAuth)
@@ -552,16 +559,23 @@ test('review appeal and no-show dispute require ownership and admin decision', a
   await request(app).get('/api/admin/review-appeals').set(userAuth).expect(403);
   const queue = await request(app).get('/api/admin/review-appeals').set(adminAuth).expect(200);
   assert.equal(queue.body.total, 1);
+  assert.equal(queue.body.items[0].target.text, 'Quiet study space');
+  const bookingQueue = await request(app).get('/api/admin/booking-disputes').set(adminAuth).expect(200);
+  assert.equal(bookingQueue.body.items[0].target.status, 'no_show');
   const decisionNote = 'Receipt and visit log were checked by the moderator.';
   await request(app).patch(`/api/admin/review-appeals/${appeal.body.case._id}`).set(adminAuth)
     .send({ status: 'accepted', decisionNote }).expect(200);
   assert.equal((await Review.findById(review._id)).hidden, false);
   await request(app).patch(`/api/admin/booking-disputes/${dispute.body.case._id}`).set(adminAuth)
-    .send({ status: 'accepted', decisionNote }).expect(200);
+    .send({ status: 'accepted', decisionNote }).expect(400);
+  await request(app).patch(`/api/admin/booking-disputes/${dispute.body.case._id}`).set(adminAuth)
+    .send({ status: 'accepted', decisionNote, evidenceSource: 'receipt',
+      evidenceSummary: 'Customer provided a dated receipt that matches the visit.' }).expect(200);
   assert.equal((await Booking.findById(booking._id)).status, 'completed');
   assert.equal((await VisitProof.findOne({ booking: booking._id })).method, 'admin_dispute');
   await request(app).patch(`/api/admin/booking-disputes/${dispute.body.case._id}`).set(adminAuth)
-    .send({ status: 'accepted', decisionNote }).expect(409);
+    .send({ status: 'accepted', decisionNote, evidenceSource: 'receipt',
+      evidenceSummary: 'Customer provided a dated receipt that matches the visit.' }).expect(409);
 });
 
 test('email outbox retries and password reset token is delivered once', async () => {
