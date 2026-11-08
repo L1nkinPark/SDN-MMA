@@ -68,6 +68,8 @@ test('error responses map validation, duplicate, cast, and internal failures', t
   assert.equal(respond({ code: 11000 }).code, 409);
   assert.equal(respond(new mongoose.Error.CastError('ObjectId', 'bad', '_id')).code, 400);
   assert.deepEqual(respond(new HttpError(403, 'Forbidden')).body, { error: 'Forbidden' });
+  assert.deepEqual(respond(new HttpError(503, 'Email delivery is not configured')).body,
+    { error: 'Email delivery is not configured' });
   assert.deepEqual(respond(new Error('secret detail')).body, { error: 'Internal server error' });
   assert.equal(logged.mock.callCount(), 1);
 });

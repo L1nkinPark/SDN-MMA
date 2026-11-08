@@ -1,19 +1,15 @@
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router';
 
+import { useUnreadNotificationCount } from '../api/hooks';
 import { useSession } from '../auth/sessionContext';
+import { linksFor } from './navigation';
 import { Button, LoadingRows } from './ui';
 
-const LINKS = [
-  { to: '/', label: 'Tổng quan', end: true },
-  { to: '/places', label: 'Địa điểm', end: false },
-  { to: '/reports', label: 'Báo cáo', end: false },
-  { to: '/reviews', label: 'Đánh giá', end: false },
-];
-
-/** Signed-in frame: brand, section links and the admin's name. Sends everyone else to /login. */
+/** Signed-in frame: brand, the sections this account may open, notifications and account. Sends guests to /login. */
 export function Layout() {
   const { status, user, signOut } = useSession();
   const location = useLocation();
+  const unread = useUnreadNotificationCount(status === 'signed-in');
 
   if (status === 'loading') {
     return (
@@ -27,14 +23,17 @@ export function Layout() {
     return <Navigate to={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} replace />;
   }
 
+  const count = unread.data ?? 0;
+  const area = user?.role === 'admin' ? 'Quản trị' : 'Chủ quán';
+
   return (
     <div className="shell">
       <header className="topbar">
         <NavLink to="/" className="topbar__brand">
-          StudySpot <small>Quản trị</small>
+          StudySpot <small>{area}</small>
         </NavLink>
         <nav className="nav" aria-label="Điều hướng chính">
-          {LINKS.map((link) => (
+          {linksFor(user).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -45,7 +44,16 @@ export function Layout() {
           ))}
         </nav>
         <div className="topbar__user">
-          <span>{user?.name ?? user?.email}</span>
+          <NavLink
+            to="/notifications"
+            className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`}
+            aria-label={count ? `Thông báo, ${count} chưa đọc` : 'Thông báo'}>
+            Thông báo
+            {count ? <span className="count">{count > 99 ? '99+' : count}</span> : null}
+          </NavLink>
+          <NavLink to="/account" className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`}>
+            {user?.name ?? user?.email ?? 'Tài khoản'}
+          </NavLink>
           <Button variant="danger-text" size="small" onClick={() => void signOut()}>
             Đăng xuất
           </Button>

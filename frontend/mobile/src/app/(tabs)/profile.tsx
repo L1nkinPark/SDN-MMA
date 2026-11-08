@@ -4,16 +4,24 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import { useMe } from '@/api/hooks/useMe';
+import { useUnreadNotificationCount } from '@/api/hooks/useNotifications';
 import { useRefetchOnFocus } from '@/api/hooks/useRefetchOnFocus';
 import { useSession } from '@/auth/session';
 import { Header, Icon, LoadingList, MessageState, Screen } from '@/components';
 import { colors, fonts, sizes, spacing, type } from '@/theme';
 
-function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
+function LinkRow({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="link" onPress={onPress} style={({ pressed }) => [styles.link, pressed ? styles.pressed : null]}>
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={count ? `${label}, ${count} chưa đọc` : label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.link, pressed ? styles.pressed : null]}>
       <Text style={styles.linkText}>{label}</Text>
-      <Icon name="chevron" size={18} color={colors.textSecondary} />
+      <View style={styles.linkEnd}>
+        {count ? <Text style={styles.count}>{count > 99 ? '99+' : count}</Text> : null}
+        <Icon name="chevron" size={18} color={colors.textSecondary} />
+      </View>
     </Pressable>
   );
 }
@@ -21,9 +29,11 @@ function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
 export default function ProfileScreen() {
   const { status, signOut } = useSession();
   const me = useMe();
+  const unread = useUnreadNotificationCount();
   const [signingOut, setSigningOut] = useState(false);
 
   useRefetchOnFocus(me.refetch, status === 'signed-in');
+  useRefetchOnFocus(unread.refetch, status === 'signed-in');
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -68,8 +78,18 @@ export default function ProfileScreen() {
           <Text style={styles.pointsValue}>{user.reputation ?? 0}</Text>
           <Text style={type.secondary}>+1 cho check-in đầu tiên trong ngày tại một địa điểm, +2 cho đánh giá đầu tiên.</Text>
         </View>
+        <LinkRow label="Thông báo" count={unread.data} onPress={() => router.push('/notifications')} />
+        <LinkRow label="Đặt chỗ của tôi" onPress={() => router.push('/my-bookings')} />
         <LinkRow label="Báo cáo của tôi" onPress={() => router.push('/my-reports')} />
         <LinkRow label="Đề xuất địa điểm" onPress={() => router.push('/propose')} />
+        <LinkRow label="Tài khoản và bảo mật" onPress={() => router.push('/account')} />
+        <View style={styles.merchantNote}>
+          <Text style={type.secondary}>
+            {user.role === 'merchant'
+              ? 'Bạn đang quản lý quán. Giờ mở cửa, mã QR tại quầy và đặt chỗ của khách được quản lý trên trang web StudySpot.'
+              : 'Bạn là chủ quán? Đăng nhập trang web StudySpot bằng tài khoản này để đăng ký hoặc nhận quyền quản lý quán.'}
+          </Text>
+        </View>
         <View style={styles.signOutRow}>
           <Pressable
             accessibilityRole="button"
@@ -122,6 +142,21 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.rule,
   },
   linkText: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },
+  linkEnd: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  count: {
+    minWidth: 24,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    textAlign: 'center',
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.onInk,
+    backgroundColor: colors.ink,
+    borderRadius: sizes.radius,
+    overflow: 'hidden',
+  },
+  merchantNote: { paddingVertical: spacing.lg, paddingLeft: spacing.contentLeft, paddingRight: spacing.contentRight },
   pressed: { opacity: 0.6 },
   signOutRow: { paddingTop: spacing.sm, paddingLeft: spacing.contentLeft, paddingRight: spacing.contentRight },
   signOut: { minHeight: sizes.touchTarget, justifyContent: 'center', alignSelf: 'flex-start' },

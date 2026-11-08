@@ -110,6 +110,9 @@ export default function LoginScreen() {
           />
           <FormAlert message={login.isError ? errorMessage(login.error) : null} />
           <Button label="Đăng nhập" busyLabel="Đang đăng nhập" busy={login.isPending} onPress={submit} block size="large" />
+          <Pressable accessibilityRole="link" onPress={() => router.push('/forgot-password')} style={styles.forgotLink}>
+            <Text style={styles.registerLinkText}>Quên mật khẩu?</Text>
+          </Pressable>
           <View style={styles.registerRow}>
             <Text style={styles.registerText}>Chưa có tài khoản?</Text>
             <Pressable accessibilityRole="link" onPress={() => router.replace('/register')} style={styles.registerLink}>
@@ -132,5 +135,6 @@ const styles = StyleSheet.create({
   registerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   registerText: { fontFamily: fonts.regular, fontSize: 14, color: colors.textSecondary },
   registerLink: { minHeight: 44, justifyContent: 'center' },
+  forgotLink: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   registerLinkText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
 });

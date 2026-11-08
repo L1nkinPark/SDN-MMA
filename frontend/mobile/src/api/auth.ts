@@ -1,5 +1,15 @@
 import { api } from './client';
-import type { AuthTokens, Credentials, MeResponse, RegisterInput } from './types';
+import type {
+  AuthTokens,
+  ChangePasswordInput,
+  Credentials,
+  DataExport,
+  DeleteAccountInput,
+  MeResponse,
+  RegisterInput,
+  ResetPasswordInput,
+  UpdateMeInput,
+} from './types';
 
 /** Lowercases and trims the email, as the backend expects. */
 export function normalizeEmail(email: string): string {
@@ -20,4 +30,22 @@ export const authApi = {
   logout: (refreshToken: string) =>
     api.request<void>('/api/auth/logout', { method: 'POST', body: { refreshToken } }),
   me: () => api.request<MeResponse>('/api/auth/me'),
+
+  /** Name and notification settings. Answers `{ user }`. */
+  updateMe: (input: UpdateMeInput) => api.request<MeResponse>('/api/auth/me', { method: 'PATCH', body: input }),
+  /** 204; every session, this one included, is revoked afterwards. */
+  changePassword: (input: ChangePasswordInput) =>
+    api.request<void>('/api/auth/change-password', { method: 'POST', body: input }),
+  /** 202 whether or not the account exists; 503 when the server cannot send email. */
+  forgotPassword: (email: string) =>
+    api.request<void>('/api/auth/forgot-password', { method: 'POST', body: { email: normalizeEmail(email) } }),
+  /** 204; the token is the code from the email. */
+  resetPassword: (input: ResetPasswordInput) =>
+    api.request<void>('/api/auth/reset-password', {
+      method: 'POST',
+      body: { token: input.token.trim(), newPassword: input.newPassword },
+    }),
+  exportData: () => api.request<DataExport>('/api/auth/me/export'),
+  /** 204; personal history is deleted and the account disabled. */
+  deleteAccount: (input: DeleteAccountInput) => api.request<void>('/api/auth/me', { method: 'DELETE', body: input }),
 };

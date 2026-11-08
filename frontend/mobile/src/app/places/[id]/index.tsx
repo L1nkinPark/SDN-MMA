@@ -9,6 +9,7 @@ import { useAddFavorite, useRemoveFavorite } from '@/api/hooks/useFavorites';
 import { usePlace } from '@/api/hooks/usePlace';
 import { useRefetchOnFocus } from '@/api/hooks/useRefetchOnFocus';
 import { useReviews } from '@/api/hooks/useReviews';
+import { verifiedVisitLabel } from '@/api/reviews';
 import type { Place, Review } from '@/api/types';
 import { useSession } from '@/auth/session';
 import {
@@ -27,6 +28,7 @@ import { usePlaceRealtime } from '@/realtime/usePlaceRealtime';
 import { colors, fonts, sizes, spacing, type } from '@/theme';
 import { formatDate, formatRating, formatThousands, formatTime } from '@/utils/format';
 import { isStatusKnown, MIN_SAMPLES } from '@/utils/liveStatus';
+import { vnDateKey, weekdayOf } from '@/utils/vnTime';
 
 /** Same top spacing as the shared Header with a back button: 52px in the design, ~44px of it status bar. */
 const TOP_OFFSET = 52 - 44;
@@ -54,13 +56,25 @@ function statusText(place: Place): string {
   return parts.join(', ');
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value, alert = false }: { label: string; value: string; alert?: boolean }) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <Text style={[styles.infoValue, alert ? styles.infoAlert : null]}>{value}</Text>
     </View>
   );
+}
+
+/** Today's opening hours in Vietnam time, or null when the shop hasn't set any hours. */
+function todayHours(place: Place): { text: string; closed: boolean } | null {
+  const business = place.business;
+  if (business?.temporaryClosed) return { text: 'Tạm đóng cửa', closed: true };
+  const hours = business?.openingHours ?? [];
+  if (hours.length === 0) return null;
+  const today = vnDateKey();
+  if (business?.closedDates?.includes(today)) return { text: 'Nghỉ hôm nay', closed: true };
+  const slot = hours.find((item) => item.day === weekdayOf(today));
+  return slot?.open && slot.close ? { text: `${slot.open}–${slot.close}`, closed: false } : { text: 'Không mở cửa', closed: true };
 }
 
 function ReviewPreview({ review }: { review: Review }) {
@@ -75,6 +89,7 @@ function ReviewPreview({ review }: { review: Review }) {
         <RatingStars value={review.rating ?? 0} />
       </View>
       {review.text ? <Text style={styles.reviewText}>{review.text}</Text> : null}
+      {verifiedVisitLabel(review) ? <Text style={styles.verified}>{verifiedVisitLabel(review)}</Text> : null}
       <Text style={type.meta}>{formatDate(review.createdAt)}</Text>
     </View>
   );
@@ -120,7 +135,7 @@ export default function PlaceDetailScreen() {
     });
   };
 
-  const openSignedIn = (pathname: '/places/[id]/checkin' | '/places/[id]/report') => {
+  const openSignedIn = (pathname: '/places/[id]/checkin' | '/places/[id]/report' | '/places/[id]/booking') => {
     if (id && requireAuth()) router.push({ pathname, params: { id } });
   };
 
@@ -179,6 +194,10 @@ export default function PlaceDetailScreen() {
   const ratingCount = place.ratingCount ?? 0;
   const accuracyNote = place.source?.locationAccuracy ? accuracyNotes[place.source.locationAccuracy] : undefined;
   const firstReview = reviews.items[0];
+  const hoursToday = todayHours(place);
+  // The backend refuses check-ins, reviews and bookings from the place's owner.
+  const isOwner = Boolean(place.owner && user?.id && place.owner === user.id);
+  const bookable = Boolean(place.booking?.enabled && !place.business?.temporaryClosed) && !isOwner;
 
   return (
     <Screen>
@@ -235,6 +254,7 @@ export default function PlaceDetailScreen() {
         </View>
 
         <View style={styles.info}>
+          {hoursToday ? <InfoRow label="Hôm nay" value={hoursToday.text} alert={hoursToday.closed} /> : null}
           <InfoRow label="Wi-Fi" value={amenityText(place.amenities?.wifi)} />
           <InfoRow label="Ổ cắm" value={amenityText(place.amenities?.outlets)} />
           <InfoRow
@@ -262,13 +282,30 @@ export default function PlaceDetailScreen() {
           )}
         </View>
 
+        {bookable ? (
+          <Pressable accessibilityRole="link" onPress={() => openSignedIn('/places/[id]/booking')} style={styles.bookRow}>
+            <View style={styles.bookText}>
+              <Text style={styles.bookTitle}>Đặt chỗ trước</Text>
+              <Text style={type.secondary}>
+                {place.booking?.approvalMode === 'manual' ? 'Quán xác nhận từng lượt đặt.' : 'Xác nhận ngay khi còn chỗ.'}
+              </Text>
+            </View>
+            <Icon name="chevron" size={18} color={colors.ink} />
+          </Pressable>
+        ) : null}
         <Pressable accessibilityRole="link" onPress={() => openSignedIn('/places/[id]/report')} style={styles.report}>
           <Text style={styles.reportText}>Báo cáo địa điểm</Text>
         </Pressable>
       </ScrollView>
 
       <ActionBar>
-        <Button label="Check-in" block onPress={() => openSignedIn('/places/[id]/checkin')} />
+        {isOwner ? (
+          <Text style={type.secondary}>
+            Bạn đang quản lý địa điểm này. Giờ mở cửa, mã QR và đặt chỗ được quản lý trên trang web StudySpot.
+          </Text>
+        ) : (
+          <Button label="Check-in" block onPress={() => openSignedIn('/places/[id]/checkin')} />
+        )}
       </ActionBar>
     </Screen>
   );
@@ -316,6 +353,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontFamily: fonts.regular, fontSize: 14, color: colors.textSecondary },
   infoValue: { fontFamily: fonts.medium, fontSize: 14, color: colors.textSecondary },
+  infoAlert: { color: colors.error },
   description: { marginTop: spacing.md, marginBottom: spacing.sm, fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.text },
   reviews: { paddingTop: spacing.sm, paddingLeft: spacing.contentLeft, paddingRight: spacing.contentRight },
   reviewsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -326,7 +364,23 @@ const styles = StyleSheet.create({
   reviewAuthor: { flexShrink: 1, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20, color: colors.text },
   reviewPoints: { fontFamily: fonts.medium, color: colors.textSecondary },
   reviewText: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.text },
+  verified: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16, color: colors.ink },
   noReview: { paddingVertical: spacing.md },
+  bookRow: {
+    minHeight: sizes.rowMinHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingLeft: spacing.contentLeft,
+    paddingRight: spacing.contentRight,
+    borderTopWidth: sizes.rowRule,
+    borderBottomWidth: sizes.rowRule,
+    borderColor: colors.rule,
+  },
+  bookText: { flex: 1, gap: 2 },
+  bookTitle: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 22, color: colors.ink },
   report: { minHeight: sizes.touchTarget, justifyContent: 'center', paddingLeft: spacing.contentLeft, paddingBottom: spacing.sm },
   reportText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.textSecondary },
 });

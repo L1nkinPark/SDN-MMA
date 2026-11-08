@@ -1,10 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { authApi } from '../api/endpoints';
 import { errorMessage, isApiError } from '../api/errors';
-import { NotAdminError, useSession } from '../auth/sessionContext';
+import { useSession } from '../auth/sessionContext';
 import { Button, FormAlert, TextField } from '../components/ui';
 import { emailError, passwordError } from '../utils/validation';
 
@@ -40,19 +40,22 @@ export function LoginPage() {
     login.mutate();
   }
 
-  const alert = login.isError ? (login.error instanceof NotAdminError ? login.error.message : errorMessage(login.error)) : notice;
+  const alert = login.isError ? errorMessage(login.error) : notice;
 
   return (
     <div className="login">
       <div className="login__brand">StudySpot</div>
-      <h1 className="login__title">Trang quản trị</h1>
-      <p className="state__sentence">Duyệt địa điểm, xử lý báo cáo và kiểm duyệt đánh giá. Chỉ tài khoản quản trị đăng nhập được.</p>
+      <h1 className="login__title">Quản lý StudySpot</h1>
+      <p className="state__sentence">
+        Quản trị viên duyệt và kiểm duyệt nội dung. Chủ quán, hoặc sinh viên muốn đăng ký quán, đăng nhập bằng tài khoản StudySpot để gửi hồ sơ,
+        tạo mã QR tại quầy và quản lý đặt chỗ.
+      </p>
       <form className="login__form" onSubmit={submit} noValidate>
         <TextField
           label="Email"
           type="email"
           autoComplete="username"
-          placeholder="admin@example.com"
+          placeholder="ten@example.com"
           value={email}
           onChange={(event) => {
             setEmail(event.target.value);
@@ -82,6 +85,7 @@ export function LoginPage() {
         <Button type="submit" size="large" busy={login.isPending} busyLabel="Đang đăng nhập">
           Đăng nhập
         </Button>
+        <Link to="/forgot-password">Quên mật khẩu?</Link>
       </form>
     </div>
   );

@@ -1,5 +1,7 @@
 import {
   addressError,
+  confirmPasswordError,
+  resetCodeError,
   descriptionError,
   emailError,
   isValidEmail,
@@ -60,5 +62,13 @@ describe('place proposal validation', () => {
     expect(parsePrice('25k')).toBeUndefined();
     expect(parsePrice('-5')).toBeUndefined();
     expect(priceError('abc')).toBe('Giá cần là số đồng, ví dụ 25.000.');
+  });
+
+  it('checks the reset code and the repeated password', () => {
+    expect(resetCodeError('')).toBe('Nhập mã trong email.');
+    expect(resetCodeError('abc')).toBe('Mã chưa đúng. Hãy sao chép đủ mã trong email.');
+    expect(resetCodeError(` ${'a'.repeat(64)} `)).toBeNull();
+    expect(confirmPasswordError('Password1', 'Password1')).toBeNull();
+    expect(confirmPasswordError('Password1', 'Password2')).toBe('Mật khẩu nhập lại chưa khớp.');
   });
 });

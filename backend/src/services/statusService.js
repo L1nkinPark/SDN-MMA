@@ -11,7 +11,7 @@ function averageLabel(values, labels) {
 
 async function calculateAndStore(placeId, cfg, io) {
   const now = new Date();
-  const checkins = await Checkin.find({ place: placeId, expiresAt: { $gt: now } }).sort({ createdAt: -1 }).lean();
+  const checkins = await Checkin.find({ place: placeId, expiresAt: { $gt: now }, flagged: { $ne: true } }).sort({ createdAt: -1 }).lean();
   const byUser = new Map();
   for (const checkin of checkins) {
     const key = String(checkin.user);

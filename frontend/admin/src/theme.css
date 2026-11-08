@@ -1,4 +1,4 @@
-/* Design tokens from CLAUDE.md "Mobile: visual design", reused for the admin. Use the variables, never raw values. */
+/* Shared StudySpot design tokens. */
 :root {
   --paper: #f6f7f9;
   --ink: #16308f;

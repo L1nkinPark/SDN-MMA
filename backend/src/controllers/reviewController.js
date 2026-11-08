@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Place, Review } from '../models/index.js';
+import { Place, Review, VisitProof } from '../models/index.js';
 import { HttpError, assertId, pageQuery, parse } from '../utils/common.js';
 import { updateRating } from '../services/ratingService.js';
 import { awardReputation } from '../services/reputationService.js';
@@ -14,7 +14,8 @@ export const reviewController = {
     const { page, limit } = parse(pageQuery, req.query);
     const query = { place: placeId, hidden: false };
     const [items, total] = await Promise.all([
-      Review.find(query).populate('user', 'name reputation').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Review.find(query).populate('user', 'name reputation').populate('verifiedVisit', 'method')
+        .sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       Review.countDocuments(query)
     ]);
     res.json({ items, page, limit, total });
@@ -22,10 +23,16 @@ export const reviewController = {
   upsertMine: async (req, res) => {
     const placeId = assertId(req.params.id);
     const body = parse(reviewBody, req.body);
-    if (!(await Place.exists({ _id: placeId, approval: 'approved' }))) throw new HttpError(404, 'Place not found');
+    const place = await Place.findOne({ _id: placeId, approval: 'approved' }).select('owner');
+    if (!place) throw new HttpError(404, 'Place not found');
+    if (String(place.owner) === String(req.user._id)) throw new HttpError(403, 'Owner cannot review own place');
     const previous = await Review.findOne({ user: req.user._id, place: placeId });
     if (previous?.hidden) throw new HttpError(403, 'This review was hidden by moderation');
-    const review = await Review.findOneAndUpdate({ user: req.user._id, place: placeId }, { $set: body, $setOnInsert: { hidden: false } }, { upsert: true, new: true });
+    const proof = await VisitProof.findOne({ user: req.user._id, place: placeId,
+      verifiedAt: { $gte: new Date(Date.now() - 14 * 86400000) } }).sort({ verifiedAt: -1 });
+    const review = await Review.findOneAndUpdate({ user: req.user._id, place: placeId },
+      { $set: { ...body, verifiedVisit: proof?._id || null }, $setOnInsert: { hidden: false } },
+      { upsert: true, new: true });
     if (!previous) await awardReputation(req.user._id, placeId, 'review', 'lifetime', 2);
     await updateRating(placeId);
     res.json({ review });

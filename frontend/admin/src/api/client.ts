@@ -15,12 +15,15 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
+export type AuthLostReason = 'expired' | 'unavailable';
+
 type RefreshResult = 'ok' | 'rejected' | 'network';
 
 export type ApiClient = {
   request<T>(path: string, options?: RequestOptions): Promise<T>;
   /** Called after a refresh fails for auth reasons and tokens were cleared. */
-  setAuthLostHandler(handler: (() => void) | null): void;
+  /** `unavailable`: the account was suspended or deleted; `expired`: the refresh token no longer works. */
+  setAuthLostHandler(handler: ((reason: AuthLostReason) => void) | null): void;
   tokens: TokenStore;
 };
 
@@ -61,7 +64,7 @@ export function createApiClient(options: { baseUrl: string; tokens: TokenStore; 
   const { baseUrl, tokens } = options;
   const fetchImpl = options.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
   let refreshing: Promise<RefreshResult> | null = null;
-  let onAuthLost: (() => void) | null = null;
+  let onAuthLost: ((reason: AuthLostReason) => void) | null = null;
 
   async function send(path: string, request: RequestOptions, accessToken: string | null): Promise<Response> {
     const headers: Record<string, string> = { Accept: 'application/json' };
@@ -93,14 +96,15 @@ export function createApiClient(options: { baseUrl: string; tokens: TokenStore; 
     }
     if (!response.ok) {
       if (response.status === 429 || response.status >= 500) return 'network';
+      const unavailable = (await toError(response)).is(403, 'Account unavailable');
       tokens.clear();
-      onAuthLost?.();
+      onAuthLost?.(unavailable ? 'unavailable' : 'expired');
       return 'rejected';
     }
     const body = (await readBody(response)) as AuthTokens | undefined;
     if (!body?.accessToken || !body.refreshToken) {
       tokens.clear();
-      onAuthLost?.();
+      onAuthLost?.('expired');
       return 'rejected';
     }
     tokens.setTokens({ accessToken: body.accessToken, refreshToken: body.refreshToken });
@@ -140,7 +144,15 @@ export function createApiClient(options: { baseUrl: string; tokens: TokenStore; 
       response = await send(path, req, tokens.getAccessToken());
     }
 
-    if (!response.ok) throw await toError(response);
+    if (!response.ok) {
+      const error = await toError(response);
+      // A suspended or deleted account gets 403 on every call: the session is over.
+      if (canRefresh && error.is(403, 'Account unavailable')) {
+        tokens.clear();
+        onAuthLost?.('unavailable');
+      }
+      throw error;
+    }
     return (await readBody(response)) as T;
   }
 

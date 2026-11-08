@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { api } from '../api/client';
 import { authApi } from '../api/endpoints';
-import { isApiError, NOT_ADMIN_MESSAGE } from '../api/errors';
+import { ACCOUNT_UNAVAILABLE_MESSAGE, isApiError, SESSION_EXPIRED_MESSAGE } from '../api/errors';
 import { queryKeys } from '../api/queryKeys';
 import type { AuthTokens, User } from '../api/types';
-import { NotAdminError, SessionContext, type Session, type SessionStatus } from './sessionContext';
+import { SessionContext, type Session, type SessionStatus } from './sessionContext';
 
 async function revoke(refreshToken: string | null | undefined) {
   if (!refreshToken) return;
@@ -17,6 +17,10 @@ async function revoke(refreshToken: string | null | undefined) {
   }
 }
 
+/**
+ * Web session for admins, merchants and students. Students sign in here to apply as a merchant;
+ * once an admin approves them their role becomes `merchant`, which the focus refresh below picks up.
+ */
 export function SessionProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<SessionStatus>(() => (api.tokens.getRefreshToken() ? 'loading' : 'signed-out'));
@@ -35,7 +39,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    api.setAuthLostHandler(() => endSession('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.'));
+    api.setAuthLostHandler((reason) =>
+      endSession(reason === 'unavailable' ? ACCOUNT_UNAVAILABLE_MESSAGE : SESSION_EXPIRED_MESSAGE),
+    );
     return () => api.setAuthLostHandler(null);
   }, [endSession]);
 
@@ -47,9 +53,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       .me()
       .then(({ user: me }) => {
         if (!active) return;
-        if (me?.role !== 'admin') {
-          void revoke(api.tokens.getRefreshToken());
-          endSession(NOT_ADMIN_MESSAGE);
+        if (!me) {
+          endSession(null);
           return;
         }
         queryClient.setQueryData(queryKeys.me, { user: me });
@@ -64,20 +69,34 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           setStatus('signed-out');
           return;
         }
-        endSession(isApiError(error) && error.status === 401 ? 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.' : null);
+        // The client already ended the session with its own notice.
+        if (isApiError(error) && error.is(403, 'Account unavailable')) return;
+        endSession(isApiError(error) && error.status === 401 ? SESSION_EXPIRED_MESSAGE : null);
       });
     return () => {
       active = false;
     };
   }, [status, endSession, queryClient]);
 
+  // Role and permissions can change on the server (claim approved, permissions edited): reload on focus.
+  useEffect(() => {
+    if (status !== 'signed-in') return;
+    const reload = () => {
+      if (document.visibilityState !== 'visible') return;
+      authApi
+        .me()
+        .then(({ user: me }) => {
+          if (me) setUser(me);
+        })
+        .catch(() => undefined);
+    };
+    document.addEventListener('visibilitychange', reload);
+    return () => document.removeEventListener('visibilitychange', reload);
+  }, [status]);
+
   const signIn = useCallback(
     async (result: AuthTokens) => {
-      if (!result.accessToken || !result.refreshToken) throw new Error('Missing tokens');
-      if (result.user?.role !== 'admin') {
-        await revoke(result.refreshToken);
-        throw new NotAdminError();
-      }
+      if (!result.accessToken || !result.refreshToken || !result.user) throw new Error('Missing tokens');
       api.tokens.setTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken });
       queryClient.setQueryData(queryKeys.me, { user: result.user });
       setUser(result.user);
@@ -87,10 +106,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [queryClient],
   );
 
-  const signOut = useCallback(async () => {
-    await revoke(api.tokens.getRefreshToken());
-    endSession(null);
-  }, [endSession]);
+  const signOut = useCallback(
+    async (message?: string) => {
+      await revoke(api.tokens.getRefreshToken());
+      endSession(message ?? null);
+    },
+    [endSession],
+  );
 
   const value = useMemo<Session>(() => ({ status, user, notice, signIn, signOut }), [status, user, notice, signIn, signOut]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

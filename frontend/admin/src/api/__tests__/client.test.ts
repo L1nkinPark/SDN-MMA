@@ -86,7 +86,29 @@ describe('admin api client', () => {
     );
     await expect(client.request('/api/admin/places')).rejects.toMatchObject({ status: 401 });
     expect(store.getRefreshToken()).toBeNull();
-    expect(onAuthLost).toHaveBeenCalledOnce();
+    expect(onAuthLost).toHaveBeenCalledWith('expired');
+  });
+
+  it('ends the session with its own reason when the account is suspended', async () => {
+    const { client, store, onAuthLost } = setup(() => json(403, { error: 'Account unavailable' }));
+    await expect(client.request('/api/merchant/places')).rejects.toMatchObject({ status: 403 });
+    expect(store.getRefreshToken()).toBeNull();
+    expect(onAuthLost).toHaveBeenCalledWith('unavailable');
+  });
+
+  it('reports a suspension found during refresh', async () => {
+    const { client, onAuthLost } = setup((url) =>
+      url.endsWith('/refresh') ? json(403, { error: 'Account unavailable' }) : json(401, { error: 'Access token revoked' }),
+    );
+    await expect(client.request('/api/admin/places')).rejects.toMatchObject({ status: 401 });
+    expect(onAuthLost).toHaveBeenCalledWith('unavailable');
+  });
+
+  it('keeps the session for other 403 answers', async () => {
+    const { client, store, onAuthLost } = setup(() => json(403, { error: 'Admin permission required: users' }));
+    await expect(client.request('/api/admin/users')).rejects.toMatchObject({ status: 403 });
+    expect(store.getRefreshToken()).toBe('old-refresh');
+    expect(onAuthLost).not.toHaveBeenCalled();
   });
 
   it('keeps tokens on a network failure', async () => {

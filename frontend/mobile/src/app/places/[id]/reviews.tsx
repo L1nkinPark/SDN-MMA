@@ -4,6 +4,7 @@ import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { errorMessage } from '@/api/errors';
 import { usePlace } from '@/api/hooks/usePlace';
 import { useReviews } from '@/api/hooks/useReviews';
+import { verifiedVisitLabel } from '@/api/reviews';
 import type { Review } from '@/api/types';
 import { useSession } from '@/auth/session';
 import { ActionBar, Button, FormAlert, Header, LoadingList, MessageState, RatingStars, Screen } from '@/components';
@@ -22,6 +23,7 @@ function ReviewItem({ review }: { review: Review }) {
         <RatingStars value={review.rating ?? 0} />
       </View>
       {review.text ? <Text style={styles.text}>{review.text}</Text> : null}
+      {verifiedVisitLabel(review) ? <Text style={styles.verified}>{verifiedVisitLabel(review)}</Text> : null}
       <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
     </View>
   );
@@ -29,11 +31,14 @@ function ReviewItem({ review }: { review: Review }) {
 
 export default function ReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { requireAuth } = useSession();
+  const { requireAuth, user } = useSession();
   const place = usePlace(id);
   const reviews = useReviews(id);
 
   const placeName = place.data?.place?.name;
+  const owner = place.data?.place?.owner;
+  // The backend refuses reviews from the place's owner.
+  const isOwner = Boolean(owner && user?.id && owner === user.id);
 
   function writeReview() {
     if (!id || !requireAuth()) return;
@@ -69,7 +74,7 @@ export default function ReviewsScreen() {
       <MessageState
         heading="Chưa có đánh giá nào"
         sentence="Bạn có thể là người đầu tiên đánh giá địa điểm này."
-        action={{ label: 'Viết đánh giá', variant: 'primary', onPress: writeReview }}
+        action={isOwner ? undefined : { label: 'Viết đánh giá', variant: 'primary', onPress: writeReview }}
       />
     );
   } else {
@@ -108,7 +113,11 @@ export default function ReviewsScreen() {
           }
         />
         <ActionBar>
-          <Button label="Viết đánh giá" onPress={writeReview} block size="large" />
+          {isOwner ? (
+            <Text style={styles.ownerNote}>Bạn đang quản lý địa điểm này nên không viết đánh giá cho quán.</Text>
+          ) : (
+            <Button label="Viết đánh giá" onPress={writeReview} block size="large" />
+          )}
         </ActionBar>
       </>
     );
@@ -148,5 +157,7 @@ const styles = StyleSheet.create({
   authorPoints: { fontFamily: fonts.medium, color: colors.textSecondary },
   text: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.text },
   date: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16, color: colors.textSecondary },
+  verified: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16, color: colors.ink },
+  ownerNote: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.textSecondary },
   footerError: { gap: spacing.sm, paddingVertical: spacing.lg, paddingLeft: spacing.contentLeft, paddingRight: spacing.contentRight },
 });

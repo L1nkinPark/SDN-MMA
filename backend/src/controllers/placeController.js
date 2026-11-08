@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { Place } from '../models/index.js';
 import { HttpError, assertId, coordinates, escapeRegex, pageQuery, parse } from '../utils/common.js';
+import { notifyAdmins } from '../services/notificationService.js';
 
-const placeBody = z.object({
+export const placeBody = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(2000).default(''),
   address: z.string().trim().min(5).max(300),
@@ -42,7 +43,11 @@ export const placeController = {
   },
   create: async (req, res) => {
     const body = parse(placeBody, req.body);
+    await assertNoDuplicatePlace(body);
     const place = await Place.create({ ...body, location: { type: 'Point', coordinates: body.coordinates }, submittedBy: req.user._id, approval: req.user.role === 'admin' ? 'approved' : 'pending' });
+    if (place.approval === 'pending') await notifyAdmins(req.app.locals.cfg, { kind: 'place_submitted',
+      title: 'Địa điểm mới chờ duyệt', body: `${req.user.name} đề xuất ${place.name}.`,
+      resourceType: 'Place', resourceId: place._id }).catch(console.error);
     res.status(201).json({ place });
   },
   get: async (req, res) => {
@@ -51,3 +56,13 @@ export const placeController = {
     res.json({ place });
   }
 };
+
+export async function assertNoDuplicatePlace(body, excludeId = null) {
+  const duplicate = await Place.findOne({
+    ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+    name: new RegExp(`^${escapeRegex(body.name)}$`, 'i'),
+    approval: { $ne: 'rejected' },
+    location: { $near: { $geometry: { type: 'Point', coordinates: body.coordinates }, $maxDistance: 100 } }
+  }).select('_id name address');
+  if (duplicate) throw new HttpError(409, `Possible duplicate place: ${duplicate._id}`);
+}

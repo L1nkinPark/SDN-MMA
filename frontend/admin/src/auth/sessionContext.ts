@@ -1,6 +1,5 @@
 import { createContext, useContext } from 'react';
 
-import { NOT_ADMIN_MESSAGE } from '../api/errors';
 import type { AuthTokens, User } from '../api/types';
 
 export type SessionStatus = 'loading' | 'signed-out' | 'signed-in';
@@ -8,21 +7,15 @@ export type SessionStatus = 'loading' | 'signed-out' | 'signed-in';
 export type Session = {
   status: SessionStatus;
   user: User | null;
-  /** Why the session ended on its own (expired, not an admin), shown on the login page. */
+  /** Why the session ended (expired, suspended, password changed), shown on the login page. */
   notice: string | null;
-  /** Keeps tokens only for admin accounts. Throws NotAdminError otherwise. */
+  /** Keeps the tokens of any active account; the role decides which area the user sees. */
   signIn(result: AuthTokens): Promise<void>;
-  signOut(): Promise<void>;
+  /** Revokes the refresh token, then shows `notice` on the login page if given. */
+  signOut(notice?: string): Promise<void>;
 };
 
 export const SessionContext = createContext<Session | null>(null);
-
-export class NotAdminError extends Error {
-  constructor() {
-    super(NOT_ADMIN_MESSAGE);
-    this.name = 'NotAdminError';
-  }
-}
 
 export function useSession(): Session {
   const session = useContext(SessionContext);

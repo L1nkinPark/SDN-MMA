@@ -14,6 +14,11 @@ const STATS: Stat[] = [
   { key: 'approvedPlaces', label: 'Địa điểm đã duyệt', link: { to: '/places?approval=approved', label: 'Xem địa điểm' } },
   { key: 'users', label: 'Tài khoản' },
   { key: 'activeCheckins', label: 'Check-in còn hiệu lực' },
+  { key: 'pendingClaims', label: 'Chủ quán chờ duyệt', link: { to: '/claims', label: 'Xem hồ sơ' }, alert: true },
+  { key: 'upcomingBookings', label: 'Booking sắp tới', link: { to: '/bookings', label: 'Xem booking' } },
+  { key: 'pendingFraudFlags', label: 'Cờ gian lận', link: { to: '/fraud', label: 'Rà soát' }, alert: true },
+  { key: 'pendingEmails', label: 'Email đang chờ gửi' },
+  { key: 'failedEmails', label: 'Email gửi thất bại', alert: true },
 ];
 
 export function OverviewPage() {

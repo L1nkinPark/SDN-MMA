@@ -1,8 +1,22 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { adminApi } from './endpoints';
+import { adminApi, authApi, merchantApi, notificationsApi, publicApi, type UserFilter } from './endpoints';
 import { queryKeys } from './queryKeys';
-import type { Approval, PlaceInput, PlaceUpdate, ReportStatus } from './types';
+import type {
+  AdminPermission,
+  Approval,
+  BookingAction,
+  BookingStatus,
+  ClaimStatus,
+  FraudStatus,
+  MerchantClaimInput,
+  MerchantPlaceInput,
+  MerchantPlaceUpdate,
+  PlaceChangeFields,
+  PlaceInput,
+  PlaceUpdate,
+  ReportStatus,
+} from './types';
 
 export function useAnalytics() {
   return useQuery({ queryKey: queryKeys.analytics, queryFn: adminApi.analytics });
@@ -66,7 +80,7 @@ export function useCreatePlace() {
 export function useUpdateReport() {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'resolved' | 'dismissed' }) => adminApi.updateReport(id, status),
+    mutationFn: ({ id, status, reason }: { id: string; status: 'resolved' | 'dismissed'; reason?: string }) => adminApi.updateReport(id, status, reason),
     onSuccess: () => invalidate(queryKeys.reports),
   });
 }
@@ -74,7 +88,264 @@ export function useUpdateReport() {
 export function useUpdateReview() {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: ({ id, hidden }: { id: string; hidden: boolean }) => adminApi.updateReview(id, hidden),
+    mutationFn: ({ id, hidden, reason }: { id: string; hidden: boolean; reason?: string }) => adminApi.updateReview(id, hidden, reason),
     onSuccess: () => invalidate(queryKeys.reviews),
+  });
+}
+
+/* ---------- Notifications and account (every signed-in role) ---------- */
+
+export function useNotificationsPage(unread: boolean, page: number) {
+  return useQuery({
+    queryKey: queryKeys.notificationsPage(unread, page),
+    queryFn: () => notificationsApi.list(page, unread),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Unread count for the top bar; refetched when the window regains focus. */
+export function useUnreadNotificationCount(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.unreadNotifications,
+    queryFn: notificationsApi.unreadCount,
+    select: (page) => page.unreadCount ?? 0,
+    enabled,
+    refetchInterval: 60000,
+  });
+}
+
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationsApi.markRead(id),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => notificationsApi.markAllRead(),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      authApi.changePassword(currentPassword, newPassword),
+  });
+}
+
+/* ---------- Merchant area ---------- */
+
+/** Public search used to find an approved place to claim. */
+export function usePlaceSearch(q: string) {
+  const term = q.trim();
+  return useQuery({
+    queryKey: queryKeys.placeSearch(term),
+    queryFn: () => publicApi.searchPlaces(term),
+    enabled: term.length >= 2,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useMerchantPlaces() {
+  return useQuery({ queryKey: queryKeys.merchantPlaces, queryFn: merchantApi.listPlaces });
+}
+
+export function useCreateMerchantPlace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: MerchantPlaceInput) => merchantApi.createPlace(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.merchantPlaces }),
+  });
+}
+
+export function useMerchantClaims(page: number) {
+  return useQuery({
+    queryKey: queryKeys.merchantClaimsPage(page),
+    queryFn: () => merchantApi.listClaims(page),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useSubmitClaim() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: MerchantClaimInput) => merchantApi.submitClaim(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.merchantClaims }),
+  });
+}
+
+export function useUpdateMerchantPlace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: string; changes: MerchantPlaceUpdate }) => merchantApi.updatePlace(id, changes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.merchantPlaces }),
+  });
+}
+
+export function useVisitCode() {
+  return useMutation({ mutationFn: (placeId: string) => merchantApi.visitCode(placeId) });
+}
+
+export function useMerchantBookings(placeId: string, status: BookingStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.merchantBookingsPage(placeId, status, page),
+    queryFn: () => merchantApi.listBookings(placeId, page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+    refetchInterval: 60000,
+  });
+}
+
+export function useBookingDecision(placeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action, reason }: { id: string; action: BookingAction; reason?: string }) =>
+      merchantApi.decideBooking(id, action, reason),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.merchantBookings(placeId) }),
+  });
+}
+
+export function useMerchantChanges(page: number) {
+  return useQuery({
+    queryKey: queryKeys.merchantChangesPage(page),
+    queryFn: () => merchantApi.listChanges(page),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useSubmitChange() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: string; changes: PlaceChangeFields }) => merchantApi.submitChange(id, changes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.merchantChanges }),
+  });
+}
+
+export function useSubmitImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => merchantApi.submitImage(id, file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.merchantChanges }),
+  });
+}
+
+/* ---------- Admin operations ---------- */
+
+export function useAdminUsers(filter: UserFilter, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.usersPage(filter),
+    queryFn: () => adminApi.listUsers(filter),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+export function useUpdateUserStatus() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: 'active' | 'suspended'; reason?: string }) =>
+      adminApi.updateUserStatus(id, status, reason),
+    onSuccess: () => invalidate(queryKeys.users),
+  });
+}
+
+/** Grant, edit or revoke admin rights (super admin only). */
+export function useAdminRights() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (input: { kind: 'promote' | 'permissions'; id: string; permissions: AdminPermission[] } | { kind: 'demote'; id: string }) =>
+      input.kind === 'promote'
+        ? adminApi.promoteAdmin(input.id, input.permissions)
+        : input.kind === 'permissions'
+          ? adminApi.updateAdminPermissions(input.id, input.permissions)
+          : adminApi.demoteAdmin(input.id),
+    onSuccess: () => invalidate(queryKeys.users),
+  });
+}
+
+export function useAdminClaims(status: ClaimStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.claimsPage(status, page),
+    queryFn: () => adminApi.listClaims(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useDecideClaim() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, note }: { id: string; status: 'approved' | 'rejected'; note: string }) =>
+      adminApi.decideClaim(id, status, note),
+    onSuccess: () => invalidate(queryKeys.claims, queryKeys.places),
+  });
+}
+
+export function useAdminPlaceChanges(status: ClaimStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.placeChangesPage(status, page),
+    queryFn: () => adminApi.listPlaceChanges(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useDecidePlaceChange() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, note }: { id: string; status: 'approved' | 'rejected'; note: string }) =>
+      adminApi.decidePlaceChange(id, status, note),
+    onSuccess: () => invalidate(queryKeys.placeChanges, queryKeys.places),
+  });
+}
+
+export function useAdminBookings(status: BookingStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.bookingsPage(status, page),
+    queryFn: () => adminApi.listBookings(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAdminCancelBooking() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => adminApi.cancelBooking(id, reason),
+    onSuccess: () => invalidate(queryKeys.bookings),
+  });
+}
+
+export function useFraudFlags(status: FraudStatus | 'all', page: number) {
+  return useQuery({
+    queryKey: queryKeys.fraudPage(status, page),
+    queryFn: () => adminApi.listFraudFlags(page, status === 'all' ? undefined : status),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useDecideFraudFlag() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: 'resolved' | 'dismissed'; reason?: string }) =>
+      adminApi.decideFraudFlag(id, status, reason),
+    onSuccess: () => invalidate(queryKeys.fraud),
+  });
+}
+
+export function useAudit(page: number) {
+  return useQuery({
+    queryKey: queryKeys.auditPage(page),
+    queryFn: () => adminApi.listAudit(page),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useTransferOwner() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, ownerId, reason }: { id: string; ownerId: string | null; reason: string }) =>
+      adminApi.transferOwner(id, ownerId, reason),
+    onSuccess: () => invalidate(queryKeys.places, queryKeys.users),
   });
 }
