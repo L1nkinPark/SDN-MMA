@@ -122,6 +122,7 @@ export function merchantController(cfg) {
           body: `${req.user.name} thêm ảnh cho ${place.name}.`, resourceType: 'Place', resourceId: place._id }).catch(console.error);
         return res.status(201).json({ place: updated, imageUrl });
       }
+      if (!['merchant', 'admin'].includes(req.user.role)) throw new HttpError(403, 'Merchant access required');
       if (await PlaceChangeRequest.exists({ place: placeId, status: 'pending' })) throw new HttpError(409, 'Pending change already exists');
       const imageUrl = await uploadPlaceImage(req.file);
       const change = await PlaceChangeRequest.create({ place: placeId, merchant: req.user._id,

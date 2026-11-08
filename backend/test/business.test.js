@@ -85,6 +85,12 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   }).expect(201);
   const placeId = created.body.place._id;
   assert.equal(created.body.place.approval, 'pending');
+  assert.equal((await User.findById(owner.user.id)).role, 'student');
+  await request(app).patch(`/api/merchant/places/${placeId}`).set(ownerAuth)
+    .send({ bookingEnabled: true }).expect(403);
+  await request(app).post(`/api/merchant/places/${placeId}/change-requests`).set(ownerAuth)
+    .send({ name: 'Unapproved change' }).expect(403);
+  await request(app).post(`/api/merchant/places/${placeId}/images`).set(ownerAuth).expect(400);
   await request(app).get(`/api/places/${placeId}`).expect(404);
   await request(app).post('/api/merchant/places').set(ownerAuth).send({
     name: 'New Study Cafe', address: '22 Campus Road', coordinates: [105.82, 21.02],
