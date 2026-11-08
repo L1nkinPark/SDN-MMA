@@ -73,7 +73,7 @@ function ReviewForm({ placeId, placeName, existing, onHidden }: FormProps) {
   }
 
   const failure = save.error ?? remove.error;
-  const formError = failure && !(isApiError(failure) && failure.status === 403 && save.error) ? errorMessage(failure) : null;
+  const formError = failure && !(isApiError(failure) && failure.is(403, 'This review was hidden by moderation')) ? errorMessage(failure) : null;
 
   return (
     <>
@@ -109,7 +109,7 @@ function ReviewForm({ placeId, placeName, existing, onHidden }: FormProps) {
             error={errors.text}
             editable={!busy}
           />
-          {!errors.text ? <Text style={styles.hint}>Từ 3 đến 1.000 ký tự. Chỉ đánh giá có lượt ghé được xác minh mới tính vào điểm trung bình.</Text> : null}
+          {!errors.text ? <Text style={styles.hint}>Từ 3 đến 1.000 ký tự. Cần quét mã QR tại quầy hoặc được quán xác nhận đã đến trong 14 ngày gần đây để đánh giá.</Text> : null}
         </View>
       </FormScroll>
       <ActionBar>

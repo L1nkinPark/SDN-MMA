@@ -27,6 +27,7 @@ const exactMessages: Record<number, Record<string, string>> = {
   403: {
     'Check-in requires location within 250 meters': 'Chỉ check-in được khi ở trong bán kính 250 m.',
     'This review was hidden by moderation': 'Đánh giá của bạn đã bị ẩn bởi quản trị viên.',
+    'Verified visit required to review': 'Bạn cần quét mã QR tại quầy hoặc được quán xác nhận đã đến trong 14 ngày gần đây trước khi đánh giá.',
     'Account unavailable': ACCOUNT_UNAVAILABLE_MESSAGE,
     'Invalid or expired visit code': 'Mã QR đã hết hạn hoặc không hợp lệ. Nhờ quán tạo mã mới rồi quét lại.',
     'Visit code does not belong to this place': 'Mã QR này không phải của địa điểm bạn đang check-in.',

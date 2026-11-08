@@ -110,8 +110,9 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   assert.equal(second.body.liveStatus.noise, 'moderate');
   assert.ok(events.some(e => e.room === `place:${placeId}` && e.payload.liveStatus.sampleCount === 2));
 
-  await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(200);
+  await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(403);
   assert.equal((await Place.findById(placeId)).ratingCount, 0);
+  assert.equal((await request(app).get(`/api/places/${placeId}/reviews`).expect(200)).body.total, 0);
   await VisitProof.create({ user: alice.user.id, place: placeId, method: 'qr' });
   await VisitProof.create({ user: bob.user.id, place: placeId, method: 'qr' });
   await request(app).put(`/api/places/${placeId}/reviews/me`).set(aliceAuth).send({ rating: 5, text: 'Good place to study' }).expect(200);

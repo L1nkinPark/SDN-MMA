@@ -200,6 +200,70 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   await request(app).get('/api/admin/audit').set(adminAuth).expect(200);
 });
 
+test('one merchant manages multiple places and reviews require proof for each place', async () => {
+  const owner = await register('Multi Shop Owner', 'multi-shop-owner@example.com');
+  const visitor = await register('Multi Shop Visitor', 'multi-shop-visitor@example.com');
+  const adminLogin = await request(app).post('/api/auth/login')
+    .send({ email: 'root@example.com', password: 'AdminPassword123!' }).expect(200);
+  const ownerAuth = auth(owner.accessToken);
+  const visitorAuth = auth(visitor.accessToken);
+  const adminAuth = auth(adminLogin.body.accessToken);
+  const placeIds = [];
+  for (const [name, coordinates] of [
+    ['East Study Cafe', [105.83, 21.03]],
+    ['West Study Cafe', [105.84, 21.04]]
+  ]) {
+    const created = await request(app).post('/api/merchant/places').set(ownerAuth).send({
+      name, address: `${name}, Campus Road`, coordinates,
+      contactPhone: '0901234567', evidenceUrls: ['https://example.com/storefront.jpg']
+    }).expect(201);
+    const placeId = created.body.place._id;
+    await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
+      .send({ approval: 'approved', decisionNote: 'Ownership evidence checked' }).expect(200);
+    placeIds.push(placeId);
+  }
+  const [eastId, westId] = placeIds;
+  const owned = await request(app).get('/api/merchant/places').set(ownerAuth).expect(200);
+  assert.deepEqual(owned.body.items.filter(item => placeIds.includes(item._id))
+    .map(item => item.owner).sort(), [owner.user.id, owner.user.id]);
+
+  const eastReview = { rating: 5, text: 'Quiet corner with outlets' };
+  const westReview = { rating: 2, text: 'Too noisy for studying' };
+  await request(app).put(`/api/places/${eastId}/reviews/me`).set(ownerAuth)
+    .send(eastReview).expect(403);
+  await request(app).put(`/api/places/${eastId}/reviews/me`).set(visitorAuth)
+    .send(eastReview).expect(403);
+  await VisitProof.create({ user: visitor.user.id, place: eastId, method: 'qr' });
+  await request(app).put(`/api/places/${westId}/reviews/me`).set(visitorAuth)
+    .send(westReview).expect(403);
+  await request(app).put(`/api/places/${eastId}/reviews/me`).set(visitorAuth)
+    .send(eastReview).expect(200);
+  await VisitProof.create({ user: visitor.user.id, place: westId, method: 'staff_booking' });
+  await request(app).put(`/api/places/${westId}/reviews/me`).set(visitorAuth)
+    .send(westReview).expect(200);
+
+  const [east, west, eastPublic, westPublic] = await Promise.all([
+    Place.findById(eastId), Place.findById(westId),
+    request(app).get(`/api/places/${eastId}/reviews`).expect(200),
+    request(app).get(`/api/places/${westId}/reviews`).expect(200)
+  ]);
+  assert.equal(east.ratingAverage, 5);
+  assert.equal(west.ratingAverage, 2);
+  assert.equal(east.ratingCount, 1);
+  assert.equal(west.ratingCount, 1);
+  assert.equal(eastPublic.body.total, 1);
+  assert.equal(westPublic.body.total, 1);
+  assert.equal(eastPublic.body.items[0].text, eastReview.text);
+  assert.equal(westPublic.body.items[0].text, westReview.text);
+
+  const legacyUser = await register('Unverified Visitor', 'unverified-visitor@example.com');
+  await Review.create({ user: legacyUser.user.id, place: eastId, rating: 1,
+    text: 'Unverified legacy feedback' });
+  const afterLegacy = await request(app).get(`/api/places/${eastId}/reviews`).expect(200);
+  assert.equal(afterLegacy.body.total, 1);
+  assert.equal((await Place.findById(eastId)).ratingCount, 1);
+});
+
 test('booking deadline worker releases pending seats and records no-show', async () => {
   const place = await Place.findOne({ name: 'New Study Cafe Plus' });
   const user = await register('Deadline Guest', 'deadline@example.com');

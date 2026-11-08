@@ -533,7 +533,7 @@ paths:
   /api/places/{id}/reviews:
     get:
       tags: [Reviews]
-      summary: Danh sách đánh giá đang hiển thị
+      summary: Danh sách đánh giá có lượt ghé đã xác minh và đang hiển thị
       operationId: listReviews
       parameters:
         - { $ref: '#/components/parameters/PlaceId' }
@@ -565,7 +565,7 @@ paths:
                   review: { $ref: '#/components/schemas/Review', nullable: true }
     put:
       tags: [Reviews]
-      summary: Tạo hoặc cập nhật đánh giá của mình
+      summary: Tạo hoặc cập nhật đánh giá sau khi xác minh lượt ghé quán trong 14 ngày gần đây
       operationId: upsertMyReview
       security: [{ bearerAuth: [] }]
       parameters:
@@ -589,7 +589,7 @@ paths:
                 type: object
                 properties:
                   review: { $ref: '#/components/schemas/Review' }
-        '403': { description: Đánh giá đã bị admin ẩn }
+        '403': { description: 'Chưa có lượt ghé được xác minh, là chủ quán hoặc đánh giá đã bị admin ẩn' }
         '404': { description: Không tìm thấy địa điểm }
     delete:
       tags: [Reviews]
