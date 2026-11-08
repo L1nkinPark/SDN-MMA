@@ -88,3 +88,8 @@ Frontend không sửa backend. Các điểm sau đã gặp khi làm frontend:
    Ngoài ra thiếu field `reason` khi khóa user.
 4. Summary của `GET /api/merchant/places` ghi "do tôi gửi hoặc quản lý", nhưng code chỉ trả về quán mình sở hữu (`owner`). Đề xuất địa điểm của sinh viên qua `POST /api/places` vì vậy không hiện ở đây.
 5. `FraudFlag.detail` được lưu bằng tiếng Anh ("12 km in 3 minutes"). Web đang tự chuyển sang tiếng Việt theo mẫu câu này.
+6. `openapi.yaml` ghi thu hồi quyền admin là `DELETE /api/admin/admins/{id}/permissions`, nhưng route thật trong `adminRoutes.js` là `DELETE /api/admin/admins/{id}`. Web gọi theo route thật.
+
+## Git
+
+`develop` là nhánh chính. Mỗi việc làm trên một nhánh `feature/<tên>` tạo từ `develop` mới nhất, xong thì merge hoặc mở PR vào `develop`. Trước khi merge: lint, typecheck và test của app đã sửa phải qua.
