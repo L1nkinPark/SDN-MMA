@@ -78,3 +78,15 @@ export function parsePrice(text: string): number | null | undefined {
 export function priceError(text: string): string | null {
   return parsePrice(text) === undefined ? 'Giá cần là số đồng, ví dụ 25.000.' : null;
 }
+
+/** The code in the reset email is 64 hex characters; the backend accepts 32 to 256. */
+export function resetCodeError(code: string): string | null {
+  const length = trimmedLength(code);
+  if (length === 0) return 'Nhập mã trong email.';
+  if (length < 32 || length > 256) return 'Mã chưa đúng. Hãy sao chép đủ mã trong email.';
+  return null;
+}
+
+export function confirmPasswordError(password: string, confirmation: string): string | null {
+  return password === confirmation ? null : 'Mật khẩu nhập lại chưa khớp.';
+}
