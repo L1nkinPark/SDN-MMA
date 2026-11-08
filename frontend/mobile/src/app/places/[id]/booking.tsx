@@ -1,74 +1,367 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { api } from '@/api/client';
-import { errorMessage } from '@/api/errors';
-import { usePlace } from '@/api/hooks/usePlace';
-import { Button, ChoiceChip, FormAlert, Header, LoadingList, Screen, TextField } from '@/components';
-import { colors, fonts, spacing, type } from '@/theme';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-type Slot = { startsAt: string; reserved: number; capacity: number };
-type Availability = { enabled: boolean; closedOnDate?: boolean; capacityPerSlot: number | null; slotMinutes: number;
-  openingHours: { day: number; open: string; close: string }[]; slots: Slot[] };
-function todayVietnam() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); }
-function times(open: string, close: string, duration: number): string[] {
-  const [h, m] = open.split(':').map(Number);
-  const [ch, cm] = close.split(':').map(Number);
-  const result: string[] = [];
-  for (let minute = Math.ceil((h * 60 + m) / duration) * duration; minute + duration <= ch * 60 + cm; minute += duration) {
-    result.push(`${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`);
-  }
-  return result;
+import { MAX_PARTY_SIZE, MAX_UPCOMING_BOOKINGS, NOTE_MAX_LENGTH } from '@/api/bookings';
+import { errorMessage } from '@/api/errors';
+import { useAvailability, useCreateBooking } from '@/api/hooks/useBookings';
+import { usePlace } from '@/api/hooks/usePlace';
+import type { Availability, CreateBookingResponse, Place } from '@/api/types';
+import { useSession } from '@/auth/session';
+import {
+  ActionBar,
+  Button,
+  ChoiceChip,
+  FormAlert,
+  Header,
+  LoadingList,
+  MessageState,
+  Screen,
+  TextArea,
+} from '@/components';
+import { colors, fonts, sizes, spacing, type } from '@/theme';
+import {
+  isBookableStart,
+  longDateLabel,
+  nextDateKeys,
+  shortDateLabel,
+  slotStartTimes,
+  vnDateTime,
+  vnInstant,
+  weekdayOf,
+} from '@/utils/vnTime';
+
+/** Today plus the 14 days the backend allows. */
+const DAYS_SHOWN = 15;
+
+type Slot = { clock: string; remaining: number; available: boolean };
+
+/** Every start time of the day with the seats left, from opening hours and the slots already booked. */
+function daySlots(availability: Availability, date: string, partySize: number, now: number): Slot[] {
+  const hours = availability.openingHours.find((item) => item.day === weekdayOf(date));
+  if (!hours?.open || !hours.close) return [];
+  const capacity = availability.capacityPerSlot ?? 0;
+  return slotStartTimes(hours.open, hours.close, availability.slotMinutes).map((clock) => {
+    const start = vnInstant(date, clock);
+    const booked = availability.slots.find((slot) => Date.parse(slot.startsAt) === start.getTime());
+    const remaining = Math.max(0, (booked?.capacity ?? capacity) - (booked?.reserved ?? 0));
+    return { clock, remaining, available: isBookableStart(start, now) && remaining >= partySize };
+  });
 }
+
+/** Days the shop is closed for sure, from the place itself, so the chips can say so before loading. */
+function closedDay(place: Place, date: string): boolean {
+  const business = place.business;
+  if (business?.closedDates?.includes(date)) return true;
+  const hours = business?.openingHours ?? [];
+  return hours.length > 0 && !hours.some((item) => item.day === weekdayOf(date));
+}
+
+function PartySize({ value, max, onChange }: { value: number; max: number; onChange: (value: number) => void }) {
+  return (
+    <View style={styles.stepper}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Bớt một người"
+        accessibilityState={{ disabled: value <= 1 }}
+        disabled={value <= 1}
+        onPress={() => onChange(value - 1)}
+        style={[styles.stepButton, value <= 1 ? styles.stepDisabled : null]}>
+        <Text style={styles.stepText}>−</Text>
+      </Pressable>
+      <Text accessibilityLiveRegion="polite" style={styles.stepValue}>
+        {value} người
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Thêm một người"
+        accessibilityState={{ disabled: value >= max }}
+        disabled={value >= max}
+        onPress={() => onChange(value + 1)}
+        style={[styles.stepButton, value >= max ? styles.stepDisabled : null]}>
+        <Text style={styles.stepText}>+</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function Success({ result, placeName }: { result: CreateBookingResponse; placeName: string }) {
+  const booking = result.booking;
+  const pending = booking.status === 'pending';
+  const heading = result.alreadyExists ? 'Bạn đã đặt khung giờ này' : pending ? 'Đã gửi yêu cầu đặt chỗ' : 'Đã đặt chỗ';
+  const sentence = result.alreadyExists
+    ? 'Lượt đặt trước đó vẫn còn hiệu lực; không có lượt mới nào được tạo.'
+    : pending
+      ? 'Quán sẽ xác nhận và bạn nhận được thông báo. Nếu quán chưa xác nhận trước giờ đến 1 giờ, yêu cầu tự hủy.'
+      : 'Quán đã giữ chỗ cho bạn. Bạn có thể hủy trước giờ đến ít nhất 1 giờ.';
+  return (
+    <View style={styles.success}>
+      <Text accessibilityRole="header" style={type.heading}>
+        {heading}
+      </Text>
+      <Text style={styles.successPlace}>{placeName}</Text>
+      <Text style={type.body}>
+        {vnDateTime(booking.startsAt)} · {booking.partySize ?? 1} người
+      </Text>
+      <Text style={type.body}>{sentence}</Text>
+      <Button label="Xem đặt chỗ của tôi" variant="primary" onPress={() => router.replace('/my-bookings')} />
+      <Button label="Về địa điểm" variant="secondary" onPress={() => router.back()} />
+    </View>
+  );
+}
+
+/** Đặt chỗ: pick a Vietnam-time day and slot, the party size and a note. */
 export default function BookingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const client = useQueryClient();
-  const place = usePlace(id);
-  const [date, setDate] = useState(todayVietnam);
-  const [time, setTime] = useState('');
-  const [partySize, setPartySize] = useState('1');
+  const { status, user } = useSession();
+  const placeQuery = usePlace(id);
+  const dates = useMemo(() => nextDateKeys(DAYS_SHOWN), []);
+  const [date, setDate] = useState(dates[0]);
+  const [clock, setClock] = useState<string | null>(null);
+  const [partySize, setPartySize] = useState(1);
   const [note, setNote] = useState('');
-  const [success, setSuccess] = useState('');
   const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, []);
-  const availability = useQuery({ queryKey: ['availability', id, date], enabled: !!id && /^\d{4}-\d{2}-\d{2}$/.test(date),
-    queryFn: () => api.request<Availability>(`/api/places/${encodeURIComponent(id)}/availability`, { query: { date } }) });
-  const create = useMutation({ mutationFn: () => api.request<{ booking: { status: string } }>('/api/bookings', {
-    method: 'POST', body: { placeId: id, startsAt: new Date(`${date}T${time}:00+07:00`).toISOString(), partySize: Number(partySize), note: note.trim() } }),
-    onSuccess: result => { setSuccess(result.booking.status === 'pending' ? 'Đã gửi yêu cầu. Chờ quán xác nhận.' : 'Đặt chỗ thành công.');
-      void client.invalidateQueries({ queryKey: ['my-bookings'] }); } });
-  const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T12:00:00+07:00`) : null;
-  const day = selectedDate?.getUTCDay();
-  const hours = availability.data?.openingHours.find(h => h.day === day);
-  const capacity = availability.data?.capacityPerSlot || 0;
-  const choices = hours ? times(hours.open, hours.close, availability.data?.slotMinutes || 60) : [];
-  const booked = (clock: string) => availability.data?.slots.find(s => s.startsAt === new Date(`${date}T${clock}:00+07:00`).toISOString())?.reserved || 0;
-  const validDate = selectedDate && selectedDate.getTime() > now && selectedDate.getTime() < now + 15 * 86400000;
-  const selectedStart = time ? new Date(`${date}T${time}:00+07:00`).getTime() : 0;
-  const selectedAvailable = !!time && !!availability.data?.enabled && selectedStart >= now + 3600000 &&
-    selectedStart <= now + 14 * 86400000 && capacity - booked(time) >= Number(partySize);
-  return <Screen><Header title="Đặt chỗ" back /><ScrollView contentContainerStyle={styles.content}>
-    {place.isPending ? <LoadingList rows={2} /> : <Text style={type.heading}>{place.data?.place?.name || 'Địa điểm'}</Text>}
-    <Text style={type.secondary}>Đặt trước ít nhất 1 giờ, tối đa 14 ngày. Mỗi tài khoản giữ tối đa 3 booking sắp tới.</Text>
-    <TextField label="Ngày đến (YYYY-MM-DD)" value={date} onChangeText={value => { setDate(value); setTime(''); }} autoCapitalize="none" />
-    <TextField label="Số người (1–20)" value={partySize} onChangeText={setPartySize} keyboardType="number-pad" />
-    {availability.isPending ? <LoadingList rows={2} /> : availability.isError ? <FormAlert message={errorMessage(availability.error)} /> :
-      availability.data?.closedOnDate ? <Text style={styles.warning}>Quán nghỉ vào ngày này.</Text> :
-      !availability.data?.enabled ? <Text style={styles.warning}>Quán chưa bật đặt chỗ.</Text> :
-      !hours ? <Text style={styles.warning}>Quán không nhận khách vào ngày này.</Text> : <View style={styles.times}>
-        <Text style={type.label}>Chọn giờ đến</Text><View style={styles.chips}>{choices.map(clock => {
-          const start = new Date(`${date}T${clock}:00+07:00`).getTime();
-          const remaining = capacity - booked(clock);
-          const available = start >= now + 3600000 && start <= now + 14 * 86400000 && remaining >= Number(partySize);
-          return <ChoiceChip key={clock} label={`${clock} · còn ${remaining}`} selected={time === clock} disabled={!available} onPress={() => setTime(clock)} />;
-        })}</View></View>}
-    <TextField label="Ghi chú cho quán" value={note} onChangeText={setNote} maxLength={500} />
-    <FormAlert message={create.isError ? errorMessage(create.error) : null} />
-    {success ? <Text style={styles.success}>{success}</Text> : null}
-    <Button label="Xác nhận đặt chỗ" busy={create.isPending} disabled={!validDate || !selectedAvailable || Number(partySize) < 1 || Number(partySize) > 20 || !Number.isInteger(Number(partySize))}
-      onPress={() => create.mutate()} block />
-    {success ? <Button label="Xem booking của tôi" variant="secondary" onPress={() => router.push('/my-bookings')} block /> : null}
-  </ScrollView></Screen>;
+  const availability = useAvailability(id, date);
+  const create = useCreateBooking(id ?? '');
+
+  // Slots close one hour before they start; keep the list honest while the screen stays open.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const place = placeQuery.data?.place;
+  const isOwner = Boolean(place?.owner && user?.id && place.owner === user.id);
+
+  let body;
+  if (status === 'guest') {
+    body = (
+      <MessageState
+        heading="Đăng nhập để đặt chỗ"
+        sentence="Lượt đặt chỗ được giữ theo tài khoản của bạn."
+        action={{ label: 'Đăng nhập', variant: 'primary', onPress: () => router.push('/login') }}
+      />
+    );
+  } else if (placeQuery.isPending) {
+    body = <LoadingList rows={3} />;
+  } else if (!place) {
+    body = (
+      <MessageState
+        tone="error"
+        heading="Chưa tải được địa điểm"
+        sentence={errorMessage(placeQuery.error)}
+        action={{ label: 'Thử lại', onPress: () => placeQuery.refetch(), busy: placeQuery.isFetching }}
+      />
+    );
+  } else if (isOwner) {
+    body = (
+      <MessageState
+        heading="Bạn đang quản lý địa điểm này"
+        sentence="Chủ quán không đặt chỗ tại quán của mình."
+        action={{ label: 'Về địa điểm', onPress: () => router.back() }}
+      />
+    );
+  } else if (place.business?.temporaryClosed) {
+    body = (
+      <MessageState
+        heading="Quán đang tạm đóng cửa"
+        sentence="Quán tạm ngừng nhận khách nên chưa đặt chỗ được. Hãy quay lại sau."
+        action={{ label: 'Về địa điểm', onPress: () => router.back() }}
+      />
+    );
+  } else if (!place.booking?.enabled) {
+    body = (
+      <MessageState
+        heading="Quán chưa nhận đặt chỗ"
+        sentence="Bạn vẫn có thể đến trực tiếp và check-in để báo độ đông, độ ồn."
+        action={{ label: 'Về địa điểm', onPress: () => router.back() }}
+      />
+    );
+  } else if (create.data) {
+    body = <Success result={create.data} placeName={place.name ?? 'Địa điểm'} />;
+  }
+
+  if (body || !place) {
+    return (
+      <Screen>
+        <Header title="Đặt chỗ" back />
+        {body}
+      </Screen>
+    );
+  }
+
+  const data = availability.data;
+  const capacity = data?.capacityPerSlot ?? place.booking?.capacityPerSlot ?? MAX_PARTY_SIZE;
+  const maxParty = Math.max(1, Math.min(MAX_PARTY_SIZE, capacity));
+  // The seat limit is only known once availability loads; never send more than it allows.
+  const party = Math.min(partySize, maxParty);
+  const slots = data ? daySlots(data, date, party, now) : [];
+  const selected = slots.find((slot) => slot.clock === clock);
+  const canSubmit = Boolean(data?.enabled && selected?.available) && !create.isPending;
+
+  function chooseDate(next: string) {
+    setDate(next);
+    setClock(null);
+    if (create.isError) create.reset();
+  }
+
+  function submit() {
+    if (!id || !clock || !canSubmit) return;
+    create.mutate({
+      placeId: id,
+      startsAt: vnInstant(date, clock).toISOString(),
+      partySize: party,
+      ...(note.trim() ? { note: note.trim() } : {}),
+    });
+  }
+
+  let slotArea;
+  if (availability.isPending) {
+    slotArea = <LoadingList rows={2} />;
+  } else if (availability.isError || !data) {
+    slotArea = (
+      <View style={styles.slotState}>
+        <FormAlert message={errorMessage(availability.error)} />
+        <Button label="Thử lại" variant="secondary" size="medium" busy={availability.isFetching} onPress={() => availability.refetch()} />
+      </View>
+    );
+  } else if (data.closedOnDate) {
+    slotArea = <Text style={styles.closed}>Quán nghỉ vào ngày này. Hãy chọn ngày khác.</Text>;
+  } else if (!data.enabled) {
+    slotArea = <Text style={styles.closed}>Quán không nhận đặt chỗ vào ngày này.</Text>;
+  } else if (slots.length === 0) {
+    slotArea = <Text style={styles.closed}>Quán không mở cửa hoặc không còn khung giờ nào vào ngày này.</Text>;
+  } else {
+    slotArea = (
+      <>
+        <View style={styles.chips}>
+          {slots.map((slot) => (
+            <ChoiceChip
+              key={slot.clock}
+              label={slot.remaining > 0 ? `${slot.clock} · còn ${slot.remaining}` : `${slot.clock} · hết chỗ`}
+              accessibilityLabel={`${slot.clock}, còn ${slot.remaining} chỗ`}
+              selected={clock === slot.clock}
+              disabled={!slot.available}
+              onPress={() => {
+                setClock(slot.clock);
+                if (create.isError) create.reset();
+              }}
+            />
+          ))}
+        </View>
+        {slots.every((slot) => !slot.available) ? (
+          <Text style={styles.closed}>Không còn khung giờ đặt được cho {party} người vào ngày này.</Text>
+        ) : (
+          <Text style={type.secondary}>Mỗi khung dài {data.slotMinutes} phút. Giờ đã qua hoặc còn dưới 1 giờ không đặt được.</Text>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <Screen>
+      <Header title="Đặt chỗ" back />
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+        <View style={styles.intro}>
+          <Text style={styles.placeName}>{place.name}</Text>
+          {place.address ? <Text style={type.secondary}>{place.address}</Text> : null}
+          <Text style={type.secondary}>
+            Đặt trước ít nhất 1 giờ, tối đa 14 ngày. Mỗi tài khoản giữ tối đa {MAX_UPCOMING_BOOKINGS} lượt sắp tới.
+            {place.booking?.approvalMode === 'manual' ? ' Quán xác nhận từng lượt đặt.' : ''}
+          </Text>
+        </View>
+
+        <View style={styles.group}>
+          <Text style={styles.groupTitle}>Ngày đến</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dates}>
+            {dates.map((key) => (
+              <ChoiceChip
+                key={key}
+                label={closedDay(place, key) ? `${shortDateLabel(key)} · nghỉ` : shortDateLabel(key)}
+                accessibilityLabel={longDateLabel(key)}
+                selected={key === date}
+                onPress={() => chooseDate(key)}
+              />
+            ))}
+          </ScrollView>
+          <Text style={type.secondary}>{longDateLabel(date)} (giờ Việt Nam)</Text>
+        </View>
+
+        <View style={styles.group}>
+          <Text style={styles.groupTitle}>Số người</Text>
+          <PartySize
+            value={party}
+            max={maxParty}
+            onChange={(value) => {
+              setPartySize(value);
+              if (create.isError) create.reset();
+            }}
+          />
+          <Text style={type.secondary}>Tối đa {maxParty} người cho một lượt đặt.</Text>
+        </View>
+
+        <View style={styles.group}>
+          <Text style={styles.groupTitle}>Giờ đến</Text>
+          {slotArea}
+        </View>
+
+        <TextArea
+          label="Ghi chú cho quán (không bắt buộc)"
+          value={note}
+          onChangeText={setNote}
+          placeholder="Ví dụ: cần bàn gần ổ cắm"
+          maxLength={NOTE_MAX_LENGTH}
+          rows={3}
+          showCount
+        />
+      </ScrollView>
+
+      <ActionBar>
+        <FormAlert message={create.isError ? errorMessage(create.error) : null} />
+        <Button
+          label={place.booking?.approvalMode === 'manual' ? 'Gửi yêu cầu đặt chỗ' : 'Đặt chỗ'}
+          busyLabel="Đang gửi"
+          busy={create.isPending}
+          disabled={!canSubmit}
+          onPress={submit}
+          block
+          size="large"
+        />
+        {selected ? (
+          <Text style={type.secondary}>
+            {longDateLabel(date)} · {selected.clock} · {party} người
+          </Text>
+        ) : (
+          <Text style={type.secondary}>Chọn giờ đến để đặt chỗ.</Text>
+        )}
+      </ActionBar>
+    </Screen>
+  );
 }
-const styles = StyleSheet.create({ content: { gap: spacing.lg, padding: spacing.lg }, times: { gap: spacing.sm }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }, warning: { color: colors.error, fontFamily: fonts.medium }, success: { color: colors.ink, fontFamily: fonts.semibold } });
+
+const styles = StyleSheet.create({
+  content: { gap: spacing.xxl, paddingTop: spacing.xl, paddingBottom: spacing.xl, paddingLeft: spacing.contentLeft, paddingRight: spacing.contentRight },
+  intro: { gap: spacing.xs },
+  placeName: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.text },
+  group: { gap: 10 },
+  groupTitle: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.text },
+  dates: { gap: spacing.sm, paddingRight: spacing.contentRight },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  slotState: { gap: spacing.sm, alignItems: 'flex-start' },
+  closed: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.error },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
+  stepButton: {
+    width: sizes.touchTarget,
+    height: sizes.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    borderRadius: sizes.radius,
+  },
+  stepDisabled: { borderColor: colors.fieldLine, opacity: 0.5 },
+  stepText: { fontFamily: fonts.semibold, fontSize: 20, lineHeight: 24, color: colors.ink },
+  stepValue: { minWidth: 72, textAlign: 'center', fontFamily: fonts.semibold, fontSize: 16, color: colors.text },
+  success: { gap: spacing.md, paddingTop: spacing.xxxl, paddingLeft: spacing.contentLeft, paddingRight: spacing.contentRight },
+  successPlace: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.text },
+});
