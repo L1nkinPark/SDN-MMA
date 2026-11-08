@@ -1126,6 +1126,7 @@ paths:
     post:
       tags: [Bookings]
       summary: Đặt chỗ trước 1 giờ đến 14 ngày, giới hạn 3 booking sắp tới; booking chờ duyệt giữ chỗ tối đa 10 phút
+      description: Một tài khoản không thể giữ hai booking có thời gian chồng nhau, kể cả ở hai quán khác nhau. Ghế được giữ nguyên tử; yêu cầu tạo dở được job nền thu hồi.
       operationId: createBooking
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -1144,7 +1145,7 @@ paths:
       responses:
         '201': { description: Booking đã xác nhận }
         '200': { description: Booking cùng user/quán/giờ đã tồn tại }
-        '409': { description: 'Hết chỗ, quán chưa nhận booking hoặc khóa/nội dung đặt chỗ xung đột' }
+        '409': { description: 'Hết chỗ, trùng thời gian với booking khác, đã giữ 3 booking tương lai hoặc khóa/nội dung đặt chỗ xung đột' }
   /api/bookings/me:
     get:
       tags: [Bookings]

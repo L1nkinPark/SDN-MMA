@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AuditEvent, Booking, BookingSlot, Place, VisitProof } from '../models/index.js';
-import { ensureBookable, releaseSlot, reserveSlot } from '../services/bookingService.js';
+import { ensureBookable, releaseSlot, reserveSlot, reserveUserWindow } from '../services/bookingService.js';
 import { HttpError, assertId, pageQuery, parse } from '../utils/common.js';
 import { notifyUser } from '../services/notificationService.js';
 import { linkReviewToVisit } from '../services/visitReviewService.js';
@@ -18,6 +18,7 @@ function sameRequest(booking, placeId, startsAt, body) {
 
 function existingResponse(res, booking, placeId, startsAt, body) {
   if (!sameRequest(booking, placeId, startsAt, body)) throw new HttpError(409, 'Booking request differs from existing booking');
+  if (booking.status === 'reserving') throw new HttpError(409, 'Booking request is still processing');
   return res.json({ booking, alreadyExists: true });
 }
 
@@ -30,7 +31,7 @@ export const bookingController = {
     const start = new Date(`${date}T00:00:00+07:00`);
     const end = new Date(start.getTime() + 86400000);
     const slots = await BookingSlot.find({ place: placeId, startsAt: { $gte: start, $lt: end } })
-      .sort({ startsAt: 1 }).lean();
+      .select('startsAt capacity reserved').sort({ startsAt: 1 }).lean();
     const closedOnDate = place.business?.closedDates?.includes(date) || false;
     res.json({ placeId, date, closedOnDate, enabled: Boolean(place.booking?.enabled && !place.business?.temporaryClosed && !closedOnDate),
       capacityPerSlot: place.booking?.capacityPerSlot || null, slotMinutes: place.booking?.slotMinutes || 60,
@@ -54,21 +55,27 @@ export const bookingController = {
     const existing = await Booking.findOne({ user: req.user._id, place: placeId, startsAt,
       status: { $in: ['pending', 'confirmed'] } });
     if (existing) return existingResponse(res, existing, placeId, startsAt, body);
-    if (await Booking.countDocuments({ user: req.user._id, status: { $in: ['pending', 'confirmed'] },
-      startsAt: { $gt: new Date() } }) >= 3) {
-      throw new HttpError(409, 'Maximum 3 upcoming bookings');
-    }
-    await reserveSlot(place, startsAt, body.partySize);
     let booking;
     try {
       const pending = place.booking.approvalMode === 'manual';
       booking = await Booking.create({ user: req.user._id, place: placeId, startsAt,
         endsAt: new Date(startsAt.getTime() + duration * 60000), partySize: body.partySize, note: body.note,
-        idempotencyKey: body.idempotencyKey || null, status: pending ? 'pending' : 'confirmed',
+        idempotencyKey: body.idempotencyKey || null, status: 'reserving',
         holdUntil: pending ? new Date(Math.min(now + 10 * 60000, startsAt.getTime() - 3600000)) : null });
+      await reserveUserWindow(booking);
+      await reserveSlot(place, booking);
+      const final = await Booking.findOneAndUpdate({ _id: booking._id, status: 'reserving' },
+        { $set: { status: pending ? 'pending' : 'confirmed' } }, { new: true });
+      if (!final) throw new HttpError(409, 'Booking request expired before completion');
+      booking = final;
     } catch (error) {
-      await BookingSlot.updateOne({ place: placeId, startsAt, reserved: { $gte: body.partySize } },
-        { $inc: { reserved: -body.partySize } });
+      if (booking) {
+        const aborted = await Booking.findOneAndUpdate({ _id: booking._id, status: 'reserving' },
+          { $set: { status: 'cancelled', cancelledAt: new Date(), cancellationKind: 'expired',
+            cancellationReason: 'Yêu cầu đặt chỗ không hoàn tất' } }, { new: true });
+        await releaseSlot(aborted || booking);
+        await Booking.deleteOne({ _id: booking._id, status: 'cancelled' });
+      }
       if (error.code === 11000) {
         const previous = await Booking.findOne({ user: req.user._id, $or: [
           ...(body.idempotencyKey ? [{ idempotencyKey: body.idempotencyKey }] : []),
@@ -88,7 +95,7 @@ export const bookingController = {
   },
   mine: async (req, res) => {
     const { page, limit } = parse(pageQuery, req.query);
-    const query = { user: req.user._id };
+    const query = { user: req.user._id, status: { $ne: 'reserving' } };
     const [items, total] = await Promise.all([
       Booking.find(query).populate('place', 'name address images').sort({ startsAt: -1 })
         .skip((page - 1) * limit).limit(limit).lean(), Booking.countDocuments(query)
@@ -120,7 +127,7 @@ export const bookingController = {
     const { page, limit, status } = parse(pageQuery.extend({
       status: z.enum(['pending', 'confirmed', 'cancelled', 'completed', 'no_show']).optional()
     }), req.query);
-    const query = { place: placeId, ...(status ? { status } : {}) };
+    const query = { place: placeId, status: status || { $ne: 'reserving' } };
     const [items, total] = await Promise.all([
       Booking.find(query).populate('user', 'name email').sort({ startsAt: -1 })
         .skip((page - 1) * limit).limit(limit).lean(), Booking.countDocuments(query)

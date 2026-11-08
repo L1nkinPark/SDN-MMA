@@ -8,6 +8,7 @@ export { ReputationEvent } from './ReputationEvent.js';
 export { MerchantClaim } from './MerchantClaim.js';
 export { Booking } from './Booking.js';
 export { BookingSlot } from './BookingSlot.js';
+export { BookingUserWindow } from './BookingUserWindow.js';
 export { VisitProof } from './VisitProof.js';
 export { AuditEvent } from './AuditEvent.js';
 export { PasswordReset } from './PasswordReset.js';

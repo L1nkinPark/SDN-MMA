@@ -5,9 +5,9 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import { createApp } from '../src/app.js';
-import { Booking, BookingSlot, Checkin, EmailChange, EmailOutbox, FraudFlag, MerchantClaim, Notification, PasswordReset, Place, PlaceChangeRequest, Review, SupportCase, User, VisitProof } from '../src/models/index.js';
+import { Booking, BookingSlot, BookingUserWindow, Checkin, EmailChange, EmailOutbox, FraudFlag, MerchantClaim, Notification, PasswordReset, Place, PlaceChangeRequest, Review, SupportCase, User, VisitProof } from '../src/models/index.js';
 import { processBookingDeadlines } from '../src/services/bookingJobs.js';
-import { localVisitTime } from '../src/services/bookingService.js';
+import { localVisitTime, migrateLegacyBookingSlots, reconcileBookingUserWindows, recoverBookingReservations, reserveSlot, reserveUserWindow } from '../src/services/bookingService.js';
 import { processEmailOutbox, queueEmail } from '../src/services/notificationService.js';
 
 const cfg = {
@@ -26,7 +26,7 @@ const register = async (name, email) => (await request(app).post('/api/auth/regi
 before(async () => {
   mongo = await MongoMemoryServer.create();
   await mongoose.connect(mongo.getUri());
-  await Promise.all([Place.init(), Booking.init(), BookingSlot.init(), MerchantClaim.init(),
+  await Promise.all([Place.init(), Booking.init(), BookingSlot.init(), BookingUserWindow.init(), MerchantClaim.init(),
     PlaceChangeRequest.init(), FraudFlag.init(), Notification.init(), EmailOutbox.init(), PasswordReset.init(), EmailChange.init(), SupportCase.init()]);
   app = createApp(cfg, io);
 });
@@ -371,6 +371,9 @@ test('concurrent requests for the last seat accept only one booking and cancella
   assert.equal((await BookingSlot.findOne({ place: place._id, startsAt: start })).reserved, 1);
   assert.equal(await Booking.countDocuments({ place: place._id, startsAt: start,
     status: { $in: ['pending', 'confirmed'] } }), 1);
+  const publicAvailability = await request(app).get(`/api/places/${place._id}/availability`)
+    .query({ date: localVisitTime(start).date }).expect(200);
+  assert.equal(publicAvailability.body.slots[0].reservations, undefined);
   const winner = attempts.findIndex(result => result.status === 201);
   await request(app).post(`/api/bookings/${attempts[winner].body.booking._id}/cancel`)
     .set(auth([first, second][winner].accessToken)).expect(200);
@@ -378,6 +381,109 @@ test('concurrent requests for the last seat accept only one booking and cancella
   await request(app).post('/api/bookings').set(auth([first, second][1 - winner].accessToken))
     .send(payload).expect(201);
   assert.equal((await BookingSlot.findOne({ place: place._id, startsAt: start })).reserved, 1);
+});
+
+test('one user cannot reserve overlapping times at different places, even concurrently', async () => {
+  const user = await register('Overlap Guest', 'overlap-guest@example.com');
+  const owner = await register('Overlap Owner', 'overlap-owner@example.com');
+  const places = [];
+  for (const [name, coordinates] of [['Overlap East', [105.87, 21.07]], ['Overlap West', [105.88, 21.08]]]) {
+    places.push(await Place.create({ name, address: `${name} Campus Road`,
+      location: { type: 'Point', coordinates }, submittedBy: owner.user.id, owner: owner.user.id,
+      approval: 'approved', booking: { enabled: true, capacityPerSlot: 2,
+        slotMinutes: name === 'Overlap East' ? 120 : 60 },
+      business: { openingHours: Array.from({ length: 7 }, (_, day) => ({ day, open: '08:00', close: '22:00' })) } }));
+  }
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() + 5);
+  start.setUTCHours(3, 0, 0, 0);
+  const firstBooking = await request(app).post('/api/bookings').set(auth(user.accessToken))
+    .send({ placeId: String(places[0]._id), startsAt: start.toISOString(), partySize: 1 }).expect(201);
+  await request(app).post('/api/bookings').set(auth(user.accessToken))
+    .send({ placeId: String(places[1]._id), startsAt: new Date(start.getTime() + 3600000).toISOString(),
+      partySize: 1 }).expect(409);
+  await request(app).post(`/api/bookings/${firstBooking.body.booking._id}/cancel`)
+    .set(auth(user.accessToken)).expect(200);
+  const attempts = await Promise.all(places.map(place => request(app).post('/api/bookings')
+    .set(auth(user.accessToken)).send({ placeId: String(place._id), startsAt: start.toISOString(), partySize: 1 })));
+  assert.deepEqual(attempts.map(result => result.status).sort(), [201, 409]);
+  assert.equal(await Booking.countDocuments({ user: user.user.id, status: { $in: ['pending', 'confirmed'] } }), 1);
+  const winner = attempts.findIndex(result => result.status === 201);
+  const otherPlace = places[1 - winner];
+  await request(app).post(`/api/bookings/${attempts[winner].body.booking._id}/cancel`)
+    .set(auth(user.accessToken)).expect(200);
+  await request(app).post('/api/bookings').set(auth(user.accessToken))
+    .send({ placeId: String(otherPlace._id), startsAt: start.toISOString(), partySize: 1 }).expect(201);
+  for (const hours of [2, 4]) {
+    await request(app).post('/api/bookings').set(auth(user.accessToken))
+      .send({ placeId: String(places[1]._id), startsAt: new Date(start.getTime() + hours * 3600000).toISOString(),
+        partySize: 1 }).expect(201);
+  }
+  await request(app).post('/api/bookings').set(auth(user.accessToken))
+    .send({ placeId: String(places[1]._id), startsAt: new Date(start.getTime() + 6 * 3600000).toISOString(),
+      partySize: 1 }).expect(409);
+  assert.equal(await Booking.countDocuments({ user: user.user.id, status: { $in: ['pending', 'confirmed'] } }), 3);
+  const concurrentUser = await register('Three Bookings Guest', 'three-bookings@example.com');
+  const four = await Promise.all([0, 2, 4, 6].map(hours => request(app).post('/api/bookings')
+    .set(auth(concurrentUser.accessToken)).send({ placeId: String(places[0]._id),
+      startsAt: new Date(start.getTime() + hours * 3600000).toISOString(), partySize: 1 })));
+  assert.deepEqual(four.map(result => result.status).sort(), [201, 201, 201, 409]);
+});
+
+test('recovery releases an unfinished booking and an orphaned seat while API stays online', async () => {
+  const user = await register('Recovery Guest', 'recovery-guest@example.com');
+  const owner = await register('Recovery Owner', 'recovery-owner@example.com');
+  const place = await Place.create({ name: 'Recovery Cafe', address: '12 Campus Road',
+    location: { type: 'Point', coordinates: [105.89, 21.09] }, submittedBy: owner.user.id,
+    owner: owner.user.id, approval: 'approved', booking: { enabled: true, capacityPerSlot: 1 },
+    business: { openingHours: Array.from({ length: 7 }, (_, day) => ({ day, open: '08:00', close: '22:00' })) } });
+  const startsAt = new Date();
+  startsAt.setUTCDate(startsAt.getUTCDate() + 6);
+  startsAt.setUTCHours(3, 0, 0, 0);
+  const booking = await Booking.create({ user: user.user.id, place: place._id, startsAt,
+    endsAt: new Date(startsAt.getTime() + 3600000), partySize: 1, status: 'reserving' });
+  await reserveUserWindow(booking);
+  await reserveSlot(place, booking);
+  await recoverBookingReservations(new Date(Date.now() + 3 * 60000));
+  assert.equal(await Booking.findById(booking._id), null);
+  assert.equal((await BookingSlot.findOne({ place: place._id, startsAt })).reserved, 0);
+  assert.equal((await BookingUserWindow.findOne({ user: user.user.id })).reservations.length, 0);
+  const orphan = await Booking.create({ user: user.user.id, place: place._id, startsAt,
+    endsAt: new Date(startsAt.getTime() + 3600000), partySize: 1, status: 'reserving' });
+  await reserveUserWindow(orphan);
+  await reserveSlot(place, orphan);
+  await Booking.deleteOne({ _id: orphan._id });
+  await recoverBookingReservations();
+  assert.equal((await BookingSlot.findOne({ place: place._id, startsAt })).reserved, 0);
+  assert.equal((await BookingUserWindow.findOne({ user: user.user.id })).reservations.length, 0);
+  const recoveredBooking = await request(app).post('/api/bookings').set(auth(user.accessToken))
+    .send({ placeId: String(place._id), startsAt: startsAt.toISOString(), partySize: 1 }).expect(201);
+  await BookingSlot.collection.updateOne({ place: place._id, startsAt },
+    { $unset: { reservations: '' }, $set: { reserved: 99 } });
+  await migrateLegacyBookingSlots();
+  const migrated = await BookingSlot.findOne({ place: place._id, startsAt });
+  assert.equal(migrated.reserved, 1);
+  assert.equal(String(migrated.reservations[0].booking), recoveredBooking.body.booking._id);
+  await BookingUserWindow.deleteOne({ user: user.user.id });
+  await reconcileBookingUserWindows();
+  assert.equal((await BookingUserWindow.findOne({ user: user.user.id })).reservations.length, 1);
+  await request(app).post(`/api/bookings/${recoveredBooking.body.booking._id}/cancel`)
+    .set(auth(user.accessToken)).expect(200);
+  assert.equal((await BookingSlot.findOne({ place: place._id, startsAt })).reserved, 0);
+  const interruptedRelease = await request(app).post('/api/bookings').set(auth(user.accessToken))
+    .send({ placeId: String(place._id), startsAt: startsAt.toISOString(), partySize: 1 }).expect(201);
+  await Booking.updateOne({ _id: interruptedRelease.body.booking._id }, { $set: { status: 'cancelled' } });
+  await recoverBookingReservations();
+  assert.equal((await BookingSlot.findOne({ place: place._id, startsAt })).reserved, 0);
+  assert.equal((await BookingUserWindow.findOne({ user: user.user.id })).reservations.length, 0);
+  const visitingStart = new Date(Date.now() - 10 * 60000);
+  const visiting = await Booking.create({ user: user.user.id, place: place._id, startsAt: visitingStart,
+    endsAt: new Date(visitingStart.getTime() + 3600000), partySize: 1, status: 'completed' });
+  await reserveUserWindow(visiting);
+  await recoverBookingReservations();
+  assert.equal((await BookingUserWindow.findOne({ user: user.user.id })).reservations.length, 1);
+  await recoverBookingReservations(new Date(Date.now() + 2 * 3600000));
+  assert.equal((await BookingUserWindow.findOne({ user: user.user.id })).reservations.length, 0);
 });
 
 test('merchant closing dates cannot invalidate existing bookings and block new bookings', async () => {

@@ -16,6 +16,8 @@ describe('error mapping', () => {
     [403, 'Account unavailable', 'Tài khoản đang bị khóa hoặc đã bị xóa. Liên hệ quản trị viên nếu có nhầm lẫn.'],
     [403, 'Invalid or expired visit code', 'Mã QR đã hết hạn hoặc không hợp lệ. Nhờ quán tạo mã mới rồi quét lại.'],
     [409, 'Slot is full', 'Khung giờ này đã hết chỗ. Hãy chọn giờ khác.'],
+    [409, 'Booking time overlaps another upcoming booking', 'Bạn đã đặt chỗ ở một quán khác trong khoảng thời gian này. Hãy chọn giờ không trùng.'],
+    [409, 'Booking request is still processing', 'Yêu cầu đặt chỗ đang được xử lý. Đợi một chút rồi thử lại.'],
     [409, 'Maximum 3 upcoming bookings', 'Bạn đang giữ 3 lượt đặt chỗ sắp tới. Hủy bớt một lượt để đặt thêm.'],
     [400, 'Booking must be 1 hour to 14 days ahead', 'Chỉ đặt được chỗ trước ít nhất 1 giờ và không quá 14 ngày.'],
     [403, 'Current password incorrect', 'Mật khẩu hiện tại không đúng.'],
