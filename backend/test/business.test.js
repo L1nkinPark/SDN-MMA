@@ -85,7 +85,11 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   }).expect(201);
   const placeId = created.body.place._id;
   assert.equal(created.body.place.approval, 'pending');
+  assert.equal(created.body.place.owner, null);
+  assert.equal(created.body.place.ownerApplicant, owner.user.id);
   assert.equal((await User.findById(owner.user.id)).role, 'student');
+  const waiting = await request(app).get('/api/merchant/places').set(ownerAuth).expect(200);
+  assert.ok(waiting.body.items.some(item => item._id === placeId && item.approval === 'pending'));
   await request(app).patch(`/api/merchant/places/${placeId}`).set(ownerAuth)
     .send({ bookingEnabled: true }).expect(403);
   await request(app).post(`/api/merchant/places/${placeId}/change-requests`).set(ownerAuth)
@@ -99,9 +103,21 @@ test('new merchant place, moderated change, manual booking, notifications and fr
   const queue = await request(app).get('/api/admin/places').set(adminAuth)
     .query({ approval: 'pending' }).expect(200);
   assert.equal(queue.body.items[0].onboardingEvidenceUrls.length, 1);
+  assert.equal(queue.body.items[0].ownerApplicant.email, 'cafe-owner@example.com');
+  const rejected = await request(app).post('/api/merchant/places').set(ownerAuth).send({
+    name: 'Rejected Study Cafe', address: '88 Other Campus Road', coordinates: [105.91, 21.12],
+    contactPhone: '0901234567', evidenceUrls: ['https://example.com/other-storefront.jpg']
+  }).expect(201);
+  await request(app).patch(`/api/admin/places/${rejected.body.place._id}`).set(adminAuth)
+    .send({ approval: 'rejected', decisionNote: 'Ownership evidence not sufficient' }).expect(200);
+  assert.equal((await User.findById(owner.user.id)).role, 'student');
+  assert.equal((await Place.findById(rejected.body.place._id)).owner, null);
   await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
     .send({ approval: 'approved', decisionNote: 'Storefront evidence checked' }).expect(200);
   assert.equal((await User.findById(owner.user.id)).role, 'merchant');
+  const approvedPlace = await Place.findById(placeId);
+  assert.equal(String(approvedPlace.owner), owner.user.id);
+  assert.equal(approvedPlace.ownerApplicant, null);
   const change = await request(app).post(`/api/merchant/places/${placeId}/change-requests`).set(ownerAuth)
     .send({ name: 'New Study Cafe Plus' }).expect(201);
   await request(app).patch(`/api/admin/place-changes/${change.body.change._id}`).set(adminAuth)

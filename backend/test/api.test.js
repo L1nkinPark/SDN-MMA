@@ -81,6 +81,8 @@ test('auth, moderation, nearby search, check-in, reviews, favorites and reports'
   await request(app).get('/api/admin/analytics').set(aliceAuth).expect(403);
   await request(app).patch(`/api/admin/places/${placeId}`).set(adminAuth)
     .send({ approval: 'approved', decisionNote: 'Place details verified' }).expect(200);
+  assert.equal((await User.findById(alice.user.id)).role, 'student');
+  assert.equal((await Place.findById(placeId)).owner, null);
   await request(app).get(`/api/places/${placeId}`).expect(200);
   const forgedImage = await request(app).post(`/api/admin/places/${placeId}/images`)
     .set(adminAuth).field('reason', 'Evidence image approved')

@@ -20,6 +20,7 @@ const schema = new Schema({
   approval: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   moderationNote: { type: String, default: null },
   submittedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  ownerApplicant: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   owner: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   business: {
     phone: { type: String, default: null },

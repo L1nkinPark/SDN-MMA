@@ -40,13 +40,15 @@ export function merchantController(cfg) {
   return {
     createPlace: async (req, res) => {
       const body = parse(newPlaceBody, req.body);
-      if (await Place.countDocuments({ owner: req.user._id, approval: 'pending' }) >= 3) {
+      if (await Place.countDocuments({ approval: 'pending', $or: [
+        { ownerApplicant: req.user._id }, { owner: req.user._id }
+      ] }) >= 3) {
         throw new HttpError(409, 'Maximum 3 pending place submissions');
       }
       await assertNoDuplicatePlace(body);
       const { contactPhone, evidenceUrls, ...fields } = body;
       const place = await Place.create({ ...fields, location: { type: 'Point', coordinates: body.coordinates },
-        submittedBy: req.user._id, owner: req.user._id, approval: 'pending',
+        submittedBy: req.user._id, ownerApplicant: req.user._id, approval: 'pending',
         business: { phone: contactPhone }, onboardingEvidenceUrls: evidenceUrls });
       await notifyAdmins(cfg, { kind: 'merchant_place', title: 'Quán mới chờ duyệt',
         body: `${req.user.name} gửi hồ sơ quán ${place.name}.`, resourceType: 'Place', resourceId: place._id }).catch(console.error);
@@ -80,7 +82,8 @@ export function merchantController(cfg) {
       res.json({ items, page, limit, total });
     },
     myPlaces: async (req, res) => {
-      const items = await Place.find({ owner: req.user._id }).sort({ createdAt: -1 }).lean();
+      const items = await Place.find({ $or: [{ owner: req.user._id }, { ownerApplicant: req.user._id }] })
+        .sort({ createdAt: -1 }).lean();
       res.json({ items });
     },
     myChangeRequests: async (req, res) => {
@@ -108,14 +111,17 @@ export function merchantController(cfg) {
     },
     submitImage: async (req, res) => {
       const placeId = assertId(req.params.id);
-      const place = await Place.findOne({ _id: placeId, owner: req.user._id,
-        approval: { $in: ['pending', 'approved'] } });
+      const place = await Place.findOne({ _id: placeId, $or: [
+        { owner: req.user._id }, { ownerApplicant: req.user._id }
+      ], approval: { $in: ['pending', 'approved'] } });
       if (!place) throw new HttpError(404, 'Owned place not found');
       if (!req.file) throw new HttpError(400, 'JPEG, PNG, or WebP image required (max 5 MB)');
       if (place.approval === 'pending') {
         if (place.images.length >= 5) throw new HttpError(409, 'Maximum 5 initial images');
         const imageUrl = await uploadPlaceImage(req.file);
-        const updated = await Place.findOneAndUpdate({ _id: placeId, owner: req.user._id, approval: 'pending',
+        const updated = await Place.findOneAndUpdate({ _id: placeId, approval: 'pending', $or: [
+          { owner: req.user._id }, { ownerApplicant: req.user._id }
+        ],
           $expr: { $lt: [{ $size: '$images' }, 5] } }, { $push: { images: imageUrl } }, { new: true });
         if (!updated) throw new HttpError(409, 'Place approval changed or image limit reached');
         await notifyAdmins(cfg, { kind: 'merchant_place_image', title: 'Ảnh hồ sơ quán mới',

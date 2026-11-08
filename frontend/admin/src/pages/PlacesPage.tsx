@@ -119,9 +119,14 @@ function ImageUploader({ place }: { place: Place }) {
 }
 
 type OwnerChoice = { id: string | null; label: string };
+type AdminPlace = Place & { ownerApplicant?: string | { _id: string; name: string; email: string } | null };
+
+function applicant(place: AdminPlace) {
+  return place.ownerApplicant && typeof place.ownerApplicant === 'object' ? place.ownerApplicant : null;
+}
 
 /** Evidence from the merchant's application and the owner, with a transfer found by email (needs the users permission). */
-function OwnerSection({ place, onDone }: { place: Place; onDone: () => void }) {
+function OwnerSection({ place, onDone }: { place: AdminPlace; onDone: () => void }) {
   const { user } = useSession();
   const canSearch = hasPermission(user, 'users');
   const transfer = useTransferOwner();
@@ -149,7 +154,9 @@ function OwnerSection({ place, onDone }: { place: Place; onDone: () => void }) {
   return (
     <div className="form-grid__wide owner">
       <span className="field__label">Chủ quán và minh chứng</span>
-      <p className="row__secondary">{place.owner ? 'Địa điểm đang có chủ quán quản lý.' : 'Địa điểm chưa có chủ quán.'}</p>
+      <p className="row__secondary">{place.owner ? 'Địa điểm đang có chủ quán quản lý.'
+        : place.ownerApplicant ? 'Người đăng ký đang chờ duyệt và chưa có quyền quản lý quán.' : 'Địa điểm chưa có chủ quán.'}</p>
+      {applicant(place) ? <p className="row__body">Người đăng ký: {applicant(place)?.name} ({applicant(place)?.email}). Duyệt hồ sơ sẽ cấp quyền chủ quán cho tài khoản này.</p> : null}
       {evidence.length ? (
         <ul className="link-list">
           {evidence.map((url) => (
@@ -224,7 +231,7 @@ function OwnerSection({ place, onDone }: { place: Place; onDone: () => void }) {
   );
 }
 
-function PlaceEditor({ place, onDone }: { place: Place; onDone: () => void }) {
+function PlaceEditor({ place, onDone }: { place: AdminPlace; onDone: () => void }) {
   const update = useUpdatePlace();
   const [approval, setApproval] = useState<Approval>(place.approval ?? 'pending');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -280,7 +287,7 @@ function PlaceEditor({ place, onDone }: { place: Place; onDone: () => void }) {
   );
 }
 
-function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; onToggle: () => void }) {
+function PlaceRowItem({ place, open, onToggle }: { place: AdminPlace; open: boolean; onToggle: () => void }) {
   const update = useUpdatePlace();
   const id = place._id as string;
   const [lng, lat] = place.location?.coordinates ?? [];
@@ -320,6 +327,9 @@ function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; 
           <span>Tạo lúc {formatDateTime(place.createdAt)}</span>
         </span>
         {evidenceCount ? <span className="row__secondary">Hồ sơ chủ quán kèm {evidenceCount} link minh chứng (bấm Sửa để xem).</span> : null}
+        {place.approval === 'pending' && applicant(place) ? (
+          <span className="row__secondary">Đăng ký chủ quán: {applicant(place)?.name} ({applicant(place)?.email}). Chưa có quyền quản lý.</span>
+        ) : null}
         {place.moderationNote ? <p className="row__body">Ghi chú quyết định: {place.moderationNote}</p> : null}
         <TextField
           label="Lý do duyệt hoặc từ chối gửi người đề xuất (bắt buộc)"
@@ -340,7 +350,7 @@ function PlaceRowItem({ place, open, onToggle }: { place: Place; open: boolean; 
             busy={update.isPending && update.variables?.changes.approval === 'approved'}
             disabled={update.isPending}
             onClick={() => setApproval('approved')}>
-            Duyệt
+            {place.ownerApplicant ? 'Duyệt và cấp quyền chủ quán' : 'Duyệt'}
           </Button>
         ) : null}
         {place.approval !== 'rejected' ? (

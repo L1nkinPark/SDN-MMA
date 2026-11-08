@@ -257,7 +257,8 @@ export const adminController = {
       reason: z.string().trim().min(5).max(500) }), req.body);
     const owner = ownerId ? await User.findOne({ _id: assertId(ownerId), status: 'active' }) : null;
     if (ownerId && !owner) throw new HttpError(404, 'New owner not found');
-    const place = await Place.findByIdAndUpdate(id, { $set: { owner: owner?._id || null } }, { new: true });
+    const place = await Place.findOneAndUpdate({ _id: id, approval: 'approved' },
+      { $set: { owner: owner?._id || null } }, { new: true });
     if (!place) throw new HttpError(404, 'Place not found');
     if (owner?.role === 'student') await User.updateOne({ _id: owner._id }, { $set: { role: 'merchant' } });
     await PlaceChangeRequest.updateMany({ place: id, status: 'pending' },
@@ -270,7 +271,8 @@ export const adminController = {
     const { page, limit, approval } = parse(pageQuery.extend({ approval: z.enum(['pending', 'approved', 'rejected']).optional() }), req.query);
     const query = approval ? { approval } : {};
     const [items, total] = await Promise.all([
-      Place.find(query).select('+onboardingEvidenceUrls').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(), Place.countDocuments(query)
+      Place.find(query).select('+onboardingEvidenceUrls').populate('ownerApplicant', 'name email')
+        .sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(), Place.countDocuments(query)
     ]);
     res.json({ items, page, limit, total });
   },
@@ -296,6 +298,15 @@ export const adminController = {
     if (body.amenities) {
       delete changes.amenities;
       for (const [key, value] of Object.entries(body.amenities)) changes[`amenities.${key}`] = value;
+    }
+    if (body.approval === 'approved') {
+      const applicantPlace = await Place.findById(id).select('ownerApplicant');
+      if (applicantPlace?.ownerApplicant) {
+        const applicant = await User.findOne({ _id: applicantPlace.ownerApplicant, status: 'active' }).select('_id');
+        if (!applicant) throw new HttpError(409, 'Owner applicant is unavailable');
+        changes.owner = applicant._id;
+        changes.ownerApplicant = null;
+      }
     }
     const place = await Place.findByIdAndUpdate(id, { $set: changes }, { new: true, runValidators: true });
     if (!place) throw new HttpError(404, 'Place not found');
