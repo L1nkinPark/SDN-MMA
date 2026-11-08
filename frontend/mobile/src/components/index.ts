@@ -18,3 +18,4 @@ export { FormScroll } from './FormScroll';
 export { ActionBar } from './ActionBar';
 export { FormAlert } from './FormAlert';
 export { RadioRow } from './RadioRow';
+export { QrScanner } from './QrScanner';
