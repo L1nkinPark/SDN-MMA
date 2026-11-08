@@ -42,6 +42,9 @@ export async function processEmailOutbox(cfg, now = new Date(), deliver = sendEm
         status: failed ? 'failed' : 'pending', text: failed ? '' : mail.text,
         nextAttemptAt, lockedUntil: null, lastError: 'Delivery failed'
       } });
+      if (failed) await notifyAdmins({ ...cfg, smtp: null }, { kind: 'email_delivery_failed',
+        title: 'Email gửi thất bại', body: `Email số ${mail._id} đã hết số lần gửi lại. Kiểm tra SMTP và hàng đợi.`,
+        resourceType: 'EmailOutbox', resourceId: mail._id }).catch(console.error);
       result[failed ? 'failed' : 'retried'] += 1;
     }
   }

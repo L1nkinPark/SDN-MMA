@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
+import { authApi } from '@/api/auth';
 import { useExportData, useUpdateMe } from '@/api/hooks/useAccount';
 import { useMe } from '@/api/hooks/useMe';
 import type { NotificationSettings } from '@/api/types';
@@ -55,7 +57,7 @@ function LinkRow({ label, danger, onPress }: { label: string; danger?: boolean; 
 
 /** Tài khoản & bảo mật: display name, notification settings, password, data export and account deletion. */
 export default function AccountScreen() {
-  const { status } = useSession();
+  const { status, signOut } = useSession();
   const me = useMe();
   const update = useUpdateMe();
   const exportData = useExportData();
@@ -64,6 +66,12 @@ export default function AccountScreen() {
   const [draftName, setDraftName] = useState<string | null>(null);
   const [nameFieldError, setNameFieldError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [emailCode, setEmailCode] = useState('');
+  const requestEmail = useMutation({ mutationFn: () => authApi.requestEmailChange(newEmail, emailPassword) });
+  const confirmEmail = useMutation({ mutationFn: () => authApi.confirmEmailChange(emailCode),
+    onSuccess: () => { void signOut().then(() => router.replace('/login')); } });
 
   useEffect(() => {
     if (!notice) return;
@@ -167,6 +175,21 @@ export default function AccountScreen() {
         </View>
 
         <View style={styles.section}>
+          <SectionTitle>Đổi email đăng nhập</SectionTitle>
+          <Text style={type.secondary}>Nhập mật khẩu hiện tại. Mã xác nhận sẽ được gửi đến email mới và có hiệu lực 30 phút.</Text>
+          <TextField label="Email mới" value={newEmail} onChangeText={setNewEmail} autoCapitalize="none" keyboardType="email-address" />
+          <TextField label="Mật khẩu hiện tại" value={emailPassword} onChangeText={setEmailPassword} secureTextEntry />
+          <Button label="Gửi mã xác nhận" size="medium" variant="secondary" disabled={!newEmail.trim() || !emailPassword}
+            busy={requestEmail.isPending} onPress={() => requestEmail.mutate()} />
+          {requestEmail.isSuccess ? <Text style={type.secondary}>Đã xếp hàng gửi mã tới {newEmail.trim()}.</Text> : null}
+          <FormAlert message={requestEmail.isError ? errorMessage(requestEmail.error) : null} />
+          <TextField label="Mã trong email mới" value={emailCode} onChangeText={setEmailCode} autoCapitalize="none" />
+          <Button label="Xác nhận email mới" size="medium" variant="secondary" disabled={!emailCode.trim()}
+            busy={confirmEmail.isPending} onPress={() => confirmEmail.mutate()} />
+          <FormAlert message={confirmEmail.isError ? errorMessage(confirmEmail.error) : null} />
+        </View>
+
+        <View style={styles.section}>
           <SectionTitle>Thông báo</SectionTitle>
           <ToggleRow
             label="Thông báo trong ứng dụng"
@@ -197,6 +220,7 @@ export default function AccountScreen() {
           <SectionTitle>Bảo mật và dữ liệu</SectionTitle>
           <View>
             <LinkRow label="Đổi mật khẩu" onPress={() => router.push('/change-password')} />
+            <LinkRow label="Khiếu nại của tôi" onPress={() => router.push('/cases')} />
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ busy: exportData.isPending }}

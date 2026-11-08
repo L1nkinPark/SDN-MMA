@@ -1,36 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
-
-import { useSession } from '@/auth/session';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../queryKeys';
 import { reviewsApi } from '../reviews';
-import type { Review, ReviewInput } from '../types';
-import { reviewUserId, useReviews } from './useReviews';
-
-/** Pages searched for the user's review before treating it as new (20 reviews per page). */
-const MAX_PAGES = 10;
+import type { ReviewInput } from '../types';
 
 /**
- * Finds the signed-in user's review in the public list, because the API has no endpoint for it.
- * Hidden reviews are not listed; saving one returns 403 instead.
+ * The private endpoint includes hidden reviews, so users can see moderation and appeal it.
  */
 export function useMyReview(placeId: string | undefined) {
-  const { user } = useSession();
-  const reviews = useReviews(placeId);
-  const mine: Review | undefined = user?.id ? reviews.items.find((review) => reviewUserId(review) === user.id) : undefined;
-  const pagesLoaded = reviews.data?.pages.length ?? 0;
-  const keepLooking = !mine && reviews.hasNextPage && pagesLoaded < MAX_PAGES && !reviews.isFetchNextPageError;
-
-  useEffect(() => {
-    if (keepLooking && !reviews.isFetchingNextPage) reviews.fetchNextPage();
-  }, [keepLooking, reviews]);
+  const query = useQuery({ queryKey: queryKeys.myReview(placeId ?? ''),
+    queryFn: () => reviewsApi.mine(placeId as string), enabled: Boolean(placeId) });
 
   return {
-    review: mine,
-    isSearching: reviews.isPending || (keepLooking && !reviews.isError),
-    error: reviews.isError && !reviews.data ? reviews.error : null,
-    retry: reviews.refetch,
+    review: query.data?.review ?? undefined,
+    isSearching: query.isPending,
+    error: query.isError ? query.error : null,
+    retry: query.refetch,
   };
 }
 
@@ -41,6 +26,7 @@ function useInvalidateReviewData(placeId: string) {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.place(placeId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.reviews(placeId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.myReview(placeId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.me }),
       queryClient.invalidateQueries({ queryKey: queryKeys.places }),
     ]);

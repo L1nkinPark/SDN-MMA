@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { adminController } from '../controllers/adminController.js';
+import { caseController } from '../controllers/caseController.js';
 import { requireAdmin, requireAuth, requirePermission, requireSuperAdmin } from '../middleware/auth.js';
 import { imageUpload } from '../middleware/upload.js';
 import { asyncRoute } from '../utils/common.js';
@@ -8,6 +9,7 @@ export function adminRouter(cfg) {
   const router = Router();
   router.use(requireAuth(cfg), requireAdmin);
   router.get('/users', requirePermission('users'), asyncRoute(adminController.listUsers));
+  router.get('/users/:id/history', requirePermission('users'), asyncRoute(adminController.userHistory));
   router.patch('/users/:id', requirePermission('users'), asyncRoute(adminController.updateUser));
   router.patch('/admins/:id/permissions', requireSuperAdmin, asyncRoute(adminController.updateAdminPermissions));
   router.post('/admins', requireSuperAdmin, asyncRoute(adminController.promoteAdmin));
@@ -15,6 +17,8 @@ export function adminRouter(cfg) {
   router.get('/merchant-claims', requirePermission('places'), asyncRoute(adminController.listClaims));
   router.patch('/merchant-claims/:id', requirePermission('places'), asyncRoute(adminController.decideClaim));
   router.get('/bookings', requirePermission('bookings'), asyncRoute(adminController.listBookings));
+  router.get('/booking-disputes', requirePermission('bookings'), asyncRoute(caseController.adminList('booking_dispute')));
+  router.patch('/booking-disputes/:id', requirePermission('bookings'), asyncRoute(caseController.adminDecide('booking_dispute')));
   router.post('/bookings/:id/cancel', requirePermission('bookings'), asyncRoute(adminController.cancelBooking));
   router.get('/audit', requirePermission('audit'), asyncRoute(adminController.listAudit));
   router.get('/place-changes', requirePermission('places'), asyncRoute(adminController.listPlaceChanges));
@@ -25,9 +29,12 @@ export function adminRouter(cfg) {
   router.patch('/places/:id', requirePermission('places'), asyncRoute(adminController.updatePlace));
   router.patch('/places/:id/owner', requirePermission('places'), asyncRoute(adminController.transferPlaceOwner));
   router.post('/places/:id/images', requirePermission('places'), imageUpload, asyncRoute(adminController.uploadImage));
+  router.delete('/places/:id/images', requirePermission('places'), asyncRoute(adminController.removeImage));
   router.get('/reports', requirePermission('moderation'), asyncRoute(adminController.listReports));
   router.patch('/reports/:id', requirePermission('moderation'), asyncRoute(adminController.updateReport));
   router.get('/reviews', requirePermission('moderation'), asyncRoute(adminController.listReviews));
+  router.get('/review-appeals', requirePermission('moderation'), asyncRoute(caseController.adminList('review_appeal')));
+  router.patch('/review-appeals/:id', requirePermission('moderation'), asyncRoute(caseController.adminDecide('review_appeal')));
   router.patch('/reviews/:id', requirePermission('moderation'), asyncRoute(adminController.updateReview));
   router.get('/analytics', requirePermission('analytics'), asyncRoute(adminController.analytics));
   return router;

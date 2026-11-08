@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { User, RefreshToken, PasswordReset, Booking, Checkin, EmailOutbox, FraudFlag, MerchantClaim,
-  Notification, Place, PlaceChangeRequest, Report, ReputationEvent, Review, VisitProof } from '../models/index.js';
+import { User, RefreshToken, PasswordReset, EmailChange, Booking, Checkin, EmailOutbox, FraudFlag, MerchantClaim,
+  Notification, Place, PlaceChangeRequest, Report, ReputationEvent, Review, SupportCase, VisitProof } from '../models/index.js';
 import { HttpError, parse } from '../utils/common.js';
 import { accessToken, refreshToken, tokenHash } from '../services/tokenService.js';
 import { publicUser } from '../views/userView.js';
@@ -80,6 +80,38 @@ export function authController(cfg) {
       await RefreshToken.updateMany({ user: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
       res.status(204).end();
     },
+    requestEmailChange: async (req, res) => {
+      const { email, currentPassword } = parse(z.object({ email: z.email().toLowerCase(),
+        currentPassword: z.string().min(8).max(128) }), req.body);
+      if (!cfg.smtp) throw new HttpError(503, 'Email delivery is not configured');
+      const user = await User.findById(req.user._id).select('+passwordHash');
+      if (!(await bcrypt.compare(currentPassword, user.passwordHash))) throw new HttpError(403, 'Current password incorrect');
+      if (email === user.email) throw new HttpError(400, 'New email must differ');
+      if (await User.exists({ email })) throw new HttpError(409, 'Email already in use');
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 30 * 60000);
+      await EmailChange.findOneAndUpdate({ user: user._id },
+        { $set: { email, tokenHash: tokenHash(token), expiresAt } }, { upsert: true, new: true });
+      await queueEmail(cfg, { to: email, subject: '[StudySpot] Xác nhận email mới',
+        text: `Mã xác nhận email mới của bạn: ${token}\nMã có hiệu lực 30 phút. Nếu không yêu cầu, bạn có thể bỏ qua email này.`, expiresAt });
+      res.status(202).json({ message: 'Confirmation code sent to new email' });
+    },
+    confirmEmailChange: async (req, res) => {
+      const { token } = parse(z.object({ token: z.string().min(32).max(256) }), req.body);
+      const change = await EmailChange.findOneAndDelete({ tokenHash: tokenHash(token), expiresAt: { $gt: new Date() } });
+      if (!change) throw new HttpError(400, 'Invalid or expired confirmation code');
+      const user = await User.findOne({ _id: change.user, status: 'active' });
+      if (!user) throw new HttpError(400, 'Account unavailable');
+      if (await User.exists({ email: change.email, _id: { $ne: user._id } })) throw new HttpError(409, 'Email already in use');
+      const oldEmail = user.email;
+      user.email = change.email;
+      user.tokenVersion += 1;
+      await user.save();
+      await RefreshToken.updateMany({ user: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
+      await queueEmail(cfg, { to: oldEmail, subject: '[StudySpot] Email đăng nhập đã thay đổi',
+        text: `Email đăng nhập StudySpot của bạn đã được đổi sang ${change.email}. Nếu không phải bạn, hãy liên hệ quản trị viên.` }).catch(console.error);
+      res.status(204).end();
+    },
     forgotPassword: async (req, res) => {
       const { email } = parse(z.object({ email: z.email().toLowerCase() }), req.body);
       if (!cfg.smtp) throw new HttpError(503, 'Email delivery is not configured');
@@ -112,14 +144,15 @@ export function authController(cfg) {
     },
     exportMe: async (req, res) => {
       const userId = req.user._id;
-      const [reviews, checkins, reports, bookings, claims, visits, places] = await Promise.all([
+      const [reviews, checkins, reports, bookings, claims, visits, places, cases] = await Promise.all([
         Review.find({ user: userId }).lean(), Checkin.find({ user: userId }).lean(),
         Report.find({ user: userId }).lean(), Booking.find({ user: userId }).lean(),
         MerchantClaim.find({ applicant: userId }).lean(), VisitProof.find({ user: userId }).lean(),
-        Place.find({ $or: [{ submittedBy: userId }, { owner: userId }] }).lean()
+        Place.find({ $or: [{ submittedBy: userId }, { owner: userId }] }).lean(),
+        SupportCase.find({ user: userId }).lean()
       ]);
       res.set('Cache-Control', 'no-store').json({ generatedAt: new Date().toISOString(),
-        user: publicUser(req.user), reviews, checkins, reports, bookings, claims, visits, places });
+        user: publicUser(req.user), reviews, checkins, reports, bookings, claims, visits, places, cases });
     },
     deleteMe: async (req, res) => {
       const { password } = parse(z.object({ password: z.string().min(8) }), req.body);
@@ -143,6 +176,7 @@ export function authController(cfg) {
         PlaceChangeRequest.deleteMany({ merchant: userId }), Notification.deleteMany({ user: userId }),
         EmailOutbox.deleteMany({ to: user.email }),
         ReputationEvent.deleteMany({ user: userId }), PasswordReset.deleteMany({ user: userId }),
+        EmailChange.deleteMany({ user: userId }), SupportCase.deleteMany({ user: userId }),
         RefreshToken.deleteMany({ user: userId }), Place.updateMany({ owner: userId }, { $set: { owner: null } })
       ]);
       for (const placeId of new Set(reviews.map(item => String(item.place)))) await updateRating(placeId);

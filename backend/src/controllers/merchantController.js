@@ -108,9 +108,20 @@ export function merchantController(cfg) {
     },
     submitImage: async (req, res) => {
       const placeId = assertId(req.params.id);
-      const place = await Place.findOne({ _id: placeId, owner: req.user._id, approval: 'approved' });
+      const place = await Place.findOne({ _id: placeId, owner: req.user._id,
+        approval: { $in: ['pending', 'approved'] } });
       if (!place) throw new HttpError(404, 'Owned place not found');
       if (!req.file) throw new HttpError(400, 'JPEG, PNG, or WebP image required (max 5 MB)');
+      if (place.approval === 'pending') {
+        if (place.images.length >= 5) throw new HttpError(409, 'Maximum 5 initial images');
+        const imageUrl = await uploadPlaceImage(req.file);
+        const updated = await Place.findOneAndUpdate({ _id: placeId, owner: req.user._id, approval: 'pending',
+          $expr: { $lt: [{ $size: '$images' }, 5] } }, { $push: { images: imageUrl } }, { new: true });
+        if (!updated) throw new HttpError(409, 'Place approval changed or image limit reached');
+        await notifyAdmins(cfg, { kind: 'merchant_place_image', title: 'Ảnh hồ sơ quán mới',
+          body: `${req.user.name} thêm ảnh cho ${place.name}.`, resourceType: 'Place', resourceId: place._id }).catch(console.error);
+        return res.status(201).json({ place: updated, imageUrl });
+      }
       if (await PlaceChangeRequest.exists({ place: placeId, status: 'pending' })) throw new HttpError(409, 'Pending change already exists');
       const imageUrl = await uploadPlaceImage(req.file);
       const change = await PlaceChangeRequest.create({ place: placeId, merchant: req.user._id,

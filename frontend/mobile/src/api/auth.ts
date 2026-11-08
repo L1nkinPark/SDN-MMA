@@ -36,6 +36,11 @@ export const authApi = {
   /** 204; every session, this one included, is revoked afterwards. */
   changePassword: (input: ChangePasswordInput) =>
     api.request<void>('/api/auth/change-password', { method: 'POST', body: input }),
+  requestEmailChange: (email: string, currentPassword: string) =>
+    api.request<void>('/api/auth/change-email', { method: 'POST',
+      body: { email: normalizeEmail(email), currentPassword } }),
+  confirmEmailChange: (token: string) =>
+    api.request<void>('/api/auth/confirm-email', { method: 'POST', body: { token: token.trim() } }),
   /** 202 whether or not the account exists; 503 when the server cannot send email. */
   forgotPassword: (email: string) =>
     api.request<void>('/api/auth/forgot-password', { method: 'POST', body: { email: normalizeEmail(email) } }),

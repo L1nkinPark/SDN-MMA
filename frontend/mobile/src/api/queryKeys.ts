@@ -9,6 +9,7 @@ export const queryKeys = {
   placeList: (query: object) => ['places', 'list', query] as const,
   place: (id: string) => ['places', id] as const,
   reviews: (placeId: string) => ['places', placeId, 'reviews'] as const,
+  myReview: (placeId: string) => ['my-review', placeId] as const,
   availabilityAll: (placeId: string) => ['places', placeId, 'availability'] as const,
   availability: (placeId: string, date: string) => ['places', placeId, 'availability', date] as const,
   myBookings: ['bookings', 'me'] as const,
@@ -23,5 +24,7 @@ export const userScopedKeys = [
   queryKeys.favorites,
   queryKeys.myReports,
   queryKeys.myBookings,
+  ['cases', 'me'],
+  ['my-review'],
   queryKeys.notifications,
 ];

@@ -1,12 +1,13 @@
 import { z } from 'zod';
-import { AuditEvent, Booking, Checkin, EmailOutbox, FraudFlag, MerchantClaim, Place, PlaceChangeRequest, RefreshToken, Report, Review, User, VisitProof } from '../models/index.js';
+import { AuditEvent, Booking, Checkin, EmailOutbox, FraudFlag, MerchantClaim, Place, PlaceChangeRequest, RefreshToken, Report, Review, SupportCase, User, VisitProof } from '../models/index.js';
 import { HttpError, assertId, coordinates, escapeRegex, pageQuery, parse } from '../utils/common.js';
 import { updateRating } from '../services/ratingService.js';
 import { uploadPlaceImage } from '../services/imageService.js';
-import { releaseSlot } from '../services/bookingService.js';
+import { localVisitTime, releaseSlot } from '../services/bookingService.js';
 import { notifyUser } from '../services/notificationService.js';
 import { recalculateStatus } from '../services/statusService.js';
 import { awardReputation } from '../services/reputationService.js';
+import { linkReviewToVisit } from '../services/visitReviewService.js';
 
 export const adminController = {
   promoteAdmin: async (req, res) => {
@@ -57,14 +58,30 @@ export const adminController = {
     ]);
     res.json({ items, page, limit, total });
   },
+  userHistory: async (req, res) => {
+    const id = assertId(req.params.id);
+    const user = await User.findById(id).select('name email role status reputation createdAt updatedAt').lean();
+    if (!user) throw new HttpError(404, 'User not found');
+    const [bookings, checkins, reviews, reports, visits, flags, audit, cases] = await Promise.all([
+      Booking.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
+      Checkin.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
+      Review.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
+      Report.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
+      VisitProof.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
+      FraudFlag.find({ user: id }).populate('place', 'name').sort({ createdAt: -1 }).limit(30).lean(),
+      AuditEvent.find({ targetType: 'User', targetId: id }).populate('actor', 'name email').sort({ createdAt: -1 }).limit(30).lean(),
+      SupportCase.find({ user: id }).sort({ createdAt: -1 }).limit(30).lean()
+    ]);
+    res.set('Cache-Control', 'no-store').json({ user, bookings, checkins, reviews, reports, visits, flags, audit, cases });
+  },
   updateUser: async (req, res) => {
     const id = assertId(req.params.id);
     const { status, reason } = parse(z.object({ status: z.enum(['active', 'suspended']),
-      reason: z.string().trim().min(5).max(500).optional() }), req.body);
+      reason: z.string().trim().min(5).max(500) }), req.body);
     if (String(req.user._id) === id) throw new HttpError(403, 'Cannot change own status');
-    const user = await User.findOneAndUpdate({ _id: id, role: { $ne: 'admin' } },
+    const user = await User.findOneAndUpdate({ _id: id, role: { $ne: 'admin' }, status: { $ne: status } },
       { $set: { status }, ...(status === 'suspended' ? { $inc: { tokenVersion: 1 } } : {}) }, { new: true });
-    if (!user) throw new HttpError(404, 'Non-admin user not found');
+    if (!user) throw new HttpError(409, 'User not found or status already set');
     if (status === 'suspended') await RefreshToken.updateMany({ user: id, revokedAt: null }, { $set: { revokedAt: new Date() } });
     await AuditEvent.create({ actor: req.user._id, action: `user.${status}`, targetType: 'User', targetId: user._id, detail: reason || null });
     if (status === 'active') await notifyUser(req.app.locals.cfg, user._id, {
@@ -114,10 +131,21 @@ export const adminController = {
     res.json({ claim: decided });
   },
   listBookings: async (req, res) => {
-    const { page, limit, status } = parse(pageQuery.extend({
-      status: z.enum(['pending', 'confirmed', 'cancelled', 'completed', 'no_show']).optional()
+    const { page, limit, status, placeId, q, date } = parse(pageQuery.extend({
+      status: z.enum(['pending', 'confirmed', 'cancelled', 'completed', 'no_show']).optional(),
+      placeId: z.string().optional(), q: z.string().trim().max(100).optional(), date: z.iso.date().optional()
     }), req.query);
-    const query = status ? { status } : {};
+    const query = { ...(status ? { status } : {}) };
+    if (placeId) query.place = assertId(placeId);
+    if (q) {
+      const places = await Place.find({ name: { $regex: escapeRegex(q), $options: 'i' } }).select('_id').lean();
+      query.place = { $in: places.map(place => place._id) };
+      if (placeId) query.place = { $in: places.filter(place => String(place._id) === placeId).map(place => place._id) };
+    }
+    if (date) {
+      const start = new Date(`${date}T00:00:00+07:00`);
+      query.startsAt = { $gte: start, $lt: new Date(start.getTime() + 86400000) };
+    }
     const [items, total] = await Promise.all([
       Booking.find(query).populate('user', 'name email').populate('place', 'name address')
         .sort({ startsAt: -1 }).skip((page - 1) * limit).limit(limit).lean(), Booking.countDocuments(query)
@@ -128,7 +156,8 @@ export const adminController = {
     const id = assertId(req.params.id);
     const { reason } = parse(z.object({ reason: z.string().trim().min(5).max(500) }), req.body);
     const booking = await Booking.findOneAndUpdate({ _id: id, status: { $in: ['pending', 'confirmed'] }, startsAt: { $gt: new Date() } },
-      { $set: { status: 'cancelled', cancelledBy: req.user._id, cancellationReason: reason } }, { new: true });
+      { $set: { status: 'cancelled', cancelledBy: req.user._id, cancelledAt: new Date(),
+        cancellationKind: 'admin', cancellationReason: reason } }, { new: true });
     if (!booking) throw new HttpError(409, 'Active booking not found');
     await releaseSlot(booking);
     await AuditEvent.create({ actor: req.user._id, action: 'booking.cancel', targetType: 'Booking',
@@ -170,7 +199,7 @@ export const adminController = {
   decideFraudFlag: async (req, res) => {
     const id = assertId(req.params.id);
     const { status, reason } = parse(z.object({ status: z.enum(['resolved', 'dismissed']),
-      reason: z.string().trim().min(5).max(500).optional() }), req.body);
+      reason: z.string().trim().min(5).max(500) }), req.body);
     const flag = await FraudFlag.findOneAndUpdate({ _id: id, status: 'pending' },
       { $set: { status, decidedBy: req.user._id, decidedAt: new Date() } }, { new: true });
     if (!flag) throw new HttpError(409, 'Pending fraud flag not found');
@@ -180,7 +209,8 @@ export const adminController = {
         await awardReputation(checkin.user, checkin.place, 'checkin', checkin.createdAt.toISOString().slice(0, 10), 1);
         if (checkin.verificationLevel === 'qr_verified' && checkin.verifiedAt &&
           !(await VisitProof.exists({ user: checkin.user, place: checkin.place, method: 'qr', verifiedAt: checkin.verifiedAt }))) {
-          await VisitProof.create({ user: checkin.user, place: checkin.place, method: 'qr', verifiedAt: checkin.verifiedAt });
+          const proof = await VisitProof.create({ user: checkin.user, place: checkin.place, method: 'qr', verifiedAt: checkin.verifiedAt });
+          await linkReviewToVisit(proof);
         }
       }
       await recalculateStatus(flag.place, req.app.locals.cfg, req.app.locals.io);
@@ -255,6 +285,11 @@ export const adminController = {
       decisionNote: z.string().trim().min(5).max(1000).optional()
     }), req.body);
     if (!Object.keys(body).length) throw new HttpError(400, 'No changes supplied');
+    if (body.approval && !body.decisionNote) throw new HttpError(400, 'Decision note is required');
+    if (body.approval && body.approval !== 'approved' && await Booking.exists({ place: id,
+      status: { $in: ['pending', 'confirmed'] }, startsAt: { $gt: new Date() } })) {
+      throw new HttpError(409, 'Cancel future bookings before hiding the place');
+    }
     const changes = { ...body };
     if (body.decisionNote) { changes.moderationNote = body.decisionNote; delete changes.decisionNote; }
     if (body.coordinates) { changes.location = { type: 'Point', coordinates: body.coordinates }; delete changes.coordinates; }
@@ -287,10 +322,10 @@ export const adminController = {
   updateReport: async (req, res) => {
     const id = assertId(req.params.id);
     const { status, reason } = parse(z.object({ status: z.enum(['resolved', 'dismissed']),
-      reason: z.string().trim().min(5).max(1000).optional() }), req.body);
-    const report = await Report.findByIdAndUpdate(id, { $set: { status, resolvedBy: req.user._id,
-      resolutionNote: reason || null } }, { new: true });
-    if (!report) throw new HttpError(404, 'Report not found');
+      reason: z.string().trim().min(5).max(1000) }), req.body);
+    const report = await Report.findOneAndUpdate({ _id: id, status: 'pending' }, { $set: { status, resolvedBy: req.user._id,
+      resolutionNote: reason } }, { new: true });
+    if (!report) throw new HttpError(409, 'Pending report not found');
     await AuditEvent.create({ actor: req.user._id, action: `report.${status}`, targetType: 'Report',
       targetId: report._id, detail: reason || null });
     await notifyUser(req.app.locals.cfg, report.user, { kind: `report_${status}`,
@@ -311,9 +346,10 @@ export const adminController = {
   updateReview: async (req, res) => {
     const id = assertId(req.params.id);
     const { hidden, reason } = parse(z.object({ hidden: z.boolean(),
-      reason: z.string().trim().min(5).max(1000).optional() }), req.body);
-    const review = await Review.findByIdAndUpdate(id, { $set: { hidden, moderationNote: reason || null } }, { new: true });
-    if (!review) throw new HttpError(404, 'Review not found');
+      reason: z.string().trim().min(5).max(1000) }), req.body);
+    const review = await Review.findOneAndUpdate({ _id: id, hidden: { $ne: hidden } },
+      { $set: { hidden, moderationNote: reason } }, { new: true });
+    if (!review) throw new HttpError(409, 'Review not found or visibility already set');
     await updateRating(review.place);
     await AuditEvent.create({ actor: req.user._id, action: hidden ? 'review.hide' : 'review.restore',
       targetType: 'Review', targetId: review._id, detail: reason || null });
@@ -324,13 +360,35 @@ export const adminController = {
   },
   uploadImage: async (req, res) => {
     const id = assertId(req.params.id);
+    const { reason } = parse(z.object({ reason: z.string().trim().min(5).max(500) }), req.body);
     if (!req.file) throw new HttpError(400, 'JPEG, PNG, or WebP image required (max 5 MB)');
     if (!(await Place.exists({ _id: id }))) throw new HttpError(404, 'Place not found');
     const imageUrl = await uploadPlaceImage(req.file);
     const place = await Place.findByIdAndUpdate(id, { $push: { images: imageUrl } }, { new: true });
+    await AuditEvent.create({ actor: req.user._id, action: 'place.image_add', targetType: 'Place', targetId: id, detail: reason });
     res.status(201).json({ imageUrl, place });
   },
-  analytics: async (_req, res) => {
+  removeImage: async (req, res) => {
+    const id = assertId(req.params.id);
+    const { imageUrl, reason } = parse(z.object({ imageUrl: z.url(), reason: z.string().trim().min(5).max(500) }), req.body);
+    const place = await Place.findOneAndUpdate({ _id: id, images: imageUrl }, { $pull: { images: imageUrl } }, { new: true });
+    if (!place) throw new HttpError(404, 'Image not found at place');
+    await AuditEvent.create({ actor: req.user._id, action: 'place.image_remove', targetType: 'Place', targetId: id, detail: reason });
+    if (place.owner) await notifyUser(req.app.locals.cfg, place.owner, { kind: 'place_image_removed',
+      title: 'Ảnh địa điểm đã bị gỡ', body: `${place.name}: ${reason}`, resourceType: 'Place', resourceId: place._id }).catch(console.error);
+    res.json({ place });
+  },
+  analytics: async (req, res) => {
+    const { from, to } = parse(z.object({ from: z.iso.date().optional(), to: z.iso.date().optional() }), req.query);
+    const today = localVisitTime(new Date()).date;
+    const periodFrom = from || localVisitTime(new Date(Date.now() - 29 * 86400000)).date;
+    const periodTo = to || today;
+    const start = new Date(`${periodFrom}T00:00:00+07:00`);
+    const end = new Date(new Date(`${periodTo}T00:00:00+07:00`).getTime() + 86400000);
+    if (start >= end || end.getTime() - start.getTime() > 366 * 86400000) {
+      throw new HttpError(400, 'Date range must be between 1 and 366 days');
+    }
+    const createdAt = { $gte: start, $lt: end };
     const [users, approvedPlaces, pendingPlaces, pendingReports, reviews, activeCheckins,
       merchants, pendingClaims, upcomingBookings, verifiedVisits, pendingFraudFlags, pendingEmails, failedEmails] = await Promise.all([
       User.countDocuments(), Place.countDocuments({ approval: 'approved' }), Place.countDocuments({ approval: 'pending' }),
@@ -340,7 +398,16 @@ export const adminController = {
       FraudFlag.countDocuments({ status: 'pending' }), EmailOutbox.countDocuments({ status: { $in: ['pending', 'sending'] } }),
       EmailOutbox.countDocuments({ status: 'failed' })
     ]);
+    const [newUsers, newPlaces, newBookings, completedBookings, cancelledBookings, noShows,
+      newCheckins, newReviews, newReports, newVerifiedVisits] = await Promise.all([
+      User.countDocuments({ createdAt }), Place.countDocuments({ createdAt }), Booking.countDocuments({ createdAt }),
+      Booking.countDocuments({ createdAt, status: 'completed' }), Booking.countDocuments({ createdAt, status: 'cancelled' }),
+      Booking.countDocuments({ createdAt, status: 'no_show' }), Checkin.countDocuments({ createdAt }),
+      Review.countDocuments({ createdAt }), Report.countDocuments({ createdAt }), VisitProof.countDocuments({ createdAt })
+    ]);
     res.json({ users, approvedPlaces, pendingPlaces, pendingReports, reviews, activeCheckins,
-      merchants, pendingClaims, upcomingBookings, verifiedVisits, pendingFraudFlags, pendingEmails, failedEmails });
+      merchants, pendingClaims, upcomingBookings, verifiedVisits, pendingFraudFlags, pendingEmails, failedEmails,
+      period: { from: periodFrom, to: periodTo, newUsers, newPlaces, newBookings, completedBookings,
+        cancelledBookings, noShows, newCheckins, newReviews, newReports, newVerifiedVisits } });
   }
 };

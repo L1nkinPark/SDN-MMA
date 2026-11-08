@@ -9,6 +9,7 @@ const path = (placeId: string) => `/api/places/${encodeURIComponent(placeId)}/re
 export const reviewsApi = {
   list: (placeId: string, page: number, limit = REVIEWS_PAGE_SIZE) =>
     api.request<ReviewPage>(path(placeId), { query: { page, limit } }),
+  mine: (placeId: string) => api.request<{ review: Review | null }>(`${path(placeId)}/me`),
   upsertMine: (placeId: string, input: ReviewInput) =>
     api.request<ReviewResponse>(`${path(placeId)}/me`, { method: 'PUT', body: input }),
   deleteMine: (placeId: string) => api.request<void>(`${path(placeId)}/me`, { method: 'DELETE' }),
@@ -22,5 +23,6 @@ export function verifiedVisitLabel(review: Pick<Review, 'verifiedVisit'>): strin
   const proof = review.verifiedVisit;
   if (!proof) return null;
   if (typeof proof === 'object' && proof.method === 'staff_booking') return 'Đã xác minh: nhân viên quán xác nhận khách đến';
+  if (typeof proof === 'object' && proof.method === 'admin_dispute') return 'Đã xác minh: quản trị viên xử lý khiếu nại';
   return 'Đã xác minh: quét mã QR tại quán';
 }

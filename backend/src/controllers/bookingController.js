@@ -1,13 +1,25 @@
 import { z } from 'zod';
-import { Booking, BookingSlot, Place, VisitProof } from '../models/index.js';
+import { AuditEvent, Booking, BookingSlot, Place, VisitProof } from '../models/index.js';
 import { ensureBookable, releaseSlot, reserveSlot } from '../services/bookingService.js';
 import { HttpError, assertId, pageQuery, parse } from '../utils/common.js';
 import { notifyUser } from '../services/notificationService.js';
+import { linkReviewToVisit } from '../services/visitReviewService.js';
 
 const createBody = z.object({
   placeId: z.string(), startsAt: z.iso.datetime({ offset: true }),
-  partySize: z.number().int().min(1).max(20), note: z.string().trim().max(500).default('')
+  partySize: z.number().int().min(1).max(20), note: z.string().trim().max(500).default(''),
+  idempotencyKey: z.string().trim().min(8).max(128).regex(/^[a-zA-Z0-9._:-]+$/).optional()
 });
+
+function sameRequest(booking, placeId, startsAt, body) {
+  return String(booking.place) === String(placeId) && booking.startsAt.getTime() === startsAt.getTime() &&
+    booking.partySize === body.partySize && (booking.note || '') === body.note;
+}
+
+function existingResponse(res, booking, placeId, startsAt, body) {
+  if (!sameRequest(booking, placeId, startsAt, body)) throw new HttpError(409, 'Booking request differs from existing booking');
+  return res.json({ booking, alreadyExists: true });
+}
 
 export const bookingController = {
   availability: async (req, res) => {
@@ -28,6 +40,10 @@ export const bookingController = {
     const body = parse(createBody, req.body);
     const placeId = assertId(body.placeId);
     const startsAt = new Date(body.startsAt);
+    if (body.idempotencyKey) {
+      const previous = await Booking.findOne({ user: req.user._id, idempotencyKey: body.idempotencyKey });
+      if (previous) return existingResponse(res, previous, placeId, startsAt, body);
+    }
     const now = Date.now();
     if (startsAt.getTime() < now + 3600000 || startsAt.getTime() > now + 14 * 86400000) {
       throw new HttpError(400, 'Booking must be 1 hour to 14 days ahead');
@@ -37,7 +53,7 @@ export const bookingController = {
     const { duration } = ensureBookable(place, startsAt);
     const existing = await Booking.findOne({ user: req.user._id, place: placeId, startsAt,
       status: { $in: ['pending', 'confirmed'] } });
-    if (existing) return res.json({ booking: existing, alreadyExists: true });
+    if (existing) return existingResponse(res, existing, placeId, startsAt, body);
     if (await Booking.countDocuments({ user: req.user._id, status: { $in: ['pending', 'confirmed'] },
       startsAt: { $gt: new Date() } }) >= 3) {
       throw new HttpError(409, 'Maximum 3 upcoming bookings');
@@ -45,16 +61,20 @@ export const bookingController = {
     await reserveSlot(place, startsAt, body.partySize);
     let booking;
     try {
+      const pending = place.booking.approvalMode === 'manual';
       booking = await Booking.create({ user: req.user._id, place: placeId, startsAt,
         endsAt: new Date(startsAt.getTime() + duration * 60000), partySize: body.partySize, note: body.note,
-        status: place.booking.approvalMode === 'manual' ? 'pending' : 'confirmed' });
+        idempotencyKey: body.idempotencyKey || null, status: pending ? 'pending' : 'confirmed',
+        holdUntil: pending ? new Date(Math.min(now + 10 * 60000, startsAt.getTime() - 3600000)) : null });
     } catch (error) {
       await BookingSlot.updateOne({ place: placeId, startsAt, reserved: { $gte: body.partySize } },
         { $inc: { reserved: -body.partySize } });
       if (error.code === 11000) {
-        const previous = await Booking.findOne({ user: req.user._id, place: placeId, startsAt,
-          status: { $in: ['pending', 'confirmed'] } });
-        if (previous) return res.json({ booking: previous, alreadyExists: true });
+        const previous = await Booking.findOne({ user: req.user._id, $or: [
+          ...(body.idempotencyKey ? [{ idempotencyKey: body.idempotencyKey }] : []),
+          { place: placeId, startsAt, status: { $in: ['pending', 'confirmed'] } }
+        ] });
+        if (previous) return existingResponse(res, previous, placeId, startsAt, body);
       }
       throw error;
     }
@@ -77,10 +97,16 @@ export const bookingController = {
   },
   cancelMine: async (req, res) => {
     const id = assertId(req.params.id);
+    const cancelledAt = new Date();
     const booking = await Booking.findOneAndUpdate({ _id: id, user: req.user._id, status: { $in: ['pending', 'confirmed'] },
       startsAt: { $gt: new Date(Date.now() + 3600000) } },
-    { $set: { status: 'cancelled', cancelledBy: req.user._id, cancellationReason: 'Khách chủ động hủy' } }, { new: true });
-    if (!booking) throw new HttpError(409, 'Booking cannot be cancelled');
+    { $set: { status: 'cancelled', cancelledBy: req.user._id, cancelledAt,
+      cancellationKind: 'user', cancellationReason: 'Khách chủ động hủy' } }, { new: true });
+    if (!booking) {
+      const previous = await Booking.findOne({ _id: id, user: req.user._id, status: 'cancelled', cancellationKind: 'user' });
+      if (previous) return res.json({ booking: previous, alreadyExists: true });
+      throw new HttpError(409, 'Booking cannot be cancelled');
+    }
     await releaseSlot(booking);
     const place = await Place.findById(booking.place).select('owner name');
     if (place?.owner) await notifyUser(req.app.locals.cfg, place.owner, { kind: 'booking_cancelled',
@@ -105,6 +131,7 @@ export const bookingController = {
     const id = assertId(req.params.id);
     const { action, reason } = parse(z.object({ action: z.enum(['approve', 'reject', 'arrived', 'cancel', 'no_show']),
       reason: z.string().trim().min(5).max(500).optional() }), req.body);
+    if (['reject', 'cancel', 'no_show'].includes(action) && !reason) throw new HttpError(400, 'Reason is required');
     const existing = await Booking.findById(id);
     if (!existing) throw new HttpError(404, 'Booking not found');
     if (!(await Place.exists({ _id: existing.place, owner: req.user._id }))) throw new HttpError(403, 'Place ownership required');
@@ -112,11 +139,15 @@ export const bookingController = {
     if (['approve', 'reject'].includes(action)) {
       if (now >= existing.startsAt.getTime()) throw new HttpError(409, 'Booking already started');
       const status = action === 'approve' ? 'confirmed' : 'cancelled';
-      const booking = await Booking.findOneAndUpdate({ _id: id, status: 'pending' },
-        { $set: { status, ...(action === 'reject' ? { cancelledBy: req.user._id,
-          cancellationReason: reason || 'Quán từ chối booking' } : {}) } }, { new: true });
+      const booking = await Booking.findOneAndUpdate({ _id: id, status: 'pending',
+        $or: [{ holdUntil: { $gt: new Date(now) } }, { holdUntil: null, startsAt: { $gt: new Date(now + 3600000) } }] },
+        { $set: { status, decidedBy: req.user._id, decidedAt: new Date(now),
+          ...(action === 'reject' ? { cancelledBy: req.user._id, cancelledAt: new Date(now),
+            cancellationKind: 'declined', cancellationReason: reason } : {}) } }, { new: true });
       if (!booking) throw new HttpError(409, 'Pending booking not found');
       if (action === 'reject') await releaseSlot(booking);
+      await AuditEvent.create({ actor: req.user._id, action: `booking.${action}`, targetType: 'Booking',
+        targetId: booking._id, detail: reason || '' });
       await notifyUser(req.app.locals.cfg, booking.user, { kind: `booking_${status}`,
         title: action === 'approve' ? 'Quán đã xác nhận booking' : 'Quán từ chối booking',
         body: reason || 'Xem chi tiết booking trong ứng dụng StudySpot.', resourceType: 'Booking', resourceId: booking._id }).catch(console.error);
@@ -130,13 +161,20 @@ export const bookingController = {
     if (action === 'cancel' && now >= existing.startsAt.getTime()) throw new HttpError(409, 'Booking already started');
     const status = { arrived: 'completed', cancel: 'cancelled', no_show: 'no_show' }[action];
     const booking = await Booking.findOneAndUpdate({ _id: id, status: 'confirmed' },
-      { $set: { status, ...(action === 'arrived' ? { arrivedAt: new Date() } : {}),
+      { $set: { status, decidedBy: req.user._id, decidedAt: new Date(now),
+        ...(action === 'arrived' ? { arrivedAt: new Date(now) } : {}),
+        ...(action === 'no_show' ? { noShowAt: new Date(now) } : {}),
         ...(action === 'cancel' ? { cancelledBy: req.user._id,
-          cancellationReason: reason || 'Quán chủ động hủy' } : {}) } }, { new: true });
+          cancelledAt: new Date(now), cancellationKind: 'merchant', cancellationReason: reason } : {}) } }, { new: true });
     if (!booking) throw new HttpError(409, 'Booking already processed');
-    if (action === 'cancel') await releaseSlot(booking);
-    if (action === 'arrived') await VisitProof.create({ user: booking.user, place: booking.place,
-      method: 'staff_booking', booking: booking._id, verifiedAt: booking.arrivedAt });
+    if (action === 'cancel' || action === 'no_show') await releaseSlot(booking);
+    if (action === 'arrived') {
+      const proof = await VisitProof.create({ user: booking.user, place: booking.place,
+        method: 'staff_booking', booking: booking._id, verifiedAt: booking.arrivedAt });
+      await linkReviewToVisit(proof);
+    }
+    await AuditEvent.create({ actor: req.user._id, action: `booking.${action}`, targetType: 'Booking',
+      targetId: booking._id, detail: reason || '' });
     await notifyUser(req.app.locals.cfg, booking.user, { kind: `booking_${status}`, title: {
       completed: 'Đã xác nhận bạn đến quán', cancelled: 'Quán đã hủy booking', no_show: 'Booking được ghi nhận không đến'
     }[status], body: reason || 'Xem chi tiết booking trong ứng dụng StudySpot.',

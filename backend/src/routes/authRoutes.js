@@ -17,5 +17,7 @@ export function authRouter(cfg) {
   router.get('/me/export', requireAuth(cfg), asyncRoute(controller.exportMe));
   router.delete('/me', requireAuth(cfg), asyncRoute(controller.deleteMe));
   router.post('/change-password', requireAuth(cfg), asyncRoute(controller.changePassword));
+  router.post('/change-email', requireAuth(cfg), asyncRoute(controller.requestEmailChange));
+  router.post('/confirm-email', asyncRoute(controller.confirmEmailChange));
   return router;
 }

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { MAX_PARTY_SIZE, MAX_UPCOMING_BOOKINGS, NOTE_MAX_LENGTH } from '@/api/bookings';
@@ -92,7 +92,7 @@ function Success({ result, placeName }: { result: CreateBookingResponse; placeNa
   const sentence = result.alreadyExists
     ? 'Lượt đặt trước đó vẫn còn hiệu lực; không có lượt mới nào được tạo.'
     : pending
-      ? 'Quán sẽ xác nhận và bạn nhận được thông báo. Nếu quán chưa xác nhận trước giờ đến 1 giờ, yêu cầu tự hủy.'
+      ? `Quán cần xác nhận trước ${vnDateTime(booking.holdUntil)}. Nếu quá hạn, yêu cầu tự hủy và chỗ được trả lại.`
       : 'Quán đã giữ chỗ cho bạn. Bạn có thể hủy trước giờ đến ít nhất 1 giờ.';
   return (
     <View style={styles.success}>
@@ -123,6 +123,7 @@ export default function BookingScreen() {
   const [now, setNow] = useState(() => Date.now());
   const availability = useAvailability(id, date);
   const create = useCreateBooking(id ?? '');
+  const retry = useRef<{ fingerprint: string; key: string } | null>(null);
 
   // Slots close one hour before they start; keep the list honest while the screen stays open.
   useEffect(() => {
@@ -207,12 +208,17 @@ export default function BookingScreen() {
 
   function submit() {
     if (!id || !clock || !canSubmit) return;
-    create.mutate({
+    const input = {
       placeId: id,
       startsAt: vnInstant(date, clock).toISOString(),
       partySize: party,
       ...(note.trim() ? { note: note.trim() } : {}),
-    });
+    };
+    const fingerprint = JSON.stringify(input);
+    if (retry.current?.fingerprint !== fingerprint) {
+      retry.current = { fingerprint, key: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}` };
+    }
+    create.mutate({ ...input, idempotencyKey: retry.current.key });
   }
 
   let slotArea;

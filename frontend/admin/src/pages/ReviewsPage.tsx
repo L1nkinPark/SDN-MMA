@@ -5,6 +5,7 @@ import { PAGE_SIZE } from '../api/endpoints';
 import { errorMessage } from '../api/errors';
 import { useReviews, useUpdateReview } from '../api/hooks';
 import { populated, type Review } from '../api/types';
+import { CasesPanel } from '../components/CasesPanel';
 import { Button, FilterTabs, FormAlert, LoadingRows, PageHeader, Pagination, Stars, StateMessage, Tag, TextField } from '../components/ui';
 import { formatDateTime } from '../utils/format';
 import { reasonError } from '../utils/validation';
@@ -45,11 +46,11 @@ function ReviewRow({ review }: { review: Review }) {
         {review.text ? <p className="row__body">{review.text}</p> : null}
         {review.moderationNote ? <p className="row__body">Ghi chú kiểm duyệt: {review.moderationNote}</p> : null}
         <TextField
-          label="Ghi chú gửi người viết (không bắt buộc)"
+          label="Lý do kiểm duyệt gửi người viết (bắt buộc)"
           value={reason}
           maxLength={1000}
           onChange={(event) => setReason(event.target.value)}
-          error={reasonError(reason, false)}
+          error={reasonError(reason, true)}
           disabled={update.isPending}
         />
         <span className="row__meta">
@@ -65,9 +66,9 @@ function ReviewRow({ review }: { review: Review }) {
           variant={hidden ? 'secondary' : 'danger'}
           size="small"
           busy={update.isPending}
-          disabled={Boolean(reasonError(reason, false))}
+          disabled={Boolean(reasonError(reason, true))}
           busyLabel={hidden ? 'Đang hiện lại' : 'Đang ẩn'}
-          onClick={() => update.mutate({ id: review._id as string, hidden: !hidden, reason: reason.trim() || undefined })}>
+          onClick={() => update.mutate({ id: review._id as string, hidden: !hidden, reason: reason.trim() })}>
           {hidden ? 'Hiện lại' : 'Ẩn đánh giá'}
         </Button>
       </div>
@@ -125,9 +126,10 @@ export function ReviewsPage() {
   return (
     <>
       <PageHeader title="Đánh giá" right={reviews.data ? `${reviews.data.total ?? 0} đánh giá` : undefined} />
-      <p className="section row__secondary">Ẩn một đánh giá sẽ bỏ nó khỏi điểm trung bình của địa điểm. Người viết không sửa được đánh giá đã bị ẩn.</p>
+      <p className="section row__secondary">Chỉ đánh giá có lượt ghé được xác minh mới tính vào điểm trung bình. Đánh giá bị ẩn không hiển thị công khai và người viết có thể khiếu nại trong 14 ngày.</p>
       <FilterTabs label="Lọc theo hiển thị" value={filter} options={FILTERS} onChange={(value) => go({ visibility: value })} />
       {body}
+      <CasesPanel kind="review_appeal" />
     </>
   );
 }

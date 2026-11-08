@@ -14,6 +14,7 @@ export function placesRouter(cfg, io) {
   router.post('/', auth, asyncRoute(placeController.create));
   router.get('/:id', asyncRoute(placeController.get));
   router.get('/:id/reviews', asyncRoute(reviewController.list));
+  router.get('/:id/reviews/me', auth, asyncRoute(reviewController.mine));
   router.get('/:id/availability', asyncRoute(bookingController.availability));
   router.put('/:id/reviews/me', auth, asyncRoute(reviewController.upsertMine));
   router.delete('/:id/reviews/me', auth, asyncRoute(reviewController.deleteMine));

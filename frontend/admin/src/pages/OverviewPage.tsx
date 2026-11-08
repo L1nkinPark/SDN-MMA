@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { errorMessage } from '../api/errors';
@@ -5,7 +6,7 @@ import { useAnalytics } from '../api/hooks';
 import type { Analytics } from '../api/types';
 import { LoadingRows, PageHeader, StateMessage } from '../components/ui';
 
-type Stat = { key: keyof Analytics; label: string; link?: { to: string; label: string }; alert?: boolean };
+type Stat = { key: Exclude<keyof Analytics, 'period'>; label: string; link?: { to: string; label: string }; alert?: boolean };
 
 const STATS: Stat[] = [
   { key: 'pendingPlaces', label: 'Địa điểm chờ duyệt', link: { to: '/places?approval=pending', label: 'Duyệt ngay' }, alert: true },
@@ -22,11 +23,18 @@ const STATS: Stat[] = [
 ];
 
 export function OverviewPage() {
-  const analytics = useAnalytics();
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const analytics = useAnalytics(from || undefined, to || undefined);
 
   return (
     <>
       <PageHeader title="Tổng quan" />
+      <div className="section ops-filter">
+        <label className="field">Từ ngày<input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
+        <label className="field">Đến ngày<input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
+      </div>
+      <p className="section field__hint">Số liệu tổng quan bên dưới là số hiện tại. Khoảng ngày áp dụng cho hoạt động trong kỳ.</p>
       {analytics.isPending ? (
         <LoadingRows rows={3} />
       ) : analytics.isError ? (
@@ -37,6 +45,7 @@ export function OverviewPage() {
           action={{ label: 'Thử lại', onClick: () => void analytics.refetch(), busy: analytics.isFetching }}
         />
       ) : (
+        <>
         <div className="stats">
           {STATS.map((stat) => {
             const value = analytics.data[stat.key] ?? 0;
@@ -53,6 +62,21 @@ export function OverviewPage() {
             );
           })}
         </div>
+        <div className="section">
+          <h2>Hoạt động {analytics.data.period?.from} – {analytics.data.period?.to}</h2>
+          <div className="stats">
+            {([
+              ['newUsers', 'Tài khoản mới'], ['newPlaces', 'Địa điểm mới'], ['newBookings', 'Booking mới'],
+              ['completedBookings', 'Booking đã đến'], ['cancelledBookings', 'Booking đã hủy'], ['noShows', 'Không đến'],
+              ['newCheckins', 'Check-in mới'], ['newReviews', 'Đánh giá mới'], ['newReports', 'Báo cáo mới'],
+              ['newVerifiedVisits', 'Lượt ghé đã xác minh'],
+            ] as const).map(([key, label]) => (
+              <div key={key} className="stat"><span className="stat__label">{label}</span><strong className="stat__value">{analytics.data.period?.[key] ?? 0}</strong></div>
+            ))}
+          </div>
+          <p className="field__hint">Trạng thái booking tính theo tình trạng hiện tại của những booking tạo trong kỳ.</p>
+        </div>
+        </>
       )}
     </>
   );

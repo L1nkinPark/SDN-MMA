@@ -97,10 +97,11 @@ test('expiry refresh only recalculates selected expired places', async t => {
   assert.equal(saved.mock.callCount(), 1);
 });
 
-test('rating includes visible reviews and resets after the last review', async t => {
+test('rating includes only visible verified reviews and resets after the last review', async t => {
   const aggregate = t.mock.method(Review, 'aggregate', async pipeline => {
     assert.equal(String(pipeline[0].$match.place), String(placeId));
     assert.equal(pipeline[0].$match.hidden, false);
+    assert.deepEqual(pipeline[0].$match.verifiedVisit, { $type: 'objectId' });
     return [{ ratingAverage: 4, ratingCount: 2 }];
   });
   const writes = [];

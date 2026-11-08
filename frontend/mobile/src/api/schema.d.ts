@@ -246,7 +246,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Đánh giá của mình, bao gồm đánh giá đã bị ẩn để gửi khiếu nại */
+        get: operations["getMyReview"];
         /** Tạo hoặc cập nhật đánh giá của mình */
         put: operations["upsertMyReview"];
         post?: never;
@@ -389,11 +390,12 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Upload ảnh địa điểm lên Cloudinary
+         * Duyệt và upload ảnh địa điểm lên Cloudinary, ghi lý do vào audit
          * @description JPEG, PNG hoặc WebP, tối đa 5 MB. Cần cấu hình Cloudinary trong .env.
          */
         post: operations["adminUploadPlaceImage"];
-        delete?: never;
+        /** Gỡ ảnh khỏi địa điểm và ghi lý do vào audit */
+        delete: operations["adminRemovePlaceImage"];
         options?: never;
         head?: never;
         patch?: never;
@@ -474,7 +476,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Thống kê cơ bản */
+        /** Thống kê hiện tại và hoạt động trong khoảng ngày */
         get: operations["adminAnalytics"];
         put?: never;
         post?: never;
@@ -637,7 +639,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Đặt chỗ trước 1 giờ đến 14 ngày, giới hạn 3 booking sắp tới */
+        /** Đặt chỗ trước 1 giờ đến 14 ngày, giới hạn 3 booking sắp tới; booking chờ duyệt giữ chỗ tối đa 10 phút */
         post: operations["createBooking"];
         delete?: never;
         options?: never;
@@ -728,6 +730,23 @@ export interface paths {
         head?: never;
         /** Khóa hoặc mở tài khoản không phải admin */
         patch: operations["adminUpdateUser"];
+        trace?: never;
+    };
+    "/api/admin/users/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lịch sử 30 mục gần nhất mỗi loại của người dùng, cần quyền users */
+        get: operations["adminUserHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/admin/merchant-claims": {
@@ -884,6 +903,40 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/change-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gửi mã xác nhận tới email mới sau khi kiểm tra mật khẩu hiện tại */
+        post: operations["requestEmailChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/confirm-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Xác nhận email mới và thu hồi toàn bộ phiên đăng nhập */
+        post: operations["confirmEmailChange"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1175,7 +1228,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Tải ảnh quán lên để admin duyệt */
+        /** Tải ảnh hồ sơ ban đầu khi quán chờ duyệt hoặc đề nghị thêm ảnh sau khi quán đã duyệt */
         post: {
             parameters: {
                 query?: never;
@@ -1195,7 +1248,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Ảnh đang chờ duyệt */
+                /** @description Quán pending nhận ảnh riêng tư; quán approved tạo yêu cầu thay đổi chờ duyệt */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -1350,6 +1403,7 @@ export interface paths {
                     "application/json": {
                         /** @enum {string} */
                         status: "resolved" | "dismissed";
+                        reason: string;
                     };
                 };
             };
@@ -1512,6 +1566,108 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gửi một khiếu nại về đánh giá bị ẩn hoặc booking ghi nhận không đến */
+        post: operations["createSupportCase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cases/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lịch sử khiếu nại của tôi */
+        get: operations["mySupportCases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/review-appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Khiếu nại đánh giá, cần quyền moderation */
+        get: operations["adminReviewAppeals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/review-appeals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Chấp nhận và khôi phục đánh giá hoặc từ chối khiếu nại */
+        patch: operations["decideReviewAppeal"];
+        trace?: never;
+    };
+    "/api/admin/booking-disputes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Khiếu nại booking không đến, cần quyền bookings */
+        get: operations["adminBookingDisputes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/booking-disputes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Chấp nhận và sửa booking thành đã đến hoặc từ chối khiếu nại */
+        patch: operations["decideBookingDispute"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1665,7 +1821,7 @@ export interface components {
             verifiedVisit?: (string | {
                 _id?: string;
                 /** @enum {string} */
-                method?: "qr" | "staff_booking";
+                method?: "qr" | "staff_booking" | "admin_dispute";
             }) | null;
             /** Format: date-time */
             createdAt?: string;
@@ -1705,12 +1861,40 @@ export interface components {
             /** Format: date-time */
             endsAt?: string;
             partySize?: number;
+            idempotencyKey?: string | null;
             /** @enum {string} */
             status?: "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
+            /** Format: date-time */
+            holdUntil?: string | null;
             note?: string;
+            /** @enum {string|null} */
+            cancellationKind?: "user" | "merchant" | "admin" | "declined" | "expired" | null;
+            /** Format: date-time */
+            cancelledAt?: string | null;
             cancellationReason?: string | null;
+            decidedBy?: string | null;
+            /** Format: date-time */
+            decidedAt?: string | null;
             /** Format: date-time */
             arrivedAt?: string | null;
+            /** Format: date-time */
+            noShowAt?: string | null;
+        };
+        SupportCase: {
+            _id?: string;
+            user?: string;
+            /** @enum {string} */
+            kind?: "review_appeal" | "booking_dispute";
+            targetId?: string;
+            reason?: string;
+            /** @enum {string} */
+            status?: "pending" | "accepted" | "rejected";
+            decisionNote?: string | null;
+            decidedBy?: string | null;
+            /** Format: date-time */
+            decidedAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
         };
         Report: {
             _id?: string;
@@ -2143,6 +2327,31 @@ export interface operations {
             };
         };
     };
+    getMyReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description MongoDB ObjectId của địa điểm */
+                id: components["parameters"]["PlaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Đánh giá của mình hoặc null */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        review?: components["schemas"]["Review"];
+                    };
+                };
+            };
+        };
+    };
     upsertMyReview: {
         parameters: {
             query?: never;
@@ -2433,7 +2642,7 @@ export interface operations {
                     minDrinkPrice?: number | null;
                     /** @enum {string} */
                     approval?: "pending" | "approved" | "rejected";
-                    /** @description Lý do quyết định để lưu vào audit */
+                    /** @description Bắt buộc khi đổi trạng thái duyệt; lưu vào audit */
                     decisionNote?: string;
                 };
             };
@@ -2488,6 +2697,7 @@ export interface operations {
                 "multipart/form-data": {
                     /** Format: binary */
                     image: string;
+                    reason: string;
                 };
             };
         };
@@ -2514,6 +2724,42 @@ export interface operations {
             };
             /** @description Cloudinary chưa được cấu hình */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminRemovePlaceImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description MongoDB ObjectId của địa điểm */
+                id: components["parameters"]["PlaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uri */
+                    imageUrl: string;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Ảnh đã gỡ khỏi địa điểm */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Ảnh không có tại địa điểm */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2566,7 +2812,7 @@ export interface operations {
                 "application/json": {
                     /** @enum {string} */
                     status: "resolved" | "dismissed";
-                    reason?: string;
+                    reason: string;
                 };
             };
         };
@@ -2611,7 +2857,7 @@ export interface operations {
             content: {
                 "application/json": {
                     hidden: boolean;
-                    reason?: string;
+                    reason: string;
                 };
             };
         };
@@ -2676,7 +2922,12 @@ export interface operations {
     };
     adminAnalytics: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Ngày bắt đầu, mặc định 30 ngày gần nhất */
+                from?: string;
+                /** @description Ngày cuối, mặc định hôm nay */
+                to?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2703,6 +2954,22 @@ export interface operations {
                         pendingFraudFlags?: number;
                         pendingEmails?: number;
                         failedEmails?: number;
+                        period?: {
+                            /** Format: date */
+                            from?: string;
+                            /** Format: date */
+                            to?: string;
+                            newUsers?: number;
+                            newPlaces?: number;
+                            newBookings?: number;
+                            completedBookings?: number;
+                            cancelledBookings?: number;
+                            noShows?: number;
+                            newCheckins?: number;
+                            newReviews?: number;
+                            newReports?: number;
+                            newVerifiedVisits?: number;
+                        };
                     };
                 };
             };
@@ -2935,6 +3202,8 @@ export interface operations {
                     startsAt: string;
                     partySize: number;
                     note?: string;
+                    /** @description Dùng lại cùng khóa cho lần gửi lại cùng nội dung; khóa cũ với nội dung khác trả 409 */
+                    idempotencyKey?: string;
                 };
             };
         };
@@ -2953,7 +3222,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Hết chỗ hoặc quán chưa nhận booking */
+            /** @description Hết chỗ, quán chưa nhận booking hoặc khóa/nội dung đặt chỗ xung đột */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3021,7 +3290,7 @@ export interface operations {
                 "application/json": {
                     /** @enum {string} */
                     action: "approve" | "reject" | "arrived" | "cancel" | "no_show";
-                    /** @description Lý do từ chối hoặc hủy */
+                    /** @description Bắt buộc khi từ chối, hủy hoặc ghi nhận không đến */
                     reason?: string;
                 };
             };
@@ -3075,11 +3344,32 @@ export interface operations {
                 "application/json": {
                     /** @enum {string} */
                     status: "active" | "suspended";
+                    reason: string;
                 };
             };
         };
         responses: {
             /** @description Trạng thái đã cập nhật; refresh tokens bị thu hồi khi khóa */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminUserHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Người dùng cùng booking, check-in, đánh giá, báo cáo, bằng chứng ghé quán, cờ gian lận và nhật ký xử lý */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -3136,7 +3426,14 @@ export interface operations {
     };
     adminListBookings: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
+                placeId?: string;
+                /** @description Tìm theo tên quán */
+                q?: string;
+                /** @description Ngày đến theo giờ Việt Nam */
+                date?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3188,6 +3485,221 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Danh sách sự kiện quản trị */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    requestEmailChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: email */
+                    email: string;
+                    currentPassword: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Mã xác nhận có hiệu lực 30 phút đã được xếp hàng gửi */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Email đã được dùng */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description SMTP chưa được cấu hình */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    confirmEmailChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    token: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Email đã thay đổi; cần đăng nhập lại */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Mã không hợp lệ hoặc hết hạn */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createSupportCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    kind: "review_appeal" | "booking_dispute";
+                    targetId: string;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Khiếu nại đã gửi */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Không đúng chủ, quá thời hạn hoặc đã gửi trước đó */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    mySupportCases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách phân trang */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminReviewAppeals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách phân trang */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    decideReviewAppeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "accepted" | "rejected";
+                    decisionNote: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Quyết định đã lưu và gửi thông báo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    adminBookingDisputes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Danh sách phân trang */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    decideBookingDispute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "accepted" | "rejected";
+                    decisionNote: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Quyết định đã lưu và gửi thông báo */
             200: {
                 headers: {
                     [name: string]: unknown;

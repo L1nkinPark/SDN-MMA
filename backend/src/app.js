@@ -11,6 +11,7 @@ import { adminRouter } from './routes/adminRoutes.js';
 import { reputationRouter } from './routes/reputationRoutes.js';
 import { merchantRouter } from './routes/merchantRoutes.js';
 import { bookingRouter } from './routes/bookingRoutes.js';
+import { caseRouter } from './routes/caseRoutes.js';
 import { notificationRouter } from './routes/notificationRoutes.js';
 import { errorHandler } from './middleware/error.js';
 import { openapiSpec } from './docs/spec.js';
@@ -46,6 +47,7 @@ export function createApp(cfg, io) {
   app.use('/api/reputation', reputationRouter());
   app.use('/api/merchant', merchantRouter(cfg));
   app.use('/api/bookings', bookingRouter(cfg));
+  app.use('/api/cases', caseRouter(cfg));
   app.use('/api/notifications', notificationRouter(cfg));
   app.use('/api/admin', adminRouter(cfg));
   app.use('/api', communityRouter(cfg));

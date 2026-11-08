@@ -7,6 +7,7 @@ const schema = new Schema({
   crowd: { type: String, enum: ['low', 'medium', 'high'], required: true },
   noise: { type: String, enum: ['quiet', 'moderate', 'loud'], required: true },
   verificationLevel: { type: String, enum: ['gps_only', 'qr_verified', 'staff_verified'], default: 'gps_only' },
+  accuracyMeters: { type: Number, default: null },
   verifiedAt: { type: Date, default: null },
   booking: { type: Schema.Types.ObjectId, ref: 'Booking', default: null },
   flagged: { type: Boolean, default: false },

@@ -7,6 +7,11 @@ import { awardReputation } from '../services/reputationService.js';
 const reviewBody = z.object({ rating: z.number().int().min(1).max(5), text: z.string().trim().min(3).max(1000) });
 
 export const reviewController = {
+  mine: async (req, res) => {
+    const placeId = assertId(req.params.id);
+    const review = await Review.findOne({ place: placeId, user: req.user._id }).lean();
+    res.set('Cache-Control', 'no-store').json({ review });
+  },
   list: async (req, res) => {
     const placeId = assertId(req.params.id);
     const place = await Place.findOne({ _id: placeId, approval: 'approved' }).select('_id');

@@ -263,7 +263,8 @@ export default function CheckinScreen() {
       verification = { visitCode, accuracyMeters: accuracy };
     }
     checkin.mutate(
-      { crowd, noise, coordinates: [current.coords.longitude, current.coords.latitude], ...(verification ?? {}) },
+      { crowd, noise, coordinates: [current.coords.longitude, current.coords.latitude],
+        ...(current.accuracyMeters !== null ? { accuracyMeters: current.accuracyMeters } : {}), ...(verification ?? {}) },
       {
         onSuccess: setResult,
         onError: (failure) => {

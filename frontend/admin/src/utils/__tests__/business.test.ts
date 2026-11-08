@@ -33,8 +33,10 @@ describe('merchant booking actions', () => {
   const start = '2026-11-04T03:00:00Z';
   const at = (minutes: number) => Date.parse(start) + minutes * 60000;
 
-  it('approves or rejects a pending booking only before it starts', () => {
-    expect(bookingActionsAt('pending', start, at(-60))).toEqual(['approve', 'reject']);
+  it('approves or rejects a pending booking only before the hold expires', () => {
+    expect(bookingActionsAt('pending', start, at(-61))).toEqual(['approve', 'reject']);
+    expect(bookingActionsAt('pending', start, at(-60))).toEqual([]);
+    expect(bookingActionsAt('pending', start, at(-100), new Date(at(-101)).toISOString())).toEqual([]);
     expect(bookingActionsAt('pending', start, at(1))).toEqual([]);
   });
 

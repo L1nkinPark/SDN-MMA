@@ -52,11 +52,11 @@ function ReportRow({ report }: { report: Report }) {
         {report.resolutionNote ? <p className="row__body">Xử lý: {report.resolutionNote}</p> : null}
         {status === 'pending' ? (
           <TextField
-            label="Ghi chú gửi người báo cáo (không bắt buộc)"
+            label="Kết quả xử lý gửi người báo cáo (bắt buộc)"
             value={reason}
             maxLength={1000}
             onChange={(event) => setReason(event.target.value)}
-            error={reasonError(reason, false)}
+            error={reasonError(reason, true)}
             disabled={update.isPending}
           />
         ) : null}
@@ -74,16 +74,16 @@ function ReportRow({ report }: { report: Report }) {
             <Button
               size="small"
               busy={update.isPending && update.variables?.status === 'resolved'}
-              disabled={update.isPending || Boolean(reasonError(reason, false))}
-              onClick={() => update.mutate({ id: report._id as string, status: 'resolved', reason: reason.trim() || undefined })}>
+              disabled={update.isPending || Boolean(reasonError(reason, true))}
+              onClick={() => update.mutate({ id: report._id as string, status: 'resolved', reason: reason.trim() })}>
               Đã xử lý
             </Button>
             <Button
               variant="secondary"
               size="small"
               busy={update.isPending && update.variables?.status === 'dismissed'}
-              disabled={update.isPending || Boolean(reasonError(reason, false))}
-              onClick={() => update.mutate({ id: report._id as string, status: 'dismissed', reason: reason.trim() || undefined })}>
+              disabled={update.isPending || Boolean(reasonError(reason, true))}
+              onClick={() => update.mutate({ id: report._id as string, status: 'dismissed', reason: reason.trim() })}>
               Bỏ qua
             </Button>
           </>
